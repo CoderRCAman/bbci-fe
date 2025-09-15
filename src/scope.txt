@@ -1,0 +1,132 @@
+# Project Scope: Community Health Data Collection App
+
+## Overview
+
+A tablet-based data collection app to support **house-to-house visits** by health workers for capturing patient health, dietary, and sample collection data. The system includes **offline capabilities**, **automatic ID management**, and **daily data syncing** to a centralized cloud server. It also supports **lab and endoscopy follow-ups** with multi-stage data tracking and uploads.
+
+---
+
+## 1. Phase 1: Field Data Collection (Tablet App)
+
+### House-to-House Survey
+
+- Health workers will visit households using **Android tablets**.
+- The app will be packaged as an **APK**, installed on each tablet.
+- Data will be stored **offline** in **SQLite** on each device.
+
+### Patient Identification
+
+- On visiting a house:
+  - If the **person is new**, the system will generate a **unique patient ID**.
+  - If the **person exists**, their data is loaded automatically.
+- **Geolocation** and **timestamp** will be recorded.
+
+### Form Sections
+
+1. **Demographics**
+   - Name, age, gender, address, etc.
+   - Automatically generate a unique ID if not found.
+
+2. **Food Recall**
+   - Daily dietary intake (e.g., 24-hour food recall form).
+   - Stored for dietary pattern analysis.
+
+3. **Monitoring Parameters**
+   - Height, weight, BP, etc., if applicable.
+
+4. **Consent & Physical Form**
+   - Checkbox confirmations for:
+     - Consent to participate
+     - Physical form signed on paper (verified via checkbox)
+
+---
+
+## 2. Patient Flow
+
+- Patient data is collected across **multi-step forms**, each represented as a **tab** in the app.
+- After final form:
+  - Tap **“Complete”** to submit.
+  - Returns to **Home/Patient List Page**, displaying:
+    - Patient ID
+    - Name
+    - Basic info
+    - Whether synced or not
+
+---
+
+## 3. Offline Sync (Nightly Sync)
+
+- Each tablet (4 total) will **sync all local data** with a central cloud server **once daily (at night)**.
+- A **Sync button** in the app:
+  - Reads all records from local SQLite
+  - Sends them to the cloud server via API
+  - Marks records as “synced” locally
+
+---
+
+## 4. Phase 2: Lab Visit (Digital Form)
+
+### Sample Collection at Lab
+
+- Patient visits lab with their ID.
+- Health staff uses the app to:
+  - Pull up patient record
+  - Confirm and log:
+    - **2 blood vials**
+    - **1 stool sample**
+  - Scan or assign **barcodes to specimen containers**
+  - Save data and sync at night again
+
+---
+
+## 5. Phase 3: Web-Based Follow-up
+
+### Report Uploads
+
+- Partnered lab staff use a **webform/webapp** to:
+  - Upload patient **reports** to the server
+  - Attach to patient ID (match via synced data)
+  - Avoid mismatches with strict ID validation
+
+### Files to be Uploaded
+
+- **Lab Reports**
+- **Endoscopy Reports**:
+  - 3 report documents (PDFs/images)
+  - 1–2 video files (up to 100MB each)
+  - Specimen tube IDs (manually entered or scanned)
+
+---
+
+## 6. Key Technical Requirements
+
+| Feature                     | Description |
+|----------------------------|-------------|
+| Offline Data Storage        | SQLite database on each tablet |
+| Sync Mechanism              | Push all unsynced data to server at night |
+| Unique Patient ID System    | Auto-generated or fetched on lookup |
+| Barcode/Specimen Tracking   | Assign, scan, and track sample containers |
+| Multi-step Form Navigation  | Auto-flow from tab to tab for each patient |
+| Consent Management          | Checkboxes to confirm signed paper forms |
+| Admin Dashboard / Web App   | For uploading lab and endoscopy reports |
+| File Upload Handling        | Support images, PDFs, video files (100MB+) |
+
+---
+
+## 7. System Summary
+
+| Component       | Platform | Purpose |
+|-----------------|----------|---------|
+| Tablet App      | Android (Ionic) | Data collection, offline-first |
+| Cloud Server    | Backend API | Central sync + data storage |
+| Web App        | Browser (React/NextJS or similar) | Upload reports and manage patient data |
+
+---
+
+## 8. Future Enhancements (Post-MVP)
+
+- Auto-sync on Wi-Fi availability
+- QR Code for Patient ID and Sample tracking
+- Role-based access control for field staff, lab, and admins
+- Analytics dashboard for collected data
+- PDF generation of reports for printing

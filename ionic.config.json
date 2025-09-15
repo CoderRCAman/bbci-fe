@@ -1,0 +1,7 @@
+{
+  "name": "testZiro",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}

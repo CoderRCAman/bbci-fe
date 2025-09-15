@@ -1,0 +1,66 @@
+html,
+body,
+ion-app {
+  color-scheme: light !important;
+}
+
+body.dark {
+  --ion-background-color: #ffffff !important;
+  --ion-text-color: #000000;
+}
+
+/* Just in case: make sure the dark class never has effect */
+body.dark {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+@font-face {
+  font-family: "poppins";
+  /* Choose a descriptive name for your font */
+  src: url("./assets/fonts/Poppins-Regular.ttf") format("truetype");
+  /* Adjust path and format as needed */
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  /* Improves performance by displaying a fallback font while the custom font loads */
+}
+
+:root {
+  --ion-safe-area-left: 25px;
+  --ion-s--ion-safe-area-top: 20px;
+  font-family: "poppins";
+}
+
+ion-modal {
+  --ion-safe-area-top: 0;
+}
+
+.show_conflict_bg {
+  background-color: #ffc9c9;
+}
+
+.plainBorder {
+  border-color: #e5e5e5;
+}
+
+.border {
+  border: 1px solid #e5e5e5;
+}
+
+.border-top {
+  border-top: 1px solid #e5e5e5;
+}
+
+.border-bottom {
+  border-bottom: 1px solid #e5e5e5;
+}
+.border-left {
+  border-left: 1px solid #e5e5e5;
+}
+.border-right {
+  border-right: 1px solid #e5e5e5;
+}
+
+a{
+  text-decoration: underline !important;
+}

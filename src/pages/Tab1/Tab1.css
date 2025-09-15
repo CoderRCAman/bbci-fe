@@ -1,0 +1,21 @@
+.entry_row {
+    display: flex; 
+    gap:5em;   
+}
+
+.entry_row__yes_no {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+
+.label {
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.item-native {
+    padding-left: 0
+    
+}
+
