@@ -49,6 +49,7 @@ import { useEffect } from 'react';
 import { SQLiteProvider } from './utils/Sqlite';
 import Tab4 from './pages/Tab4/Tab4';
 import Tab5 from './pages/Tab5/Tab5';
+import Tab6 from './pages/Tab6/Tab6';
 
 setupIonicReact();
 
@@ -77,6 +78,9 @@ const App: React.FC = () => {
               </Route>
               <Route path="/tab5">
                 <Tab5 />
+              </Route>
+              <Route path="/tab6">
+                <Tab6 />
               </Route>
             </IonRouterOutlet>
 

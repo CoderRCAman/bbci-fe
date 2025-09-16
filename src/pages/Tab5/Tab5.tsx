@@ -5,6 +5,7 @@ import { useLocation } from 'react-router'
 import AddResidential from './AddResidential';
 import { Button } from 'primereact/button';
 import ShortUUID from 'short-uuid';
+import { Link } from 'react-router-dom';
 export interface RESIDENTIAL_TYPE {
     from_age: number,
     to_age: number,
@@ -67,9 +68,9 @@ export default function Tab5() {
         //for fresh records
         if (!isResidentialDataValid(residentialData)) {
             return setAlert({
-                show:true ,
-                header : 'FAILED',
-                message:'SOME FIELDS WERE MISSING!'
+                show: true,
+                header: 'FAILED',
+                message: 'SOME FIELDS WERE MISSING!'
             })
         }
         const columns = ['from_age', 'to_age', 'city', 'village', 'state', 'code', 'id', 'user_id'];
@@ -146,6 +147,12 @@ export default function Tab5() {
                         message={alert.message}
                         buttons={["OK"]}
                     />
+                    <div className='flex justify-end pb-5 pr-2'>
+                        <Link to={`/tab6?id=someid&edit=no`}>
+                            <Button text raised label='NEXT' className='px-10 py-3  rounded-md' />
+                        </Link>
+
+                    </div>
                 </IonContent>
             </IonPage>
         </>
