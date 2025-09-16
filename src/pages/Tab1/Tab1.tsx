@@ -34,6 +34,7 @@ import { Button } from "primereact/button";
 import { RadioButton } from "primereact/radiobutton";
 import { Calendar } from "primereact/calendar";
 import RenderError from "../../components/RenderError";
+import { Link } from "react-router-dom";
 
 interface Patient {
   id?: string;
@@ -436,8 +437,9 @@ const Tab1: React.FC = () => {
         </form>
 
         <div className="flex justify-end p-2 gap-2  ">
-          <Button label="PREV" text raised className="px-3 py-2" />
-          <Button label="NEXT" text raised className="px-3 py-2" />
+          <Link to={'/tab5?id=someid&edit=yes'}>
+            <Button label="NEXT" text raised className="px-3 py-2" />
+          </Link>
         </div>
         <IonAlert
           isOpen={alert.show}

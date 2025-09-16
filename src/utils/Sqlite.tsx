@@ -155,6 +155,25 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({ children }) =>
                     console.log("--------- _rev colum already exist ----------");
                 }
 
+                try {
+                    const query = `
+                    CREATE TABLE IF NOT EXISTS residential_history (
+                        id TEXT PRIMARY KEY NOT NULL ,
+                        from_age INT  , 
+                        to_age TEXT ,
+                        city TEXT , 
+                        village TEXT,
+                        state TEXT,
+                        code INT,
+                        user_id TEXT 
+                    );
+                `;
+                    await newDb?.execute(query);
+                } catch (error) {
+
+                }
+
+
                 setDb(newDb);
                 setIsLoading(false);
             } catch (err: any) {

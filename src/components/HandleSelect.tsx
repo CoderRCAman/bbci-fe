@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Button } from 'primereact/button';
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useSQLite } from '../utils/Sqlite';
 interface DATA_TYPE {
     id: string,
@@ -61,7 +61,7 @@ export default function HandleSelect({ items, setAlert, fetchPatients }: {
                     synch = 1 
                     where patient_id = '${afterSave?.Id}'    
                 `)
-               await sqlite?.saveToStore('patientdb');
+                await sqlite?.saveToStore('patientdb');
                 await fetchPatients();
             }
         } catch (error) {

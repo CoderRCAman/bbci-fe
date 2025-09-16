@@ -46,6 +46,7 @@
     "react-hook-form": "^7.62.0",
     "react-router": "^5.3.4",
     "react-router-dom": "^5.3.4",
+    "short-uuid": "^5.2.0",
     "sql.js": "^1.11.0"
   },
   "devDependencies": {
