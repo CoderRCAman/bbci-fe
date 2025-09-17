@@ -2,9 +2,10 @@ import { IonContent, IonPage } from "@ionic/react";
 import Header from "../../components/Header";
 import { useLocation } from "react-router";
 import { useEffect, useState } from "react";
-import { FloatLabel } from "primereact/floatlabel";
-import { InputText } from "primereact/inputtext";
-import { Dropdown } from "primereact/dropdown";
+import data from "./data.json"
+import PMHInput from "./PMHInput";
+import { Button } from "primereact/button";
+import { Link } from "react-router-dom";
 export interface PERSONAL_MEDICAL_HISTORY {
     condition: string,
     condition_status: number,
@@ -13,6 +14,7 @@ export interface PERSONAL_MEDICAL_HISTORY {
     treatment_received?: number,
     mode_of_treatment?: string,
     mode_of_diagnosis?: string
+    user_id?:string
 }
 export default function Tab6() {
     const location = useLocation();
@@ -29,65 +31,26 @@ export default function Tab6() {
             <IonPage>
                 <Header title={0 ? "Edit Personal Medical History" : "Personal Medical History"} />
                 <IonContent class='' fullscreen>
-                    <main className="p-2">
-                        <div className="border rounded-md p-2 shadow">
-                            <div className="space-y-7">
-                                <h1 className="font-semibold text-slate-500 text-lg">Diabetes</h1>
-                                <div className="flex gap-4 items-center  text-md">
-                                    <div className="space-x-2">
-                                        <input type="radio" name="condition_status" value={1} />
-                                        <span>YES </span>
-                                    </div>
-                                    <div className="space-x-2">
-                                        <input type="radio" name="condition_status" value={2} />
-                                        <span>NO </span>
-                                    </div>
-                                    <div className="space-x-2">
-                                        <input type="radio" name="condition_status" value={2} />
-                                        <span>DON'T KNOW </span>
-                                    </div>
-                                    <div className="space-x-2">
-                                        <input type="radio" name="condition_status" value={2} />
-                                        <span>REFUSED TO ANSWER</span>
-                                    </div>
+                    <main className="p-2 space-y-2">
+                        {
+                            data.map((d, index) => (
 
-                                </div>
-                                <div >
-                                    <FloatLabel>
-                                        <InputText
-                                            keyfilter="int"
-                                            className="border-1 p-2"
-                                        />
-                                        <label>Age at first diagnosis</label>
-                                    </FloatLabel>
+                                <PMHInput
+                                    condition={d.condition}
+                                    mode_of_diagnosis={d.mode_of_diagnosis}
+                                    mode_of_treatment={d.mode_of_treatment}
+                                    key={index}
+                                />
 
-                                </div>
-                                <div >
-                                    <FloatLabel>
-                                        <InputText
-                                            className="border-1 p-2"
-                                        />
-                                        <label>Year of first diagnosis</label>
-                                    </FloatLabel>
-
-                                </div>
-                                <div>
-                                    <Dropdown
-                                        optionLabel="name"
-                                        optionValue="value"
-                                        className="border-1"
-                                        placeholder="Treatment Received"
-                                        options={[
-                                            { name: "YES", value: "1" },
-                                            { name: "NO", value: "2" },
-                                            { name: "DON'T KNOW", value: "8" },
-                                            { name: "REFUSED TO ANSWER", value: "8" }
-                                        ]}
-                                    />
-                                </div>
-                            </div>
-
-
+                            ))
+                        }
+                        <div className='flex justify-end gap-2 '>
+                            <Button className='px-10 py-2' label='SAVE' severity='success' />
+                            <Link 
+                             to={'/tab7'}
+                            >
+                                <Button className='px-10 py-2' label='NEXT' />
+                            </Link>
                         </div>
                     </main>
                 </IonContent>

@@ -1,0 +1,97 @@
+[
+    {
+        "condition": "Diabetes",
+        "mode_of_treatment": [
+            "Allopathic medicine",
+            "Homeopathic medicine",
+            "Ayurvedic medicine",
+            "Surgery"
+        ],
+        "mode_of_diagnosis": [
+            "Blood sugar levels E/PP",
+            "Glycated haeomoglobin (HbA1C)"
+        ]
+    },
+    {
+        "condition": "Hypertension",
+        "mode_of_treatment": [
+            "Allopathic medicine",
+            "Homeopathic medicine",
+            "Ayurvedic medicine",
+            "Surgery"
+        ],
+        "mode_of_diagnosis": [
+            "Sphygmomanometer / BP Machine",
+            "Cardiopulmonary function test"
+        ]
+    },
+    {
+        "condition": "Tuberculosis",
+        "mode_of_treatment": [
+            "Allopathic medicine",
+            "Homeopathic medicine",
+            "Ayurvedic medicine",
+            "Surgery"
+        ],
+        "mode_of_diagnosis": [
+            "Sputum Examination",
+            "Chest X-ray",
+            "Mantoux test/TB skin test",
+            "Intravenous blood test",
+            "Biopsy / FNAC"
+        ]
+    },
+    {
+        "condition": "Thyroid Diseas (Hyper/Hypo)",
+        "mode_of_treatment": [
+            "Allopathic medicine",
+            "Homeopathic medicine",
+            "Ayurvedic medicine",
+            "Surgery"
+        ],
+        "mode_of_diagnosis": [
+            "Intravenous blood test (T3, T4, TSH /Free T3, T4, TSH /Thyroid Autoantibodies (AtAb))"
+        ]
+    },
+    {
+        "condition": "Stone in Gall Bladder",
+        "mode_of_treatment": [
+            "Allopathic medicine",
+            "Homeopathic medicine",
+            "Ayurvedic medicine",
+            "Surgery"
+        ],
+        "mode_of_diagnosis": [
+            "Ultrasonography",
+            "Computed tomography (CT) scan",
+            "Magnetic resonance imaging (MRI)",
+            "Cholescintigraphy"
+        ]
+    },
+    {
+        "condition" : "Diabetes" ,
+        "mode_of_treatment" : [
+                "Allopathic medicine",
+                "Homeopathic medicine",
+                "Ayurvedic medicine",
+                "Surgery"
+        ],
+        "mode_of_diagnosis" : [
+            "Blood sugar levels E/PP",
+            "Glycated haeomoglobin (HbA1C)"
+        ]
+    },
+    {
+        "condition" : "Typhoid fever" ,
+        "mode_of_treatment" : [
+                "Allopathic medicine",
+                "Homeopathic medicine",
+                "Ayurvedic medicine",
+                "Surgery"
+        ],
+        "mode_of_diagnosis" : [
+            "Intravenous blood test (Blood Culture, Widal Test)",
+            "Stool Test"
+        ]
+    }
+]

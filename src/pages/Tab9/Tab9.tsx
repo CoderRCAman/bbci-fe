@@ -1,37 +1,41 @@
-import { IonAlert, IonContent, IonPage } from '@ionic/react'
-import React, { useEffect, useState } from 'react'
-import Header from '../../components/Header'
-import { useLocation } from 'react-router'
-import AddResidential from './AddResidential';
-import { Button } from 'primereact/button';
-import ShortUUID from 'short-uuid';
-import { Link } from 'react-router-dom';
-export interface RESIDENTIAL_TYPE {
+import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import Header from "../../components/Header";
+import { useLocation } from "react-router";
+import { useEffect, useState } from "react";
+import shortUUID from "short-uuid";
+import AddIndoorAirPollution from "./AddIndoorAirPollution";
+import { Button } from "primereact/button";
+import { Link } from "react-router-dom";
+export interface INDOOR_AIR_POLLUTION {
+    id: string,
     from_age: number,
     to_age: number,
-    city?: string,
-    village?: string,
-    state: string,
-    code: number,
-    id: string,
-    user_id?:string
+    hours: number,
+    minutes: number,
+    ventilation: number,
+    most_common_cooking_fuel: number,
+    smokiness: number,
+    most_cooking: number,
 }
-function isResidentialDataValid(data: RESIDENTIAL_TYPE[]): boolean {
+function isIndoorAirPollutionDataValid(data: INDOOR_AIR_POLLUTION[]): boolean {
     return data.every(item =>
         item.id?.trim() &&
         item.from_age > 0 &&
         item.to_age > 0 &&
-        item.state?.trim() &&
-        item.code > 0 &&
-        (item.city?.trim() || item.village?.trim())
+        item.hours > -1 &&
+        item.minutes > -1 &&
+        item.ventilation > -1 &&
+        item.most_common_cooking_fuel > -1 &&
+        item.smokiness > -1 &&
+        item.most_cooking > -1
     );
 }
-export default function Tab5() {
+export default function Tab9() {
     const location = useLocation();
     const [id, setId] = useState<string | null>('');
     const [editFlag, setEditFlag] = useState(false);
     const searchParams = new URLSearchParams(location.search);
-    const [residentialData, setResidentialData] = useState<RESIDENTIAL_TYPE[]>([]);
+    const [indoorAirData, setIndoorAirData] = useState<INDOOR_AIR_POLLUTION[]>([]);
     const [alert, setAlert] = useState({
         show: false,
         header: "",
@@ -44,53 +48,72 @@ export default function Tab5() {
     }, [location.pathname])
 
     const handleAddNewUi = () => {
-        console.log('hello')
-        const translator = ShortUUID();
-        const newResidential: RESIDENTIAL_TYPE = {
+        const translator = shortUUID();
+        const newResidential: INDOOR_AIR_POLLUTION = {
             id: translator.new(),
             from_age: 0,
             to_age: 0,
-            city: '',
-            state: '',
-            code: 0,
+            hours: -1,
+            minutes: -1,
+            most_common_cooking_fuel: -1,
+            ventilation: -1,
+            smokiness: -1,
+            most_cooking: -1,
+
         };
-        setResidentialData(d => ([...d, newResidential]))
+        setIndoorAirData(d => ([...d, newResidential]))
     }
     const handleRemoveUi = (id: string) => {
-        if (residentialData.length === 1) return;
-        setResidentialData(d => d.filter(x => x.id !== id));
+        if (indoorAirData.length === 1) return;
+        setIndoorAirData(d => d.filter(x => x.id !== id));
     }
     useEffect(() => {
-        if (residentialData.length === 0)
+        if (indoorAirData.length === 0)
             handleAddNewUi();
     }, [])
 
     const handleSaveFresh = () => {
         //for fresh records
-        if (!isResidentialDataValid(residentialData)) {
+        console.log('hello')
+        if (!isIndoorAirPollutionDataValid(indoorAirData)) {
             return setAlert({
                 show: true,
                 header: 'FAILED',
                 message: 'SOME FIELDS WERE MISSING!'
             })
         }
-        const columns = ['from_age', 'to_age', 'city', 'village', 'state', 'code', 'id', 'user_id'];
+        const columns = [
+            'from_age',
+            'to_age',
+            'hours',
+            'minutes',
+            'ventilation',
+            'most_common_cooking_fuel',
+            'smokiness',
+            'most_cooking',
+            'id',
+            'user_id'
+        ];
 
-        const valuesList = residentialData.map(item => {
+        const valuesList = indoorAirData.map(item => {
             const values = [
                 item.from_age,
                 item.to_age,
-                item.city ? `'${item.city}'` : 'NULL',
-                item.village ? `'${item.village}'` : 'NULL',
-                `'${item.state}'`,
-                item.code,
+                item.hours,
+                item.minutes,
+                item.ventilation,
+                item.most_common_cooking_fuel,
+                item.smokiness,
+                item.most_cooking,
                 `'${item.id}'`,
                 `${id}`
             ];
 
             return `(${values.join(', ')})`;
         });
-        const query = `INSERT INTO residential_history (${columns.join(', ')}) VALUES\n  ${valuesList.join(',\n  ')};`;
+
+        const query = `INSERT INTO indoor_air_pollution (${columns.join(', ')}) VALUES\n  ${valuesList.join(',\n  ')};`;
+
         console.log(query);
 
     }
@@ -99,23 +122,19 @@ export default function Tab5() {
     }
 
     return (
-        <>
-            <IonPage>
-                <Header title={0 ? "Edit Residential History" : "Add Residential History"} />
-                <IonContent class='' fullscreen>
-                    <main className='mt-6 p-2  space-y-8'>
-                        {
-                            residentialData.map(item => (
-                                <AddResidential
-                                    handleRemoveUi={handleRemoveUi}
-                                    key={item.id}
-                                    data={item}
-                                    setResidentialData={setResidentialData}
-                                />
-                            ))
-                        }
-
-                    </main>
+        <IonPage>
+            <Header title={0 ? "Edit Indoor Air Pollution" : "Indoor Air Pollution"} />
+            <IonContent class='' fullscreen>
+                <main className="p-2 space-y-2">
+                    {
+                        indoorAirData.map(data => (
+                            <AddIndoorAirPollution
+                                data={data}
+                                handleRemoveUi={handleRemoveUi}
+                                setIndoorAirData={setIndoorAirData}
+                            />
+                        ))
+                    }
                     <div className='mt-4 flex justify-end gap-4 pr-2 pb-5'>
                         <Button
                             label="+ Add new"
@@ -141,6 +160,7 @@ export default function Tab5() {
                         }
 
                     </div>
+
                     <IonAlert
                         isOpen={alert.show}
                         onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
@@ -149,13 +169,12 @@ export default function Tab5() {
                         buttons={["OK"]}
                     />
                     <div className='flex justify-end pb-5 pr-2'>
-                        <Link to={`/tab6?id=someid&edit=no`}>
+                        <Link to={`/tab10?id=someid&edit=no`}>
                             <Button text raised label='NEXT' className='px-10 py-3  rounded-md' />
                         </Link>
-
                     </div>
-                </IonContent>
-            </IonPage>
-        </>
+                </main>
+            </IonContent>
+        </IonPage>
     )
 }
