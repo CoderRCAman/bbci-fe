@@ -20,6 +20,7 @@ export default function Tab10() {
         setEditFlag(searchParams?.get('edit') === 'YES');
     }, [location.pathname])
 
+    // ye mene dala comment
 
     return (
         <IonPage>
