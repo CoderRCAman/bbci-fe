@@ -14,7 +14,7 @@ export interface RESIDENTIAL_TYPE {
     state: string,
     code: number,
     id: string,
-    user_id?:string
+    user_id?: string
 }
 function isResidentialDataValid(data: RESIDENTIAL_TYPE[]): boolean {
     return data.every(item =>
@@ -148,9 +148,12 @@ export default function Tab5() {
                         message={alert.message}
                         buttons={["OK"]}
                     />
-                    <div className='flex justify-end pb-5 pr-2'>
+                    <div className='flex gap-2 justify-end pb-5 pr-2'>
+                        <Link to={`/tab1?id=${id}&edit=no`}>
+                            <Button label='PREV' className='px-10 py-3  rounded-md' />
+                        </Link>
                         <Link to={`/tab6?id=someid&edit=no`}>
-                            <Button text raised label='NEXT' className='px-10 py-3  rounded-md' />
+                            <Button label='NEXT' className='px-10 py-3  rounded-md' />
                         </Link>
 
                     </div>

@@ -3,6 +3,7 @@ import Header from "../../components/Header";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "primereact/button";
 import { useEffect, useState } from "react";
+import { Dropdown } from "primereact/dropdown";
 
 export default function Tab10() {
     const location = useLocation();
@@ -27,6 +28,22 @@ export default function Tab10() {
             <Header title={0 ? "Edit Food Recall" : "Food Recall"} />
             <IonContent class='' fullscreen>
                 <main className="p-2">
+                    <div className="border p-2 rounded-md">
+                        <div>
+                            <Dropdown
+                                optionLabel="name"
+                                optionValue="value"
+                                className="border-1"
+                                placeholder="Are you vegeterian or non-vegeterian"
+                                options={[
+                                    { name: "Veg", value: "1" },
+                                    { name: "Non-Veg", value: "2" },
+                                ]}
+                            />
+                        </div>
+                    </div>
+
+
                     <IonAlert
                         isOpen={alert.show}
                         onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
@@ -34,11 +51,17 @@ export default function Tab10() {
                         message={alert.message}
                         buttons={["OK"]}
                     />
-                    <div className='flex justify-end pb-5 pr-2'>
-                        <Link to={`/tab11?id=someid&edit=no`}>
-                            <Button label='NEXT' className='px-10 py-2' />
+                    <div className="pt-10 flex justify-end gap-2">
+                        <Link
+                            to={'/tab9'}
+                        >
+                            <Button className='px-10 py-2 rounded' label='PREV' />
                         </Link>
-
+                        <Link
+                            to={'/tab11'}
+                        >
+                            <Button className='px-10 py-2 rounded' label='NEXT' />
+                        </Link>
                     </div>
                 </main>
 

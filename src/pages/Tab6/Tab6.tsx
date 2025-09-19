@@ -14,7 +14,7 @@ export interface PERSONAL_MEDICAL_HISTORY {
     treatment_received?: number,
     mode_of_treatment?: string,
     mode_of_diagnosis?: string
-    user_id?:string
+    user_id?: string
 }
 export default function Tab6() {
     const location = useLocation();
@@ -46,10 +46,18 @@ export default function Tab6() {
                         }
                         <div className='flex justify-end gap-2 '>
                             <Button className='px-10 py-2' label='SAVE' severity='success' />
-                            <Link 
-                             to={'/tab7'}
+
+                        </div>
+                        <div className="pt-10 flex justify-end gap-2">
+                            <Link
+                                to={'/tab5'}
                             >
-                                <Button className='px-10 py-2' label='NEXT' />
+                                <Button className='px-10 py-2 rounded' label='PREV' />
+                            </Link>
+                            <Link
+                                to={'/tab7'}
+                            >
+                                <Button className='px-10 py-2 rounded' label='NEXT' />
                             </Link>
                         </div>
                     </main>

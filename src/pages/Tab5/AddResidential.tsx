@@ -23,7 +23,7 @@ export default function AddResidential({ handleRemoveUi, data, setResidentialDat
             <FloatLabel>
                 <InputText
                     keyfilter="int"
-                    className="border-1 w-[50%]"
+                    className="border-1 w-[50%] p-2"
                     value={data['from_age'].toString()}
                     onChange={e => handleUpdate('from_age', isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value))}
                 />
@@ -32,7 +32,7 @@ export default function AddResidential({ handleRemoveUi, data, setResidentialDat
             <FloatLabel>
                 <InputText
                     keyfilter="int"
-                    className="border-1 w-[50%]"
+                    className="border-1 w-[50%] p-2"
                     value={data['to_age'].toString()}
                     onChange={e => handleUpdate('to_age', isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value))}
                 />
@@ -41,7 +41,7 @@ export default function AddResidential({ handleRemoveUi, data, setResidentialDat
             <FloatLabel>
                 <InputText
                     name='city'
-                    className="border-1 w-[50%]"
+                    className="border-1 w-[50%] p-2"
                     value={data['city']}
                     onChange={e => handleUpdate('city', e.target.value)}
                 />
@@ -50,7 +50,7 @@ export default function AddResidential({ handleRemoveUi, data, setResidentialDat
             <FloatLabel>
                 <InputText
                     name='village'
-                    className="border-1 w-[50%]"
+                    className="border-1 w-[50%] p-2"
                     value={data['village']}
                     onChange={e => handleUpdate('village', e.target.value)}
                 />
@@ -59,7 +59,7 @@ export default function AddResidential({ handleRemoveUi, data, setResidentialDat
             <FloatLabel>
                 <InputText
                     name='state'
-                    className="border-1 w-[50%]"
+                    className="border-1 w-[50%] p-2"
                     value={data['state']}
                     onChange={e => handleUpdate('state', e.target.value)}
                 />

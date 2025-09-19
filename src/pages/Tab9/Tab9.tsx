@@ -168,11 +168,19 @@ export default function Tab9() {
                         message={alert.message}
                         buttons={["OK"]}
                     />
-                    <div className='flex justify-end pb-5 pr-2'>
-                        <Link to={`/tab10?id=someid&edit=no`}>
-                            <Button text raised label='NEXT' className='px-10 py-3  rounded-md' />
+                    <div className="pt-10 flex justify-end gap-2">
+                        <Link
+                            to={'/tab8'}
+                        >
+                            <Button className='px-10 py-2 rounded' label='PREV' />
+                        </Link>
+                        <Link
+                            to={'/tab10'}
+                        >
+                            <Button className='px-10 py-2 rounded' label='NEXT' />
                         </Link>
                     </div>
+
                 </main>
             </IonContent>
         </IonPage>

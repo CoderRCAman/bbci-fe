@@ -291,8 +291,8 @@ const Tab1: React.FC = () => {
             className="p-3 rounded-md"
           />
           <div
-            className="flex w-full align-items-center gap-5 p-1 border-1 border-round-md"
-            style={{ borderColor: "#c4c4c4" }}
+            className="flex border rounded-md w-full align-items-center gap-5 p-2 "
+            
           >
             <div className="flex align-items-center">
               <p>Latitude : </p>
@@ -308,7 +308,7 @@ const Tab1: React.FC = () => {
 
           <FloatLabel>
             <InputText
-              className="border-1"
+              className="border-1 p-2"
               value={watch("name")}
               {...register("name", { required: "Name is required" })}
             />
@@ -319,9 +319,9 @@ const Tab1: React.FC = () => {
           )}
           {/* ------------------------------------- */}
 
-          <div className="border-1 border-round-md p-2 plainBorder ">
+          <div className="border rounded p-2 plainBorder ">
             <p className="m-0">Select gender</p>
-            <div className="flex align-items-center gap-4">
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Controller
                   name="gender"
@@ -358,7 +358,7 @@ const Tab1: React.FC = () => {
                 />
                 <p>Female</p>
               </div>
-              <div className="flex align-items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Controller
                   name="gender"
                   control={control}
@@ -386,7 +386,7 @@ const Tab1: React.FC = () => {
           <FloatLabel>
             <InputText
               keyfilter="int"
-              className="border-1"
+              className="border-1 p-2"
               value={watch("age").toString()}
               {...register("age", { required: "Age is required" })}
             />
@@ -414,7 +414,7 @@ const Tab1: React.FC = () => {
 
                 return (
                   <Calendar
-                    className="border-1"
+                    className="border-1 p-2 focus:outline-none"
                     value={value ? new Date(value) : null}
                     onChange={(e) => onChange(e.value)}
                     showIcon
@@ -438,7 +438,7 @@ const Tab1: React.FC = () => {
 
         <div className="flex justify-end p-2 gap-2  ">
           <Link to={'/tab5?id=someid&edit=yes'}>
-            <Button label="NEXT" text raised className="px-3 py-2" />
+            <Button label="NEXT"  className="px-3 py-2 rounded" />
           </Link>
         </div>
         <IonAlert

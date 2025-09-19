@@ -67,10 +67,18 @@ export default function Tab8() {
                         </div>
                         <div className='flex justify-end gap-2 mt-4 '>
                             <Button className='px-10 py-2' label='SAVE' severity='success' />
+
+                        </div>
+                        <div className="pt-10 flex justify-end gap-2">
+                            <Link
+                                to={'/tab7'}
+                            >
+                                <Button className='px-10 py-2 rounded' label='PREV' />
+                            </Link>
                             <Link
                                 to={'/tab9'}
                             >
-                                <Button className='px-10 py-2' label='NEXT' />
+                                <Button className='px-10 py-2 rounded' label='NEXT' />
                             </Link>
                         </div>
                     </main>
