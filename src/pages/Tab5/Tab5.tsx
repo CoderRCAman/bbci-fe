@@ -6,6 +6,7 @@ import AddResidential from './AddResidential';
 import { Button } from 'primereact/button';
 import ShortUUID from 'short-uuid';
 import { Link } from 'react-router-dom';
+import { useSQLite } from '../../utils/Sqlite';
 export interface RESIDENTIAL_TYPE {
     from_age: number,
     to_age: number,
@@ -29,18 +30,19 @@ function isResidentialDataValid(data: RESIDENTIAL_TYPE[]): boolean {
 export default function Tab5() {
     const location = useLocation();
     const [id, setId] = useState<string | null>('');
-    const [editFlag, setEditFlag] = useState(false);
+    const [editFlag , setEditFlag] = useState<string|null>(null) ;
     const searchParams = new URLSearchParams(location.search);
     const [residentialData, setResidentialData] = useState<RESIDENTIAL_TYPE[]>([]);
     const [alert, setAlert] = useState({
         show: false,
         header: "",
         message: "",
-    });
+    }); 
 
+    const { db ,sqlite } = useSQLite();
     useEffect(() => {
         setId(searchParams?.get('id'));
-        setEditFlag(searchParams?.get('edit') === 'YES');
+        setEditFlag(searchParams?.get('edit'))
     }, [location.pathname])
 
     const handleAddNewUi = () => {
@@ -54,6 +56,7 @@ export default function Tab5() {
             state: '',
             code: 0,
         };
+
         setResidentialData(d => ([...d, newResidential]))
     }
     const handleRemoveUi = (id: string) => {
@@ -61,11 +64,30 @@ export default function Tab5() {
         setResidentialData(d => d.filter(x => x.id !== id));
     }
     useEffect(() => {
-        if (residentialData.length === 0)
-            handleAddNewUi();
-    }, [])
 
-    const handleSaveFresh = () => {
+        loadExisting()
+    }, [db])
+    const loadExisting = async () => {
+        try {
+            const query = `
+                select * from residential_history where user_id = '${id}' ;    
+            `
+            const res = await db?.query(query)  
+            console.log(query)
+            const values = res?.values;
+            console.log(values)
+            if (values?.length === 0) {
+                handleAddNewUi();
+            }
+            else {
+                setResidentialData(values || []);
+            } 
+        } catch (error) {
+            console.log(error);
+        }
+    }
+    const handleSaveFresh = async() => { 
+        console.log('hilo')
         //for fresh records
         if (!isResidentialDataValid(residentialData)) {
             return setAlert({
@@ -85,14 +107,20 @@ export default function Tab5() {
                 `'${item.state}'`,
                 item.code,
                 `'${item.id}'`,
-                `${id}`
+                `'${id}'`
             ];
 
             return `(${values.join(', ')})`;
         });
-        const query = `INSERT INTO residential_history (${columns.join(', ')}) VALUES\n  ${valuesList.join(',\n  ')};`;
-        console.log(query);
-
+        const query = `INSERT  OR IGNORE INTO residential_history (${columns.join(', ')}) VALUES\n  ${valuesList.join(',\n  ')};`;
+        console.log(query); 
+        await db?.run(query) ;
+        await sqlite?.saveToStore('patientdb');
+        try {
+            await db?.run(query) ;    
+        } catch (error) {
+            console.log(error)
+        }
     }
     const handleSaveUpdated = () => {
         //for updated records
@@ -101,7 +129,7 @@ export default function Tab5() {
     return (
         <>
             <IonPage>
-                <Header title={0 ? "Edit Residential History" : "Add Residential History"} />
+                <Header title={"Residential History"} />
                 <IonContent class='' fullscreen>
                     <main className='mt-6 p-2  space-y-8'>
                         {
@@ -124,7 +152,7 @@ export default function Tab5() {
                             onClick={handleAddNewUi}
                         />
                         {
-                            editFlag ?
+                            editFlag ==='yes' ?
                                 <Button
                                     label="Save"
                                     text raised
@@ -136,7 +164,7 @@ export default function Tab5() {
                                     label="Save"
                                     severity="success" text raised
                                     className="px-3 py-2 px-10 py-3 rounded-md font-bold"
-                                    onClick={handleSaveFresh}
+                                    onClick={()=>handleSaveFresh()}
                                 />
                         }
 

@@ -16,6 +16,29 @@ export interface PERSONAL_MEDICAL_HISTORY {
     mode_of_diagnosis?: string
     user_id?: string
 }
+export interface PERSONAL_MEDICAL_HISTORY_DB {
+    id: string,
+    condition: string,
+    condition_status?: number,
+    age_first_diagnosis?: number,
+    year_of_first_diagnosis?: string,
+    treatment_received?: number,
+    mot_1?: string,
+    mot_2?: string,
+    mot_3?: string,
+    mot_4?: string,
+    mod_1?: string,
+    mod_2?: string,
+    mod_3?: string,
+    mod_4?: string,
+    mod_5?: string,
+    mod_6?: string,
+    mod_7?: string,
+    user_id?: string
+} 
+
+
+
 export default function Tab6() {
     const location = useLocation();
     const [id, setId] = useState<string | null>('');

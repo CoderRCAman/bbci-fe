@@ -1,5 +1,5 @@
 // src/pages/Tab1.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, } from "react";
 import { InputText } from "primereact/inputtext";
 import {
   IonContent,
@@ -27,7 +27,7 @@ import { Geolocation } from "@capacitor/geolocation";
 import Header from "../../components/Header";
 import { useSQLite } from "../../utils/Sqlite";
 import { generateUniqueId } from "../../utils/helper";
-import { useLocation } from "react-router";
+import { useHistory, useLocation } from "react-router";
 import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
@@ -68,7 +68,8 @@ const Tab1: React.FC = () => {
     i_emp_code: "",
     dob: "",
   });
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [id, setId] = useState<string | null>(null);
+  const [editFlag, setEditFlag] = useState<string | null>(null);
   const location = useLocation();
   const { db, sqlite } = useSQLite();
   const [alert, setAlert] = useState({
@@ -76,7 +77,7 @@ const Tab1: React.FC = () => {
     header: "",
     message: "",
   });
-
+  const history = useHistory();
   const {
     control,
     register,
@@ -98,12 +99,15 @@ const Tab1: React.FC = () => {
   console.log(patient);
   //below checks if this is for edit purpose
   useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const id = searchParams.get('id')
+    const flag = searchParams.get('edit');
+    setId(id);
+    setEditFlag(flag);
     if (!db) return;
-    const id = location.search?.split("?")[1]?.split("&")[0]?.split("=")[1];
     console.log(id);
-    setEditingId(id);
     if (!id) {
-      setEditingId(null);
+
       setPatient({
         id: "",
         name: "",
@@ -142,7 +146,7 @@ const Tab1: React.FC = () => {
       return;
     }
 
-    if (editingId) {
+    if (editFlag =="yes" && id) {
       // Update
       console.log(patient);
       await db?.run(
@@ -160,16 +164,25 @@ const Tab1: React.FC = () => {
           patient.long,
           format(data.dob, "yyyy-MM-dd"),
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
-          editingId,
+          id,
         ]
       );
-      await db?.run(
-        `
+      const checkRes = await db?.query(`
+            select * tracksync where user_id = ${id}
+        `);
+      const check = checkRes?.values?.[0] || null;
+      if (check && (check.sync == 1 || check.sync == 2)) {
+        await db?.run(
+          `
          UPDATE tracksync 
          SET synch = 2 
-         where patient_id = '${editingId}'
+         where patient_id = '${id}'
         `
-      );
+        )
+      }
+      console.log(await db?.query(`
+            select * tracksync where user_id = ${id}
+        `))
       sqlite?.saveToStore("patientdb");
       setAlert((a) => ({
         ...a,
@@ -179,12 +192,13 @@ const Tab1: React.FC = () => {
       }));
     } else {
       // Insert
+      const uniqueId = generateUniqueId(data.name);
       await db?.run(
         `INSERT INTO patients (id, i_name, i_emp_code, name, age, gender,
          lat, long, time, dob, date , created_at , updated_at )
          VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,?)`,
         [
-          generateUniqueId(data.name),
+          uniqueId,
           data.i_name,
           data.i_emp_code,
           data.name,
@@ -206,6 +220,8 @@ const Tab1: React.FC = () => {
         header: "Success",
         message: "Added successfully",
       }));
+      setId(uniqueId);
+      history.push(`/tab5?id=${uniqueId}`)
     }
   };
 
@@ -227,7 +243,7 @@ const Tab1: React.FC = () => {
   console.log(errors);
   return (
     <IonPage>
-      <Header title={editingId ? "Edit participants" : "Add Participant"} />
+      <Header title={editFlag ==="yes" ? "Edit participants" : "Add Participant"} />
       <IonContent fullscreen>
         <form
           className="min-h-full shadow-1 border rounded-md m-2 p-2 pt-5 flex flex-col gap-10"
@@ -292,7 +308,7 @@ const Tab1: React.FC = () => {
           />
           <div
             className="flex border rounded-md w-full align-items-center gap-5 p-2 "
-            
+
           >
             <div className="flex align-items-center">
               <p>Latitude : </p>
@@ -437,8 +453,8 @@ const Tab1: React.FC = () => {
         </form>
 
         <div className="flex justify-end p-2 gap-2  ">
-          <Link to={'/tab5?id=someid&edit=yes'}>
-            <Button label="NEXT"  className="px-3 py-2 rounded" />
+          <Link  to={`/tab5?id=${id}&edit=${editFlag}`}>
+            <Button label="NEXT" className="px-3 py-2 rounded" />
           </Link>
         </div>
         <IonAlert

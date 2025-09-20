@@ -73,9 +73,9 @@ export default function AddResidential({ handleRemoveUi, data, setResidentialDat
                 placeholder="Code"
                 value={data['code']}
                 options={[
-                    { name: "Urban", value: "1" },
-                    { name: "Rural", value: "2" },
-                    { name: "Semi Urban", value: "3" },
+                    { name: "Urban", value: 1 },
+                    { name: "Rural", value: 2 },
+                    { name: "Semi Urban", value: 3 },
                 ]}
                 onChange={e => handleUpdate('code', e.target.value)}
             />

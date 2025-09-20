@@ -1,7 +1,8 @@
 import { Dropdown } from 'primereact/dropdown'
 import { FloatLabel } from 'primereact/floatlabel'
 import { InputText } from 'primereact/inputtext'
-
+import { PERSONAL_MEDICAL_HISTORY_DB } from './Tab6'
+import { useState } from 'react'
 export default function PMHInput({
     condition,
     mode_of_treatment,
@@ -13,6 +14,8 @@ export default function PMHInput({
         mode_of_diagnosis: string[]
     }
 ) {
+; 
+
     return (
         <div className="border rounded-md p-2 shadow">
             <div className="space-y-7">

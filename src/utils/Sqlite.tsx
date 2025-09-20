@@ -110,7 +110,18 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({ children }) =>
                         updated_by TEXT DEFAULT 'UNKNOWN'
                     );
                 `;
-
+                const query2 = `
+                    CREATE TABLE IF NOT EXISTS residential_history (
+                        id TEXT PRIMARY KEY  NOT NULL , 
+                        user_id TEXT NOT NULL , 
+                        from_age INTEGER , 
+                        to_age INTEGER , 
+                        city TEXT , 
+                        village TEXT , 
+                        state TEXT , 
+                        code INTEGER
+                    );
+                `
 
                 //synch flag -> 0 1 2 
                 // 0 -> never synched 
@@ -118,7 +129,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({ children }) =>
                 // 2 -> updated 
 
                 await newDb.execute(query);
-
+                await newDb.execute(query2) ;
 
                 try {
                     const migration1 = `

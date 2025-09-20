@@ -73,7 +73,7 @@ const Tab2: React.FC = () => {
 
           >
             <Column field="id" sortable header="Id"
-              body={(rowData) => <Link to={`/tab1?search=${rowData.id}`}>{rowData.id}</Link>}
+              body={(rowData) => <Link to={`/tab1?id=${rowData.id}`}>{rowData.id}</Link>}
             ></Column>
             <Column field="name" sortable header="Name"></Column>
             <Column field="place" sortable header="Place"></Column>
