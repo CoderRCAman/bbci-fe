@@ -21,7 +21,7 @@ export default function Sidebar() {
                                     search: ''
                                 }}
                             >
-                                Add new patient
+                                Registration
                             </Link>
                         </li>
                         <li>
@@ -29,10 +29,22 @@ export default function Sidebar() {
                             <Link
                                 to={'/tab2'}
                             >
-                                Patient list
+                                Participants list
                             </Link>
 
                         </li>
+
+                        <li>
+                            <Link to={'/tab3'}>
+                                Blood Test / Physical
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to={'/endo1'}>
+                                Endoscopy
+                            </Link>
+                        </li>
+                        
                         <li>
                             <Link to={'/tab3'}>
                                 Synch To Database

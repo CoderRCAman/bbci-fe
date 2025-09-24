@@ -45,8 +45,8 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => {},
-  setConflictedList: () => {},
+  setBaseUrl: () => { },
+  setConflictedList: () => { },
 });
 
 // Create a custom hook to use the context
@@ -145,8 +145,29 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         mode_of_diagnosis_other TEXT ,
                         user_id TEXT    
                     );
-                
                 `;
+        const query4 = `
+              CREATE TABLE IF NOT EXISTS TOBACCO_ALCOHOL_CONSUMPTION (
+              id TEXT PRIMARY KEY,
+              user_id TEXT,
+              type TEXT,
+              product TEXT,
+              consumes INTEGER,
+              from_age INTEGER,
+              to_age INTEGER,
+              number_per_day INTEGER,
+              days_in_week INTEGER,
+              duration_placement_hr INTEGER,
+              duration_placement_min INTEGER,
+              site_of_placement_L INTEGER,
+              site_of_placement_R INTEGER,
+              site_of_placement_F INTEGER,
+              site_of_placement_NA INTEGER,
+              without_tobacco INTEGER,
+              consumption_unit_per_day INTEGER,
+              is_other_product INTEGER
+             );
+        `
 
         //synch flag -> 0 1 2
         // 0 -> never synched
@@ -156,7 +177,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query);
         await newDb.execute(query2);
         await newDb.execute(query3);
-
+        await newDb.execute(query4);
         try {
           const migration1 = `
                     CREATE TABLE IF NOT EXISTS tracksync (
@@ -205,7 +226,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                     );
                 `;
           await newDb?.execute(query);
-        } catch (error) {}
+        } catch (error) { }
 
         setDb(newDb);
         setIsLoading(false);

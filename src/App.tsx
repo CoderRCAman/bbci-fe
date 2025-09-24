@@ -11,9 +11,9 @@ import {
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { ellipse, square, triangle } from 'ionicons/icons';
-import Tab1 from './pages/Tab1/Tab1';
-import Tab2 from './pages/Tab2/Tab2';
-import Tab3 from './pages/Tab3/Tab3';
+import Tab1 from './pages/Registration/Tab1/Tab1';
+import Tab2 from './pages/Registration/Tab2/Tab2';
+import Tab3 from './pages/Registration/Tab3/Tab3';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -47,15 +47,17 @@ import './theme/variables.css';
 import Sidebar from './components/Sidebar';
 import { useEffect } from 'react';
 import { SQLiteProvider } from './utils/Sqlite';
-import Tab4 from './pages/Tab4/Tab4';
-import Tab5 from './pages/Tab5/Tab5';
-import Tab6 from './pages/Tab6/Tab6';
-import Tab7 from './pages/Tab7/Tab7';
-import Tab8 from './pages/Tab8/Tab8';
-import Tab9 from './pages/Tab9/Tab9';
-import Tab10 from './pages/Tab10/Tab10';
-import Tab11 from './pages/Tab11/Tab11';
-import Tab12 from './pages/Tab12/Tab12';
+import Tab4 from './pages/Registration/Tab4/Tab4';
+import Tab5 from './pages/Registration/Tab5/Tab5';
+import Tab6 from './pages/Registration/Tab6/Tab6';
+import Tab7 from './pages/Registration/Tab7/Tab7';
+import Tab8 from './pages/Registration/Tab8/Tab8';
+import Tab9 from './pages/Registration/Tab9/Tab9';
+import Tab10 from './pages/Registration/Tab10/Tab10';
+import Tab11 from './pages/Registration/Tab11/Tab11';
+import Tab12 from './pages/Registration/Tab12/Tab12';
+import EndoPage1 from './pages/Endoscopy/Page1/EndoPage1';
+import EndoPage2 from './pages/Endoscopy/Page2/EndoPage2';
 
 setupIonicReact();
 
@@ -106,6 +108,15 @@ const App: React.FC = () => {
               <Route path="/tab12">
                 <Tab12 />
               </Route>
+
+              {/* ENDOSCOPY PAGES STARTS FROM HERE  */}
+              <Route path="/endo1">
+                <EndoPage1 />
+              </Route>
+              <Route path="/endo2">
+                <EndoPage2 />
+              </Route>
+
             </IonRouterOutlet>
 
           </IonTabs>
