@@ -4,11 +4,16 @@ import React from 'react'
 export default function Header({ title }: { title: string }) {
     return (
         <IonHeader>
-            <IonToolbar>
+            <IonToolbar >
                 <IonButtons slot="start">
                     <IonMenuButton></IonMenuButton>
                 </IonButtons>
-                <IonTitle>{title}</IonTitle>
+                <IonTitle>
+                    <div className='flex justify-between items-center'>
+                        {title}
+                    </div>
+                </IonTitle>
+
             </IonToolbar>
         </IonHeader>
     )

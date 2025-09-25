@@ -35,7 +35,7 @@ export default function Sidebar() {
                         </li>
 
                         <li>
-                            <Link to={'/tab3'}>
+                            <Link to={'/blood1'}>
                                 Blood Test / Physical
                             </Link>
                         </li>

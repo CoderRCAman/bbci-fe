@@ -58,6 +58,9 @@ import Tab11 from './pages/Registration/Tab11/Tab11';
 import Tab12 from './pages/Registration/Tab12/Tab12';
 import EndoPage1 from './pages/Endoscopy/Page1/EndoPage1';
 import EndoPage2 from './pages/Endoscopy/Page2/EndoPage2';
+import EndoPage3 from './pages/Endoscopy/Page3/EndoPage3';
+import BloodPage1 from './pages/Blood/page1/BloodPage1';
+import BloodPage2 from './pages/Blood/page2/BloodPage2';
 
 setupIonicReact();
 
@@ -116,7 +119,18 @@ const App: React.FC = () => {
               <Route path="/endo2">
                 <EndoPage2 />
               </Route>
+              <Route path="/endo3">
+                <EndoPage3 />
+              </Route>
+              {/* {--------------------------------------} */}
 
+              {/* BLOOD PAGES STARTS FROM HERE  */}
+              <Route path="/blood1">
+                <BloodPage1 />
+              </Route>
+              <Route path="/blood2">
+                <BloodPage2 />
+              </Route>
             </IonRouterOutlet>
 
           </IonTabs>
