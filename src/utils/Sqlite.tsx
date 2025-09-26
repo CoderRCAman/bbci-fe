@@ -168,6 +168,16 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
               is_other_product INTEGER
              );
         `
+        const query5 = `
+            CREATE TABLE IF NOT EXISTS ENDOSCOPY (
+            id TEXT PRIMARY KEY, 
+            vial_code TEXT ,
+            endoscopy_video_filename TEXT , 
+            endoscopy_pdf_filename TEXT,
+            user_id TEXT ,
+            date TEXT 
+            );
+        `
 
         //synch flag -> 0 1 2
         // 0 -> never synched
@@ -178,6 +188,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query2);
         await newDb.execute(query3);
         await newDb.execute(query4);
+        await newDb.execute(query5);
         try {
           const migration1 = `
                     CREATE TABLE IF NOT EXISTS tracksync (

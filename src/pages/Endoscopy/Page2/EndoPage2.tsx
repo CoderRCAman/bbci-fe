@@ -1,10 +1,12 @@
-import { IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage } from "@ionic/react";
 import Header from "../../../components/Header";
 import { Button } from "primereact/button";
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
+import ShortUUID from 'short-uuid';
+import { format } from "date-fns";
 export default function EndoPage2() {
     const [barcodeData, setBarCodeData] = useState('');
     const location = useLocation();
@@ -12,17 +14,32 @@ export default function EndoPage2() {
     const [id, setId] = useState('');
     const { db, sqlite } = useSQLite();
     const [participant, setParticipants] = useState<any | null>(null);
+    const [endoId, setEndoId] = useState('');
+
+    const [alert, setAlert] = useState({
+        show: false,
+        header: "",
+        message: "",
+    });
+
     useEffect(() => {
         const curId = searchParams.get('id') || ''
         setId(curId);
+        const endoIdd = searchParams.get('endoId') || ''
+        setEndoId(searchParams.get('endoId') || '')
         async function fetchCurrentUser() {
             try {
                 const query = `
                     select * from patients where id = '${curId}'
                 `
+                const query2 = `
+                 select * from endoscopy where id = '${endoIdd}'
+                `
                 const res = await db?.query(query);
+                const res2 = await db?.query(query2);
                 setParticipants(res?.values?.[0]);
-
+                setBarCodeData(res2?.values?.[0]?.vial_code);
+                console.log(res2)
             } catch (error) {
                 console.log(error);
             }
@@ -44,7 +61,36 @@ export default function EndoPage2() {
         document.addEventListener('keydown', keydown);
         return () => document.removeEventListener('keydown', keydown);
     }, [location.pathname])
-    console.log(participant);
+    const handleSaveEndocode = async () => {
+        try {
+            if (!barcodeData) {
+                setAlert({
+                    header: 'Error',
+                    message: 'Barcode data is missing!',
+                    show: true
+                })
+                return;
+            }
+
+            const translator = ShortUUID();
+            const uid = translator.generate();
+            const query = `
+                    INSERT INTO ENDOSCOPY (id , vial_code , user_id , date) 
+                    values ('${uid}' , '${barcodeData}' , '${id}' , '${format(new Date(), 'yyyy-dd-MM')}') 
+                `
+            await db?.execute(query);
+            await sqlite?.saveToStore('patientdb');
+            setEndoId(uid);
+            setAlert({
+                header: 'Success',
+                message: 'Vial linked successfully!',
+                show: true
+            })
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
     return (
         <>
             <IonPage>
@@ -76,6 +122,7 @@ export default function EndoPage2() {
                                         label="Save"
                                         className="rounded px-2"
                                         severity="help"
+                                        onClick={() => handleSaveEndocode()}
                                     />
                                 </div>
                             </div>
@@ -89,16 +136,26 @@ export default function EndoPage2() {
                                     className="px-5 py-2 rounded"
                                 />
                             </Link>
+                            {
+                                endoId &&
+                                <Link to={`/endo3?id=${id}&endoId=${endoId}`}>
+                                    <Button
+                                        label="NEXT"
+                                        className="px-5 py-2 rounded"
+                                    />
+                                </Link>
+                            }
 
-                            <Link to={`/endo3?id=${id}`}>
-                                <Button
-                                    label="NEXT"
-                                    className="px-5 py-2 rounded"
-                                />
-                            </Link>
 
                         </div>
                     </main>
+                    <IonAlert
+                        isOpen={alert.show}
+                        onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
+                        header={alert.header}
+                        message={alert.message}
+                        buttons={["OK"]}
+                    />
                 </IonContent>
             </IonPage>
         </>
