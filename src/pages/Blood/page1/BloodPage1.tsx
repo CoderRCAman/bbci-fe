@@ -75,7 +75,7 @@ export default function BloodPage1() {
           <main className="p-2">
             <div className="mt-5 border-2 rounded">
               <div className="pl-5 py-2">
-                <h1 className="text-slate-600 font-semibold">Process a new blood Report</h1>
+                <h1 className="text-slate-600 font-semibold">Create Fresh/New Blood Report</h1>
               </div>
               <DataTable value={participants}
                 tableStyle={{ minWidth: '6rem' }}
@@ -98,7 +98,7 @@ export default function BloodPage1() {
 
             <div className="mt-10 border rounded">
               <div className="pl-5 py-2">
-                <h1 className="text-slate-500 font-semibold">Looking for blood report?</h1>
+                <h1 className="text-slate-500 font-semibold">Read/Write old Blood Reports</h1>
               </div>
               <DataTable value={bloodSample}
                 tableStyle={{ minWidth: '6rem' }}

@@ -75,7 +75,7 @@ export default function EndoPage1() {
           <main className="p-2">
             <div className="mt-5 border-2 rounded">
               <div className="pl-5 py-2">
-                <h1 className="text-slate-600 font-semibold">Process a new Endoscopy</h1>
+                <h1 className="text-slate-600 font-semibold">Create a new Endoscopy</h1>
               </div>
               <DataTable value={participants}
                 tableStyle={{ minWidth: '6rem' }}
@@ -98,7 +98,7 @@ export default function EndoPage1() {
 
             <div className="mt-10 border rounded">
               <div className="pl-5 py-2">
-                <h1 className="text-slate-500 font-semibold">Looking for previous Endoscopy?</h1>
+                <h1 className="text-slate-500 font-semibold">read/write old Endoscopy?</h1>
               </div>
               <DataTable value={endoscopyData}
                 tableStyle={{ minWidth: '6rem' }}

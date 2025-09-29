@@ -1,4 +1,4 @@
-import { IonButtons, IonContent, IonHeader, IonMenu, IonMenuButton, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import { IonButtons, IonContent, IonHeader, IonMenu, IonMenuButton, IonMenuToggle, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import React from 'react'
 import "./Sidebar.css"
 import { Link } from 'react-router-dom';
@@ -15,45 +15,56 @@ export default function Sidebar() {
                 <IonContent className="ion-padding">
                     <ul>
                         <li>
-                            <Link
-                                to={{
-                                    pathname: '/tab1',
-                                    search: ''
-                                }}
-                            >
-                                Registration
-                            </Link>
-                        </li>
-                        <li>
+                            <IonMenuToggle autoHide={true}>
+                                <Link
+                                    to={{
+                                        pathname: '/tab1',
+                                        search: ''
+                                    }}
 
-                            <Link
-                                to={'/tab2'}
-                            >
-                                Participants list
-                            </Link>
-
+                                >
+                                    Registration
+                                </Link>
+                            </IonMenuToggle>
+                        </li>
+                        <li>
+                            <IonMenuToggle autoHide={true}>
+                                <Link
+                                    to={'/tab2'}
+                                >
+                                    Participants list
+                                </Link>
+                            </IonMenuToggle>
+                        </li>
+                        <li>
+                            <IonMenuToggle autoHide={true}>
+                                <Link to={'/blood1'}>
+                                    Blood Test / Physical
+                                </Link>
+                            </IonMenuToggle>
+                        </li>
+                        <li>
+                            <IonMenuToggle autoHide={true}>
+                                <Link to={'/endo1'}>
+                                    Endoscopy
+                                </Link>
+                            </IonMenuToggle>
                         </li>
 
                         <li>
-                            <Link to={'/blood1'}>
-                                Blood Test / Physical
-                            </Link>
-                        </li>
-                        <li>
-                            <Link to={'/endo1'}>
-                                Endoscopy
-                            </Link>
-                        </li>
+                            <IonMenuToggle autoHide={true}>
+                                <Link to={'/tab3'}>
+                                    Synch To Database
+                                </Link>
+                            </IonMenuToggle>
 
-                        <li>
-                            <Link to={'/tab3'}>
-                                Synch To Database
-                            </Link>
                         </li>
                         <li>
-                            <Link to={'/food1'}>
-                                Food Recall
-                            </Link>
+                            <IonMenuToggle autoHide={true}>
+                                <Link to={'/food1'}>
+                                    Food Recall
+                                </Link>
+                            </IonMenuToggle>
                         </li>
                     </ul>
                 </IonContent>

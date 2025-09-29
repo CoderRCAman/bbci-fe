@@ -8,7 +8,7 @@ export default function FoodRecallPage2() {
             <IonPage>
                 <Header title={"Collect Recalls"} />
                 <IonContent class='' fullscreen>
-
+                    <h1 className="text-slate-600 font-semibold">Food Record Form</h1>
                 </IonContent>
             </IonPage>
         </>
