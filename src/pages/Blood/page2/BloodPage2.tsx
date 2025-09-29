@@ -100,10 +100,10 @@ export default function BloodPage2() {
           setBloodSample({
             id: shortUUID().generate(),
             user_id: curId,
-            date_collected: new Date().toString(),
-            time_collected: new Date().toString(),
-            last_meal_date: new Date().toString(),
-            last_meal_time: new Date().toString(),
+            date_collected: new Date().toISOString(),
+            time_collected: new Date().toISOString(),
+            last_meal_date: new Date().toISOString(),
+            last_meal_time: new Date().toISOString(),
             received_blood_last_6_months: 2,
             sample_classification: "",
             is_sample_collected: 0,
@@ -339,7 +339,7 @@ export default function BloodPage2() {
                   onChange={(e) =>
                     setBloodSample({
                       ...bloodSample,
-                      date_collected: e.value?.toString() || "",
+                      date_collected: e.value?.toISOString() || "",
                     })
                   }
                   showIcon
@@ -354,7 +354,7 @@ export default function BloodPage2() {
                     onChange={(e) => {
                       setBloodSample({
                         ...bloodSample,
-                        time_collected: e.value?.toString() || "",
+                        time_collected: e.value?.toISOString() || "",
                       });
                     }}
                     timeOnly
@@ -377,7 +377,7 @@ export default function BloodPage2() {
                     onChange={(e) =>
                       setBloodSample({
                         ...bloodSample,
-                        last_meal_date: e.value?.toString() || "",
+                        last_meal_date: e.value?.toISOString() || "",
                       })
                     }
                   />
@@ -391,7 +391,7 @@ export default function BloodPage2() {
                       onChange={(e) => {
                         setBloodSample({
                           ...bloodSample,
-                          last_meal_time: e.value?.toString() || "",
+                          last_meal_time: e.value?.toISOString() || "",
                         });
                       }}
                       timeOnly

@@ -23,7 +23,7 @@ export default function BloodPage1() {
             select * from patients ; 
           `
         const query2 = `
-          select b.* , p.name from blood_sample b  join patients p on b.user_id = p.id order by date_collected desc  ; 
+          select b.* , p.name from blood_sample b  join patients p on b.user_id = p.id order by date(date_collected) desc  ; 
         `
         const res = await db?.query(query);
         const res2 = await db?.query(query2);
