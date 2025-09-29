@@ -21,7 +21,7 @@ export default function Tab7() {
             <Header title={0 ? "Edit Family History of Cancer" : "Family History of Cancer"} />
             <IonContent class='' fullscreen>
                 <main className="p-2">
-                    <FamilyTree />
+                    <h1 className="text-center">WORK IN PROGRESS</h1>
                     <div className='flex justify-end gap-2 '>
 
                         <Button className='px-10 py-2' label='SAVE' severity='success' />

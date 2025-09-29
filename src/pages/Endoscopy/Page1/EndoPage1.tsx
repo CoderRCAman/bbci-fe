@@ -104,7 +104,7 @@ export default function EndoPage1() {
                 tableStyle={{ minWidth: '6rem' }}
                 // tableClassName="p-datatable-gridlines" 
                 globalFilter={globalFilterValue2}
-                header={header}
+                header={header2}
                 paginator
                 rows={10}
                 showGridlines

@@ -7,6 +7,7 @@ import { useLocation } from "react-router";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Link } from "react-router-dom";
+import { format } from "date-fns";
 export default function BloodPage1() {
   const { db, sqlite } = useSQLite();
   const [globalFilterValue, setGlobalFilterValue] = useState('');
@@ -114,6 +115,9 @@ export default function BloodPage1() {
                 ></Column>
                 <Column field="name" sortable header="Name"></Column>
                 <Column field="user_id" sortable header="User Id"></Column>
+                {/* <Column field="date_collected" sortable header="Collected Date" 
+                  body = {(rowData) => format(new Date(rowData.date_collected , 'yyy'))}
+                ></Column> */}
               </DataTable>
 
             </div>

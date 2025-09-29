@@ -175,7 +175,7 @@ export default function Tab9() {
                             <Button className='px-10 py-2 rounded' label='PREV' />
                         </Link>
                         <Link
-                            to={'/tab10'}
+                            to={'/tab11'}
                         >
                             <Button className='px-10 py-2 rounded' label='NEXT' />
                         </Link>

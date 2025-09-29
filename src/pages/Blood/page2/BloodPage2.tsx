@@ -9,6 +9,7 @@ import { Button } from "primereact/button";
 import shortUUID from "short-uuid";
 import { immerable } from "immer";
 import { ErrorDetectionBloodSample, saveBloodSampleRecord } from "./helper";
+import { Link } from "react-router-dom";
 export interface BLOOD_SAMPLE_COLLECTION {
   blood_collection_tube: string;
   blood_collection_tube_other: string;
@@ -79,7 +80,7 @@ export default function BloodPage2() {
     const sampleId = searchParams.get("sampleId") || "";
     setBloodSample(prev => ({ ...prev, user_id: curId }))
     setSampleId(sampleId)
-    if (!db) return;
+    if (!db) return; 
     async function fetchCurrentUser() {
       try {
         console.log(sampleId)
@@ -493,6 +494,13 @@ export default function BloodPage2() {
                   onClick={handleSave}
                 />
               </div>
+
+              <div className="flex justify-end">
+                <Link to='/blood1'>
+                  <Button label="Prev" className="px-10 py-2 rounded" />
+                </Link>
+              </div>
+
             </div>
           </main>
           <IonAlert

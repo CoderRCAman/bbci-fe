@@ -76,7 +76,7 @@ export default function Tab11() {
                 />
                 <div className="pt-10 pb-2 px-2 flex justify-end gap-2">
                     <Link
-                        to={'/tab10'}
+                        to={'/tab9'}
                     >
                         <Button className='px-10 py-2 rounded' label='PREV' />
                     </Link>

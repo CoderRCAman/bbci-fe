@@ -89,7 +89,7 @@ export default function FoodRecallPage1() {
                                 size='normal'
                             >
                                 <Column field="id" sortable header="Id"
-                                    body={(rowData) => <Link to={`/blood2?id=${rowData.id}`}>{rowData.id}</Link>}
+                                    body={(rowData) => <Link to={`/food2?id=${rowData.id}`}>{rowData.id}</Link>}
                                 ></Column>
                                 <Column field="name" sortable header="Name"></Column>
                                 <Column field="gender" sortable header="Gender"></Column>
@@ -99,7 +99,7 @@ export default function FoodRecallPage1() {
 
                         <div className="mt-10 border rounded">
                             <div className="pl-5 py-2">
-                                <h1 className="text-slate-500 font-semibold">Looking for blood report?</h1>
+                                <h1 className="text-slate-500 font-semibold">Looking for previous food recall?</h1>
                             </div>
                             <DataTable value={bloodSample}
                                 tableStyle={{ minWidth: '6rem' }}
@@ -112,7 +112,7 @@ export default function FoodRecallPage1() {
                                 size='normal'
                             >
                                 <Column field="id" sortable header="Sample Id"
-                                    body={(rowData) => <Link to={`/blood2?id=${rowData.user_id}&sampleId=${rowData.id}`}>{rowData.id}</Link>}
+                                    body={(rowData) => <Link to={`/food2?id=${rowData.user_id}&sampleId=${rowData.id}`}>{rowData.id}</Link>}
                                 ></Column>
                                 <Column field="name" sortable header="Name"></Column>
                                 <Column field="user_id" sortable header="User Id"></Column>
