@@ -3,6 +3,7 @@ import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { BLOOD_SAMPLE, BLOOD_SAMPLE_COLLECTION } from "./BloodPage2";
 import { produce } from "immer";
+import { FloatLabel } from "primereact/floatlabel";
 export default function SampleCollectionType({
   data,
   addNewCollectionTube,
@@ -19,7 +20,7 @@ export default function SampleCollectionType({
   console.log(isSampleCollected);
   return (
     <div className="border rounded p-2 my-5 space-y-5">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <p className="">Blood Collection Tube:</p>
         <Dropdown
           optionLabel="name"
@@ -41,7 +42,6 @@ export default function SampleCollectionType({
                 const index = draft?.collection_tubes?.findIndex(
                   (item) => item.id === data.id
                 );
-                console.log(index);
                 if (index === -1) return draft;
                 console.log(e.value);
                 draft.collection_tubes![index]!.blood_collection_tube = e.value;
@@ -49,6 +49,32 @@ export default function SampleCollectionType({
             )
           }
         />
+      </div>
+      <div>
+        {
+          data?.blood_collection_tube === 'Other' ?
+            <div className="flex gap-5 items-center py-3">
+              <p>Specify Other:</p>
+              <FloatLabel>
+                <InputText
+                  keyfilter="int"
+                  className="border-1 w-[300px] p-2"
+                  value={data['blood_collection_tube_other']}
+                  onChange={e => setBloodSample(prev =>
+                    produce(prev, (draft) => {
+                      const index = draft?.collection_tubes?.findIndex(
+                        (item) => item.id === data.id
+                      );
+                      if (index === -1) return draft;
+                      draft.collection_tubes![index]!.blood_collection_tube_other = e.target.value;
+                    })
+                  )}
+                />
+                <label>From Age</label>
+              </FloatLabel>
+            </div>
+            : <></>
+        }
       </div>
 
       <div className="flex gap-5 items-center">
@@ -129,13 +155,13 @@ export default function SampleCollectionType({
         <Button
           onClick={addNewCollectionTube}
           label="Add more"
-          className="px-10 py-3 rounded-full"
+          className="px-10 py-2 rounded-full"
           severity="info"
         />
         <Button
           onClick={() => removeCollectionTube(data.id)}
           label="Remove"
-          className="px-10 py-3 rounded-full"
+          className="px-10 py-2 rounded-full"
           severity="danger"
         />
       </div>

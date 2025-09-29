@@ -61,6 +61,7 @@ import EndoPage2 from './pages/Endoscopy/Page2/EndoPage2';
 import EndoPage3 from './pages/Endoscopy/Page3/EndoPage3';
 import BloodPage1 from './pages/Blood/page1/BloodPage1';
 import BloodPage2 from './pages/Blood/page2/BloodPage2';
+import FoodRecallPage1 from './pages/FoodRecall/Page1/FoodRecallPage1';
 
 setupIonicReact();
 
@@ -132,7 +133,12 @@ const App: React.FC = () => {
                 <BloodPage2 />
               </Route>
             </IonRouterOutlet>
+            {/* ----------------------------------------- */}
 
+            {/* FOOD RECALL STARTS FROM HERE  */}
+            <Route path="/food1">
+              <FoodRecallPage1 />
+            </Route>
           </IonTabs>
         </IonReactRouter>
       </IonApp>

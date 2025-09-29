@@ -178,6 +178,30 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             date TEXT 
             );
         `
+        const query6 = `
+          CREATE TABLE IF NOT EXISTS blood_sample (
+            id TEXT PRIMARY KEY , 
+            user_id TEXT , 
+            date_collected TEXT , 
+            time_collected TEXT , 
+            last_meal_date TEXT , 
+            last_meal_time TEXT , 
+            received_blood_last_6_months INTEGER , 
+            sample_classification TEXT , 
+            is_sample_collected INTEGER 
+          )
+        `
+        const query7 = `
+          CREATE TABLE IF NOT EXISTS blood_tube_collection (
+            id TEXT PRIMARY KEY , 
+            blood_collection_tube TEXT , 
+            blood_collection_tube_other , 
+            identification_code_tube , 
+            volume INTEGER , 
+            characteristic TEXT , 
+            blood_sample_id TEXT 
+          )
+        `
 
         //synch flag -> 0 1 2
         // 0 -> never synched
@@ -189,6 +213,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query3);
         await newDb.execute(query4);
         await newDb.execute(query5);
+        await newDb.execute(query6);
+        await newDb.execute(query7);
         try {
           const migration1 = `
                     CREATE TABLE IF NOT EXISTS tracksync (

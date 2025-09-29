@@ -44,10 +44,15 @@ export default function Sidebar() {
                                 Endoscopy
                             </Link>
                         </li>
-                        
+
                         <li>
                             <Link to={'/tab3'}>
                                 Synch To Database
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to={'/food1'}>
+                                Food Recall
                             </Link>
                         </li>
                     </ul>

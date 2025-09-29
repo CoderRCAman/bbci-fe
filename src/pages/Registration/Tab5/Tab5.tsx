@@ -44,7 +44,7 @@ export default function Tab5() {
         setId(searchParams?.get('id'));
         setEditFlag(searchParams?.get('edit'))
     }, [location.pathname])
-
+ 
     const handleAddNewUi = () => {
         console.log('hello')
         const translator = ShortUUID();

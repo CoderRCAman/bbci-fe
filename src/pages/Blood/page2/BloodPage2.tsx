@@ -1,4 +1,4 @@
-import { IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage } from "@ionic/react";
 import { useEffect, useState } from "react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
@@ -8,6 +8,7 @@ import { Calendar } from "primereact/calendar";
 import { Button } from "primereact/button";
 import shortUUID from "short-uuid";
 import { immerable } from "immer";
+import { ErrorDetectionBloodSample, saveBloodSampleRecord } from "./helper";
 export interface BLOOD_SAMPLE_COLLECTION {
   blood_collection_tube: string;
   blood_collection_tube_other: string;
@@ -17,6 +18,8 @@ export interface BLOOD_SAMPLE_COLLECTION {
   id: string;
   blood_sample_id?: string;
 }
+
+
 
 export interface BLOOD_SAMPLE {
   id: string;
@@ -30,6 +33,8 @@ export interface BLOOD_SAMPLE {
   is_sample_collected: number; //0 or 1
   collection_tubes: BLOOD_SAMPLE_COLLECTION[];
 }
+
+
 
 class BloodSample implements BLOOD_SAMPLE_COLLECTION {
   blood_collection_tube: string = "";
@@ -49,6 +54,7 @@ export default function BloodPage2() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
+  const [sampleId, setSampleId] = useState('');
   const { db, sqlite } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [bloodSample, setBloodSample] = useState<BLOOD_SAMPLE>({
@@ -58,32 +64,107 @@ export default function BloodPage2() {
     time_collected: new Date().toString(),
     last_meal_date: new Date().toString(),
     last_meal_time: new Date().toString(),
-    received_blood_last_6_months: 0,
+    received_blood_last_6_months: 2,
     sample_classification: "",
     is_sample_collected: 0,
     collection_tubes: [],
   });
+  const [alert, setAlert] = useState({
+    show: false,
+    header: "",
+    message: "",
+  });
   useEffect(() => {
     const curId = searchParams.get("id") || "";
-    setId(curId);
+    const sampleId = searchParams.get("sampleId") || "";
+    setBloodSample(prev => ({ ...prev, user_id: curId }))
+    setSampleId(sampleId)
+    if (!db) return;
     async function fetchCurrentUser() {
       try {
+        console.log(sampleId)
         const query = `
                         select * from patients where id = '${curId}'
                     `;
+        const query2 = `
+         select * from blood_sample where id = '${sampleId}' ; 
+        `
+        const query3 = `
+         select * from blood_tube_collection where blood_sample_id = '${sampleId}'
+        `
         const res = await db?.query(query);
+        const res1 = await db?.query(query2);
+        const res2 = await db?.query(query3);
+        if (!sampleId) {
+          setBloodSample({
+            id: shortUUID().generate(),
+            user_id: curId,
+            date_collected: new Date().toString(),
+            time_collected: new Date().toString(),
+            last_meal_date: new Date().toString(),
+            last_meal_time: new Date().toString(),
+            received_blood_last_6_months: 2,
+            sample_classification: "",
+            is_sample_collected: 0,
+            collection_tubes: [
+              new BloodSample({
+                blood_collection_tube: "",
+                blood_collection_tube_other: "",
+                identification_code_tube: "",
+                volume: 0,
+                characteristic: "",
+                id: shortUUID().generate(),
+              })
+            ],
+          })
+        }
+        console.log(res1, res2)
+        if (res1?.values?.length == 0) return;
         setParticipants(res?.values?.[0]);
+        setBloodSample(prev => ({
+          ...prev,
+          ...res1?.values?.[0],
+          collection_tubes: res2?.values?.length == 0 ?
+            [new BloodSample({
+              blood_collection_tube: "",
+              blood_collection_tube_other: "",
+              identification_code_tube: "",
+              volume: 0,
+              characteristic: "",
+              id: shortUUID().generate(),
+            })]
+            : res2?.values
+        }))
       } catch (error) {
         console.log(error);
       }
     }
     fetchCurrentUser();
   }, [location.pathname, db]);
-
   const handleSave = async () => {
     try {
-      console.log("hey there");
-    } catch (error) {}
+      const err = ErrorDetectionBloodSample(bloodSample);
+      if (err) {
+        return setAlert({
+          header: 'Error',
+          message: err,
+          show: true
+        })
+      }
+      await saveBloodSampleRecord(bloodSample, db, sqlite);
+      setAlert({
+        header: 'Success',
+        show: true,
+        message: 'Records saved!'
+      })
+    } catch (error) {
+      console.log(error);
+      setAlert({
+        header: 'Error',
+        message: "Something went wrong!",
+        show: true
+      })
+    }
   };
 
   const addNewCollectionTube = () => {
@@ -95,6 +176,7 @@ export default function BloodPage2() {
       volume: 0,
       characteristic: "",
       id: translator.generate(),
+
     });
     setBloodSample((prev) => ({
       ...prev,
@@ -413,6 +495,13 @@ export default function BloodPage2() {
               </div>
             </div>
           </main>
+          <IonAlert
+            isOpen={alert.show}
+            onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
+            header={alert.header}
+            message={alert.message}
+            buttons={["OK"]}
+          />
         </IonContent>
       </IonPage>
     </>
