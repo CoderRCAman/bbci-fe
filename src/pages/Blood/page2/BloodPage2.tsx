@@ -77,10 +77,11 @@ export default function BloodPage2() {
   });
   useEffect(() => {
     const curId = searchParams.get("id") || "";
+    setId(curId) ;
     const sampleId = searchParams.get("sampleId") || "";
     setBloodSample(prev => ({ ...prev, user_id: curId }))
     setSampleId(sampleId)
-    if (!db) return; 
+    if (!db) return;
     async function fetchCurrentUser() {
       try {
         console.log(sampleId)
@@ -94,6 +95,7 @@ export default function BloodPage2() {
          select * from blood_tube_collection where blood_sample_id = '${sampleId}'
         `
         const res = await db?.query(query);
+        setParticipants(res?.values?.[0]);
         const res1 = await db?.query(query2);
         const res2 = await db?.query(query3);
         if (!sampleId) {
@@ -121,7 +123,7 @@ export default function BloodPage2() {
         }
         console.log(res1, res2)
         if (res1?.values?.length == 0) return;
-        setParticipants(res?.values?.[0]);
+
         setBloodSample(prev => ({
           ...prev,
           ...res1?.values?.[0],
@@ -153,6 +155,7 @@ export default function BloodPage2() {
         })
       }
       await saveBloodSampleRecord(bloodSample, db, sqlite);
+      setSampleId(bloodSample.id)
       setAlert({
         header: 'Success',
         show: true,
@@ -495,9 +498,12 @@ export default function BloodPage2() {
                 />
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2 mt-10">
                 <Link to='/blood1'>
-                  <Button label="Prev" className="px-10 py-2 rounded" />
+                  <Button label="PREV" className="px-10 py-2 rounded" />
+                </Link>
+                <Link to={`/blood3?id=${id}&sampleId=${bloodSample?.id}`}>
+                  <Button label="NEXT" className="px-10 py-2 rounded" />
                 </Link>
               </div>
 

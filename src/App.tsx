@@ -63,6 +63,7 @@ import BloodPage1 from './pages/Blood/page1/BloodPage1';
 import BloodPage2 from './pages/Blood/page2/BloodPage2';
 import FoodRecallPage1 from './pages/FoodRecall/Page1/FoodRecallPage1';
 import FoodRecallPage2 from './pages/FoodRecall/Page2/FoodRecallPage2';
+import BloodPage3 from './pages/Blood/page3/BloodPage3';
 
 setupIonicReact();
 
@@ -132,6 +133,9 @@ const App: React.FC = () => {
               </Route>
               <Route path="/blood2">
                 <BloodPage2 />
+              </Route>
+              <Route path="/blood3">
+                <BloodPage3  />
               </Route>
             </IonRouterOutlet>
             {/* ----------------------------------------- */}
