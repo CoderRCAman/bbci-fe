@@ -26,8 +26,6 @@ body.dark {
 }
 
 :root {
-  --ion-safe-area-left: 25px;
-  --ion-s--ion-safe-area-top: 20px;
   font-family: "poppins";
 }
 
@@ -61,6 +59,28 @@ ion-modal {
   border-right: 1px solid #e5e5e5;
 }
 
-a{
+a {
   text-decoration: underline !important;
+}
+
+.p-dropdown-items {
+  gap: 0em;
+  padding: 0.4em;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+  border: none !important;
+  border-radius: 0 !important;
+  gap: 2px !important;
+  border-bottom: 1px solid #e5e5e5 !important;
+}
+
+
+#result_blood .p-inputtext:enabled:focus {
+  box-shadow: none !important;
+  border: 2px solid #22d3ee !important;
+}
+#result_blood .p-inputtext {
+  border: 2px solid #e5e5e5 !important;
+  padding: 6px;
 }

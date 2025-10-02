@@ -20,8 +20,6 @@ export interface BLOOD_SAMPLE_COLLECTION {
   blood_sample_id?: string;
 }
 
-
-
 export interface BLOOD_SAMPLE {
   id: string;
   user_id: string; //user_id
@@ -34,8 +32,6 @@ export interface BLOOD_SAMPLE {
   is_sample_collected: number; //0 or 1
   collection_tubes: BLOOD_SAMPLE_COLLECTION[];
 }
-
-
 
 class BloodSample implements BLOOD_SAMPLE_COLLECTION {
   blood_collection_tube: string = "";
@@ -55,7 +51,7 @@ export default function BloodPage2() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
-  const [sampleId, setSampleId] = useState('');
+  const [sampleId, setSampleId] = useState("");
   const { db, sqlite } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [bloodSample, setBloodSample] = useState<BLOOD_SAMPLE>({
@@ -77,23 +73,23 @@ export default function BloodPage2() {
   });
   useEffect(() => {
     const curId = searchParams.get("id") || "";
-    setId(curId) ;
+    setId(curId);
     const sampleId = searchParams.get("sampleId") || "";
-    setBloodSample(prev => ({ ...prev, user_id: curId }))
-    setSampleId(sampleId)
+    setBloodSample((prev) => ({ ...prev, user_id: curId }));
+    setSampleId(sampleId);
     if (!db) return;
     async function fetchCurrentUser() {
       try {
-        console.log(sampleId)
+        console.log(sampleId);
         const query = `
                         select * from patients where id = '${curId}'
                     `;
         const query2 = `
          select * from blood_sample where id = '${sampleId}' ; 
-        `
+        `;
         const query3 = `
          select * from blood_tube_collection where blood_sample_id = '${sampleId}'
-        `
+        `;
         const res = await db?.query(query);
         setParticipants(res?.values?.[0]);
         const res1 = await db?.query(query2);
@@ -117,27 +113,30 @@ export default function BloodPage2() {
                 volume: 0,
                 characteristic: "",
                 id: shortUUID().generate(),
-              })
+              }),
             ],
-          })
+          });
         }
-        console.log(res1, res2)
+        console.log(res1, res2);
         if (res1?.values?.length == 0) return;
 
-        setBloodSample(prev => ({
+        setBloodSample((prev) => ({
           ...prev,
           ...res1?.values?.[0],
-          collection_tubes: res2?.values?.length == 0 ?
-            [new BloodSample({
-              blood_collection_tube: "",
-              blood_collection_tube_other: "",
-              identification_code_tube: "",
-              volume: 0,
-              characteristic: "",
-              id: shortUUID().generate(),
-            })]
-            : res2?.values
-        }))
+          collection_tubes:
+            res2?.values?.length == 0
+              ? [
+                  new BloodSample({
+                    blood_collection_tube: "",
+                    blood_collection_tube_other: "",
+                    identification_code_tube: "",
+                    volume: 0,
+                    characteristic: "",
+                    id: shortUUID().generate(),
+                  }),
+                ]
+              : res2?.values,
+        }));
       } catch (error) {
         console.log(error);
       }
@@ -149,25 +148,25 @@ export default function BloodPage2() {
       const err = ErrorDetectionBloodSample(bloodSample);
       if (err) {
         return setAlert({
-          header: 'Error',
+          header: "Error",
           message: err,
-          show: true
-        })
+          show: true,
+        });
       }
       await saveBloodSampleRecord(bloodSample, db, sqlite);
-      setSampleId(bloodSample.id)
+      setSampleId(bloodSample.id);
       setAlert({
-        header: 'Success',
+        header: "Success",
         show: true,
-        message: 'Records saved!'
-      })
+        message: "Records saved!",
+      });
     } catch (error) {
       console.log(error);
       setAlert({
-        header: 'Error',
+        header: "Error",
         message: "Something went wrong!",
-        show: true
-      })
+        show: true,
+      });
     }
   };
 
@@ -180,7 +179,6 @@ export default function BloodPage2() {
       volume: 0,
       characteristic: "",
       id: translator.generate(),
-
     });
     setBloodSample((prev) => ({
       ...prev,
@@ -336,6 +334,7 @@ export default function BloodPage2() {
               <div className="flex mt-10 gap-5 items-center">
                 <p className="font-semibold">Date of blood sample collection</p>
                 <Calendar
+                  appendTo="self"
                   disabled={bloodSample.is_sample_collected === 0}
                   className="border-1 p-2 focus:outline-none p-2"
                   value={new Date(bloodSample?.date_collected)}
@@ -352,6 +351,7 @@ export default function BloodPage2() {
                 <p className="font-semibold">Time of blood sample collection</p>
                 <div>
                   <Calendar
+                    appendTo="self"
                     disabled={bloodSample.is_sample_collected === 0}
                     value={new Date(bloodSample?.time_collected)}
                     onChange={(e) => {
@@ -373,6 +373,7 @@ export default function BloodPage2() {
                 <div className="flex gap-5 items-center">
                   <p>Date</p>
                   <Calendar
+                    appendTo="self"
                     disabled={bloodSample.is_sample_collected === 0}
                     className="border-1 p-2 focus:outline-none p-2"
                     showIcon
@@ -389,6 +390,7 @@ export default function BloodPage2() {
                   <p>Time</p>
                   <div className="flex gap-1">
                     <Calendar
+                      appendTo="self"
                       disabled={bloodSample.is_sample_collected === 0}
                       value={new Date(bloodSample?.last_meal_time)}
                       onChange={(e) => {
@@ -493,20 +495,19 @@ export default function BloodPage2() {
                   disabled={bloodSample.is_sample_collected === 0}
                   label="SAVE"
                   severity="success"
-                  className="px-10 py-2 rounded-full"
+                  className="px-10 py-2 rounded-md"
                   onClick={handleSave}
                 />
               </div>
 
               <div className="flex justify-end gap-2 mt-10">
-                <Link to='/blood1'>
+                <Link to="/blood1">
                   <Button label="PREV" className="px-10 py-2 rounded" />
                 </Link>
                 <Link to={`/blood3?id=${id}&sampleId=${bloodSample?.id}`}>
                   <Button label="NEXT" className="px-10 py-2 rounded" />
                 </Link>
               </div>
-
             </div>
           </main>
           <IonAlert

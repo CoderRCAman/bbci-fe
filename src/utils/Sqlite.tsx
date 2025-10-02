@@ -18,12 +18,6 @@ import {
 import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
 
 // Define the shape of a patient
-interface Patient {
-  id: number;
-  name: string;
-  age: number;
-  gender: string;
-}
 
 // Define the shape of the context value
 interface SQLiteContextValue {
@@ -35,6 +29,8 @@ interface SQLiteContextValue {
   conflictedList: any[];
   setConflictedList: React.Dispatch<React.SetStateAction<any[]>>;
   setBaseUrl: React.Dispatch<React.SetStateAction<string | null>>;
+  curTab: string;
+  setCurTab: React.Dispatch<React.SetStateAction<string>>;
 }
 0;
 // Create the context with a default value
@@ -45,8 +41,10 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => { },
-  setConflictedList: () => { },
+  setBaseUrl: () => {},
+  setConflictedList: () => {},
+  curTab: "/tab1",
+  setCurTab: () => {},
 });
 
 // Create a custom hook to use the context
@@ -66,6 +64,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
     "http://localhost:11142"
   );
   const [ConflictedList, setConflictedList] = useState<any[]>([]);
+  const [curTab, setCurTab] = useState<string>("/tab1");
   useEffect(() => {
     const initDb = async () => {
       try {
@@ -167,7 +166,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
               consumption_unit_per_day INTEGER,
               is_other_product INTEGER
              );
-        `
+        `;
         const query5 = `
             CREATE TABLE IF NOT EXISTS ENDOSCOPY (
             id TEXT PRIMARY KEY, 
@@ -177,7 +176,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             user_id TEXT ,
             date TEXT 
             );
-        `
+        `;
         const query6 = `
           CREATE TABLE IF NOT EXISTS blood_sample (
             id TEXT PRIMARY KEY , 
@@ -190,7 +189,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             sample_classification TEXT , 
             is_sample_collected INTEGER 
           )
-        `
+        `;
         const query7 = `
           CREATE TABLE IF NOT EXISTS blood_tube_collection (
             id TEXT PRIMARY KEY , 
@@ -201,7 +200,20 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             characteristic TEXT , 
             blood_sample_id TEXT 
           )
-        `
+        `;
+        const query8 = `
+          CREATE TABLE IF NOT EXISTS gtgh_blood_report (
+            id TEXT PRIMARY KEY ,
+            test_name TEXT , 
+            result REAL , 
+            hl_flag TEXT ,
+            unit TEXT , 
+            bio_ref_interval TEXT , 
+            sampleId TEXT ,
+            test_type TEXT ,
+            sample_id TEXT
+      )
+          `;
 
         //synch flag -> 0 1 2
         // 0 -> never synched
@@ -215,6 +227,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query5);
         await newDb.execute(query6);
         await newDb.execute(query7);
+        await newDb.execute(query8);
         try {
           const migration1 = `
                     CREATE TABLE IF NOT EXISTS tracksync (
@@ -263,7 +276,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                     );
                 `;
           await newDb?.execute(query);
-        } catch (error) { }
+        } catch (error) {}
 
         setDb(newDb);
         setIsLoading(false);
@@ -293,6 +306,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
     setBaseUrl,
     conflictedList: ConflictedList,
     setConflictedList,
+    curTab,
+    setCurTab,
   };
 
   return (

@@ -1,4 +1,4 @@
-import { Redirect, Route } from 'react-router-dom';
+import { Redirect, Route } from "react-router-dom";
 import {
   IonApp,
   IonIcon,
@@ -7,29 +7,19 @@ import {
   IonTabBar,
   IonTabButton,
   IonTabs,
-  setupIonicReact
-} from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
-import Tab1 from './pages/Registration/Tab1/Tab1';
-import Tab2 from './pages/Registration/Tab2/Tab2';
-import Tab3 from './pages/Registration/Tab3/Tab3';
-
+  setupIonicReact,
+} from "@ionic/react";
+import { IonReactRouter } from "@ionic/react-router";
+import { ellipse, square, triangle } from "ionicons/icons";
+import Tab1 from "./pages/Registration/Tab1/Tab1";
+import Tab2 from "./pages/Registration/Tab2/Tab2";
+import Tab3 from "./pages/Registration/Tab3/Tab3";
+import { StatusBar, Style } from "@capacitor/status-bar";
 /* Core CSS required for Ionic components to work properly */
-import '@ionic/react/css/core.css';
-
+import "@ionic/react/css/core.css";
 /* Basic CSS for apps built with Ionic */
-import '@ionic/react/css/normalize.css';
-import '@ionic/react/css/structure.css';
-import '@ionic/react/css/typography.css';
 
 /* Optional CSS utils that can be commented out */
-import '@ionic/react/css/padding.css';
-import '@ionic/react/css/float-elements.css';
-import '@ionic/react/css/text-alignment.css';
-import '@ionic/react/css/text-transformation.css';
-import '@ionic/react/css/flex-utils.css';
-import '@ionic/react/css/display.css';
 
 /**
  * Ionic Dark Mode
@@ -40,36 +30,46 @@ import '@ionic/react/css/display.css';
 
 /* import '@ionic/react/css/palettes/dark.always.css'; */
 /* import '@ionic/react/css/palettes/dark.class.css'; */
-import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
-import './theme/variables.css';
-import Sidebar from './components/Sidebar';
-import { useEffect } from 'react';
-import { SQLiteProvider } from './utils/Sqlite';
-import Tab4 from './pages/Registration/Tab4/Tab4';
-import Tab5 from './pages/Registration/Tab5/Tab5';
-import Tab6 from './pages/Registration/Tab6/Tab6';
-import Tab7 from './pages/Registration/Tab7/Tab7';
-import Tab8 from './pages/Registration/Tab8/Tab8';
-import Tab9 from './pages/Registration/Tab9/Tab9';
-import Tab10 from './pages/Registration/Tab10/Tab10';
-import Tab11 from './pages/Registration/Tab11/Tab11';
-import Tab12 from './pages/Registration/Tab12/Tab12';
-import EndoPage1 from './pages/Endoscopy/Page1/EndoPage1';
-import EndoPage2 from './pages/Endoscopy/Page2/EndoPage2';
-import EndoPage3 from './pages/Endoscopy/Page3/EndoPage3';
-import BloodPage1 from './pages/Blood/page1/BloodPage1';
-import BloodPage2 from './pages/Blood/page2/BloodPage2';
-import FoodRecallPage1 from './pages/FoodRecall/Page1/FoodRecallPage1';
-import FoodRecallPage2 from './pages/FoodRecall/Page2/FoodRecallPage2';
-import BloodPage3 from './pages/Blood/page3/BloodPage3';
+import Sidebar from "./components/Sidebar";
+import { useEffect } from "react";
+import { SQLiteProvider } from "./utils/Sqlite";
+import Tab4 from "./pages/Registration/Tab4/Tab4";
+import Tab5 from "./pages/Registration/Tab5/Tab5";
+import Tab6 from "./pages/Registration/Tab6/Tab6";
+import Tab7 from "./pages/Registration/Tab7/Tab7";
+import Tab8 from "./pages/Registration/Tab8/Tab8";
+import Tab9 from "./pages/Registration/Tab9/Tab9";
+import Tab10 from "./pages/Registration/Tab10/Tab10";
+import Tab11 from "./pages/Registration/Tab11/Tab11";
+import Tab12 from "./pages/Registration/Tab12/Tab12";
+import EndoPage1 from "./pages/Endoscopy/Page1/EndoPage1";
+import EndoPage2 from "./pages/Endoscopy/Page2/EndoPage2";
+import EndoPage3 from "./pages/Endoscopy/Page3/EndoPage3";
+import BloodPage1 from "./pages/Blood/page1/BloodPage1";
+import BloodPage2 from "./pages/Blood/page2/BloodPage2";
+import FoodRecallPage1 from "./pages/FoodRecall/Page1/FoodRecallPage1";
+import FoodRecallPage2 from "./pages/FoodRecall/Page2/FoodRecallPage2";
+import BloodPage3 from "./pages/Blood/page3/BloodPage3";
+import BloodPage4 from "./pages/Blood/page4/BloodPage4";
+import BloodPage5 from "./pages/Blood/page5/BloodPage5";
+import BloodPage6 from "./pages/Blood/page6/BloodPage6";
+import BloodPage7 from "./pages/Blood/page7/BloodPage7";
 
 setupIonicReact();
 
 const App: React.FC = () => {
+  useEffect(() => {
+    const setupStatusBar = async () => {
+      await StatusBar.setOverlaysWebView({ overlay: false });
+      await StatusBar.setBackgroundColor({ color: "#ffffff" });
+      await StatusBar.setStyle({ style: Style.Dark });
+    };
+    setupStatusBar();
+  }, []);
   return (
-    <SQLiteProvider >
+    <SQLiteProvider>
       <IonApp>
         <IonReactRouter>
           <Sidebar />
@@ -135,7 +135,20 @@ const App: React.FC = () => {
                 <BloodPage2 />
               </Route>
               <Route path="/blood3">
-                <BloodPage3  />
+                <BloodPage3 />
+              </Route>
+              <Route path="/blood4">
+                <BloodPage4 />
+              </Route>
+              <Route path="/blood5">
+                <BloodPage5/>
+              </Route>
+              <Route path="/blood6">
+                <BloodPage6/>
+              </Route>
+              <Route path="/blood7">
+                <BloodPage7/>
+
               </Route>
             </IonRouterOutlet>
             {/* ----------------------------------------- */}
@@ -151,9 +164,7 @@ const App: React.FC = () => {
         </IonReactRouter>
       </IonApp>
     </SQLiteProvider>
-  )
-}
-
-
+  );
+};
 
 export default App;
