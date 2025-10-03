@@ -1,5 +1,6 @@
 import { SQLiteConnection, SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { BLOOD_SAMPLE } from "./BloodPage2";
+import { saveToStore } from "../../../utils/helper";
 
 export const ErrorDetectionBloodSample = (data: BLOOD_SAMPLE): string | null => {
     if (!data.id) return "Missing: Sample ID";
@@ -92,7 +93,7 @@ export const saveBloodSampleRecord = async (bloodSample: BLOOD_SAMPLE, db: SQLit
               `;
             await db?.execute(q)
         }
-        await sqlite?.saveToStore('patientdb')
+        await saveToStore(sqlite)
     } catch (error) {
 
     }

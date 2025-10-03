@@ -41,10 +41,10 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => {},
-  setConflictedList: () => {},
+  setBaseUrl: () => { },
+  setConflictedList: () => { },
   curTab: "/tab1",
-  setCurTab: () => {},
+  setCurTab: () => { },
 });
 
 // Create a custom hook to use the context
@@ -206,9 +206,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             id TEXT PRIMARY KEY ,
             test_name TEXT , 
             result REAL , 
-            hl_flag TEXT ,
             unit TEXT , 
-            bio_ref_interval TEXT , 
             sampleId TEXT ,
             test_type TEXT ,
             sample_id TEXT
@@ -276,7 +274,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                     );
                 `;
           await newDb?.execute(query);
-        } catch (error) {}
+        } catch (error) { }
 
         setDb(newDb);
         setIsLoading(false);

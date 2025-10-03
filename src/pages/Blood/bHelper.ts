@@ -15,27 +15,20 @@ export function validateRFTArray(samples: RFTType[]): string | null {
       return `Error in sample number ${sampleNumber}: Result must be greater than zero.`;
     }
 
-    if (typeof sample.hl_flag !== "string" || !sample.hl_flag.trim()) {
-      return `Error in sample number ${sampleNumber}: HL flag is missing or invalid.`;
-    }
+
     if (typeof sample.unit !== "string" || !sample.unit.trim()) {
       return `Error in sample number ${sampleNumber}: Unit is missing or invalid.`;
     }
-    if (
-      typeof sample.bio_ref_interval !== "string" ||
-      !sample.bio_ref_interval.trim()
-    ) {
-      return `Error in sample number ${sampleNumber}: Reference interval is missing or invalid.`;
-    }
+
     if (typeof sample.id !== "string" || !sample.id.trim()) {
       return `Error in sample number ${sampleNumber}: ID is missing or invalid.`;
     }
     if (sample.sampleId !== undefined && typeof sample.sampleId !== "string") {
       return `Error in sample number ${sampleNumber}: Sample ID is invalid.`;
-    } 
+    }
     if (sample.test_type !== undefined && typeof sample.test_type !== "string") {
       return `Error in sample number ${sampleNumber}: test type is invalid.`;
-    } 
+    }
   }
   return null; // no errors found
 }

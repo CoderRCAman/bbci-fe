@@ -1,3 +1,5 @@
+import { SQLiteConnection } from "@capacitor-community/sqlite";
+import { isPlatform, getPlatforms } from '@ionic/react';
 export const generateUniqueId = (name = "") => {
   const timestamp = Date.now();
   const cleanName =
@@ -22,3 +24,12 @@ export const getMisMatchFields = (obj1: any, obj2: any) => {
 
   return mismatched;
 };
+
+export const saveToStore = async (sqlite: SQLiteConnection | null) => {
+  try {
+    if (isPlatform('mobileweb') || isPlatform('desktop'))
+      await sqlite?.saveToStore('patientdb');
+  } catch (error) {
+    console.log(error)
+  }
+}

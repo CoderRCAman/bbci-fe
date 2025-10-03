@@ -1,12 +1,12 @@
 import { IonAlert, IonContent, IonPage } from "@ionic/react";
 import Header from "../../../components/Header";
 import { Button } from "primereact/button";
-import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
 import ShortUUID from 'short-uuid';
 import { format } from "date-fns";
+import { saveToStore } from "../../../utils/helper";
 export default function EndoPage2() {
     const [barcodeData, setBarCodeData] = useState('');
     const location = useLocation();
@@ -79,7 +79,7 @@ export default function EndoPage2() {
                     values ('${uid}' , '${barcodeData}' , '${id}' , '${format(new Date(), 'yyyy-dd-MM')}') 
                 `
             await db?.execute(query);
-            await sqlite?.saveToStore('patientdb');
+            await saveToStore(sqlite);
             setEndoId(uid);
             setAlert({
                 header: 'Success',

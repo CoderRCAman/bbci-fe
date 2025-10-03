@@ -7,6 +7,7 @@ import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 import { Link } from "react-router-dom";
+import { saveToStore } from "../../../utils/helper";
 
 export default function EndoPage3() {
     const location = useLocation();
@@ -65,7 +66,7 @@ export default function EndoPage3() {
                 WHERE id = '${endoId}';
             `
             await db?.execute(query);
-            await sqlite?.saveToStore('patientdb');
+            await saveToStore(sqlite);
             setAlert({
                 header: 'Success',
                 message: 'Endoscopy report updated successfully!',
