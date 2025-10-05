@@ -84,3 +84,8 @@ a {
   border: 2px solid #e5e5e5 !important;
   padding: 6px;
 }
+
+
+ion-content {
+  padding-bottom: 60px !important;
+}

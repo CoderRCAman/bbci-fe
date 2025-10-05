@@ -17,7 +17,7 @@ export default function PMHInput({
   updateStateData: (id: string, field: string, value: any) => void;
 }) {
   console.log(data);
-  
+
   return (
     <div className="border rounded-md p-2 shadow">
       <div className="space-y-7">
@@ -26,9 +26,8 @@ export default function PMHInput({
           <div className="space-x-2">
             <input
               type="radio"
-              name="condition_status"
               value={1}
-              checked={data?.["diagnosed"] === 1 ? true : false}
+              checked={data?.["diagnosed"] === 1}
               onChange={(e) =>
                 updateStateData(data.id, "diagnosed", parseInt(e.target.value))
               }
@@ -38,9 +37,8 @@ export default function PMHInput({
           <div className="space-x-2">
             <input
               type="radio"
-              name="condition_status"
               value={2}
-              checked={data?.["diagnosed"] === 2 ? true : false}
+              checked={data?.["diagnosed"] === 2}
               onChange={(e) =>
                 updateStateData(data.id, "diagnosed", parseInt(e.target.value))
               }
@@ -50,9 +48,8 @@ export default function PMHInput({
           <div className="space-x-2">
             <input
               type="radio"
-              name="condition_status"
               value={8}
-              checked={data?.["diagnosed"] === 8 ? true : false}
+              checked={data?.["diagnosed"] === 8}
               onChange={(e) =>
                 updateStateData(data.id, "diagnosed", parseInt(e.target.value))
               }
@@ -62,9 +59,8 @@ export default function PMHInput({
           <div className="space-x-2">
             <input
               type="radio"
-              name="condition_status"
               value={9}
-              checked={data?.["diagnosed"] === 9 ? true : false}
+              checked={data?.["diagnosed"] === 9}
               onChange={(e) =>
                 updateStateData(data.id, "diagnosed", parseInt(e.target.value))
               }
@@ -78,6 +74,13 @@ export default function PMHInput({
               disabled={data?.diagnosed !== 1}
               keyfilter="int"
               className="border-1 p-2"
+              onChange={(e) =>
+                updateStateData(
+                  data.id,
+                  "age_first_diagnosis",
+                  parseInt(e.target.value)
+                )
+              }
             />
             <label>Age at first diagnosis</label>
           </FloatLabel>
@@ -85,8 +88,16 @@ export default function PMHInput({
         <div>
           <FloatLabel>
             <InputText
+              value={data?.year_of_first_diagnosis}
               className="border-1 p-2"
               disabled={data?.diagnosed !== 1}
+              onChange={(e) =>
+                updateStateData(
+                  data.id,
+                  "year_of_first_diagnosis",
+                  parseInt(e.target.value)
+                )
+              }
             />
             <label>Year of first diagnosis</label>
           </FloatLabel>
@@ -94,16 +105,20 @@ export default function PMHInput({
         <div>
           <Dropdown
             disabled={data?.diagnosed !== 1}
+            value={data?.treatment_received}
             optionLabel="name"
             optionValue="value"
             className="border-1"
             placeholder="Treatment Received"
             options={[
-              { name: "YES", value: "1" },
-              { name: "NO", value: "2" },
-              { name: "DON'T KNOW", value: "8" },
-              { name: "REFUSED TO ANSWER", value: "8" },
+              { name: "YES", value: 1 },
+              { name: "NO", value: 2 },
+              { name: "DON'T KNOW", value: 8 },
+              { name: "REFUSED TO ANSWER", value: 8 },
             ]}
+            onChange={(e) =>
+              updateStateData(data.id, "treatment_received", parseInt(e.value))
+            }
           />
         </div>
         <div>
@@ -113,6 +128,9 @@ export default function PMHInput({
             {mode_of_treatment.map((d) => (
               <div className="flex gap-2">
                 <input
+                  disabled={
+                    data?.diagnosed !== 1 || data?.treatment_received !== 1
+                  }
                   type="checkbox"
                   name="mot"
                   value={d}
@@ -153,6 +171,9 @@ export default function PMHInput({
             {mode_of_diagnosis.map((d) => (
               <div className="flex gap-2">
                 <input
+                  disabled={
+                    data?.diagnosed !== 1 || data?.treatment_received !== 1
+                  }
                   type="checkbox"
                   value={d}
                   checked={data?.mode_of_diagnosis?.split("|").includes(d)}
@@ -186,15 +207,24 @@ export default function PMHInput({
             <div className="flex gap-5">
               <p>Other specify</p>
               <input
+                disabled={
+                  data?.diagnosed !== 1 || data?.treatment_received !== 1
+                }
                 type="text"
                 className="border-b-2 focus:outline-none focus:border-slate-500 w-[60%]"
-                onChange={(e) =>{
-                    updateStateData(data.id, "mod_other", e.target.value);
+                onChange={(e) => {
+                  updateStateData(data.id, "mod_other", e.target.value);
                 }}
               />
             </div>
             <div className="flex gap-2">
-              <input type="checkbox" value={"Don't know"} />
+              <input
+                disabled={
+                  data?.diagnosed !== 1 || data?.treatment_received !== 1
+                }
+                type="checkbox"
+                value={"Don't know"}
+              />
               <p>Don't know</p>
             </div>
           </div>

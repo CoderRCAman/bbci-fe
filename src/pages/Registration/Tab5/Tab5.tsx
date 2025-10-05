@@ -156,14 +156,14 @@ export default function Tab5() {
                                 <Button
                                     label="Save"
                                     text raised
-                                    className="px-3 py-2 px-10 py-3 rounded-md font-bold"
+                                    className="px-3 py-2 px-10 rounded-md font-bold"
                                     onClick={handleSaveUpdated}
                                 />
                                 :
                                 <Button
                                     label="Save"
                                     severity="success" text raised
-                                    className="px-3 py-2 px-10 py-3 rounded-md font-bold"
+                                    className="px-3 py-2 px-10  rounded-md font-bold"
                                     onClick={()=>handleSaveFresh()}
                                 />
                         }
@@ -176,12 +176,12 @@ export default function Tab5() {
                         message={alert.message}
                         buttons={["OK"]}
                     />
-                    <div className='flex gap-2 justify-end pb-5 pr-2'>
+                    <div className='flex gap-2 mt-20  justify-center pb-5 pr-2'>
                         <Link to={`/tab1?id=${id}&edit=no`}>
-                            <Button label='PREV' className='px-10 py-3  rounded-md' />
+                            <Button label='PREV' className='px-10 py-2  rounded-md' />
                         </Link>
                         <Link to={`/tab6?id=someid&edit=no`}>
-                            <Button label='NEXT' className='px-10 py-3  rounded-md' />
+                            <Button label='NEXT' className='px-10 py-2  rounded-md' />
                         </Link>
 
                     </div>

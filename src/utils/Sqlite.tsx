@@ -116,7 +116,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         time TEXT , 
                         created_at TEXT ,
                         updated_at TEXT ,
-                        updated_by TEXT DEFAULT 'UNKNOWN'
+                        updated_by TEXT DEFAULT 'UNKNOWN',
+                        tab_id TEXT,
                     );
                 `;
         const query2 = `
@@ -128,7 +129,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         city TEXT , 
                         village TEXT , 
                         state TEXT , 
-                        code INTEGER
+                        code INTEGER , 
+                        tab_id TEXT
                     );
                 `;
         const query3 = `
@@ -142,7 +144,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         mode_of_treatment TEXT ,
                         mode_of_diagnosis TEXT ,
                         mode_of_diagnosis_other TEXT ,
-                        user_id TEXT    
+                        user_id TEXT,
+                        tab_id TEXT
                     );
                 `;
         const query4 = `
@@ -164,7 +167,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
               site_of_placement_NA INTEGER,
               without_tobacco INTEGER,
               consumption_unit_per_day INTEGER,
-              is_other_product INTEGER
+              is_other_product INTEGER,
+              tab_id TEXT
              );
         `;
         const query5 = `
@@ -174,7 +178,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             endoscopy_video_filename TEXT , 
             endoscopy_pdf_filename TEXT,
             user_id TEXT ,
-            date TEXT 
+            date TEXT,
+            tab_id TEXT
             );
         `;
         const query6 = `
@@ -187,7 +192,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             last_meal_time TEXT , 
             received_blood_last_6_months INTEGER , 
             sample_classification TEXT , 
-            is_sample_collected INTEGER 
+            is_sample_collected INTEGER,
+            tab_id TEXT 
           )
         `;
         const query7 = `
@@ -198,7 +204,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             identification_code_tube , 
             volume INTEGER , 
             characteristic TEXT , 
-            blood_sample_id TEXT 
+            blood_sample_id TEXT,
+            tab_id TEXT
           )
         `;
         const query8 = `
@@ -211,9 +218,16 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             bio_ref_interval TEXT , 
             sampleId TEXT ,
             test_type TEXT ,
-            sample_id TEXT
+            sample_id TEXT,
+            tab_id TEXT
       )
           `;
+        const query9 = `
+            CREATE TABLE IF NOT EXISTS tablet_data (
+              id INTEGER PRIMARY KEY AUTO_INCREMENT,
+              tab_id TEXT,
+            );
+        `;
 
         //synch flag -> 0 1 2
         // 0 -> never synched
@@ -228,6 +242,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query6);
         await newDb.execute(query7);
         await newDb.execute(query8);
+        await newDb.execute(query9);
         try {
           const migration1 = `
                     CREATE TABLE IF NOT EXISTS tracksync (
