@@ -4,16 +4,14 @@ import { useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import { useSQLite } from "../../../utils/Sqlite";
 import { RFTType } from "../page3/BloodPage3";
-import { get } from "react-hook-form";
 import { getInitialDataSet } from "./helper";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { InputText } from "primereact/inputtext";
-import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 import { Link } from "react-router-dom";
 import { validateRFTArray } from "../bHelper";
 import { InputNumber } from "primereact/inputnumber";
+import { saveToStore } from "../../../utils/helper";
 
 export default function BloodPage4() {
   const location = useLocation();
@@ -71,37 +69,33 @@ export default function BloodPage4() {
       }
 
       const query = `
-          INSERT INTO gtgh_blood_report (id, sampleId, test_name, result, hl_flag, unit, bio_ref_interval, test_type)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)   
-          ON CONFLICT(id) DO UPDATE SET
-            sampleId=excluded.sampleId,
-            test_name=excluded.test_name,   
-            result=excluded.result,
-            hl_flag=excluded.hl_flag,
-            unit=excluded.unit,
-            bio_ref_interval=excluded.bio_ref_interval,
-            test_type=excluded.test_type
-        `;
+        INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type)
+        VALUES (?, ?, ?, ?, ?,  ?)   
+        ON CONFLICT(id) DO UPDATE SET
+          sampleId=excluded.sampleId,
+          test_name=excluded.test_name,   
+          result=excluded.result,         
+          unit=excluded.unit,
+          test_type=excluded.test_type
+      `;
       const values = lfts.map((rft) => [
         rft.id,
         rft.sampleId || sampleId,
         rft.test_name,
         rft.result,
-        rft.hl_flag,
         rft.unit,
-        rft.bio_ref_interval,
         rft.test_type || "LFT",
       ]);
       for (let i = 0; i < values.length; i++) {
         const params = values[i];
         await db?.run(query, params);
       }
-      await sqlite?.saveToStore("patientdb");
+      await saveToStore(sqlite)
       console.log(values);
       setAlert({
         show: true,
         header: "Success",
-        message: "Liver function test (LFT) saved successfully",
+        message: "Renal Function Test (RFT) saved successfully",
       });
     } catch (error) {
       console.log(error);
@@ -127,7 +121,7 @@ export default function BloodPage4() {
             <div className="mt-10">
               <DataTable
                 value={lfts}
-                tableStyle={{ minWidth: "60rem" }}
+                tableStyle={{ minWidth: "10rem" }}
                 // tableClassName="p-datatable-gridlines"
                 showGridlines
                 size="normal"
@@ -157,42 +151,13 @@ export default function BloodPage4() {
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                  ...item,
-                                  result: e.value || 0,
-                                }
+                                ...item,
+                                result: e.value || 0,
+                              }
                               : item
                           )
                         )
                       }
-                    />
-                  )}
-                ></Column>
-                <Column
-                  style={{ fontSize: "0.8rem" }}
-                  bodyClassName="border-b border-gray-300"
-                  field="h_l_flag"
-                  header="H/L Flag"
-                  body={(rowData) => (
-                    <Dropdown
-                      appendTo={document.body}
-                      onChange={(e) =>
-                        setLfts((prev) =>
-                          prev.map((item) =>
-                            item.id === rowData.id
-                              ? { ...item, hl_flag: e.target.value }
-                              : item
-                          )
-                        )
-                      }
-                      optionLabel="name"
-                      optionValue="value"
-                      className="border h-10 flex items-center"
-                      placeholder="Select"
-                      value={rowData.hl_flag}
-                      options={[
-                        { name: "L", value: "L" },
-                        { name: "N", value: "N" },
-                      ]}
                     />
                   )}
                 ></Column>
@@ -202,52 +167,12 @@ export default function BloodPage4() {
                   field="unit"
                   header="Unit"
                   body={(rowData) => (
-                    <Dropdown
-                      appendTo={document.body}
-                      onChange={(e) =>
-                        setLfts((prev) =>
-                          prev.map((item) =>
-                            item.id === rowData.id
-                              ? { ...item, unit: e.target.value }
-                              : item
-                          )
-                        )
-                      }
-                      value={rowData.unit}
-                      optionLabel="name"
-                      optionValue="value"
-                      className="border h-10 flex items-center"
-                      placeholder="Select"
-                      options={[
-                        { name: "mg/dL", value: "mg/dL" },
-                        { name: "U/L", value: "U/L" },
-                        { name: "g/dL", value: "d/dL" },
-                      ]}
-                    />
+                    <div>
+                      {rowData.unit}
+                    </div>
                   )}
                 ></Column>
-                <Column
-                  style={{ fontSize: "0.8rem" }}
-                  bodyClassName="border-b border-gray-300"
-                  field="bio_ref_interval"
-                  header="Biological Reference interval"
-                  body={(rowData) => (
-                    <InputText
-                      placeholder="Modify"
-                      value={rowData.bio_ref_interval}
-                      className="border p-2 "
-                      onChange={(e) =>
-                        setLfts((prev) =>
-                          prev.map((item) =>
-                            item.id === rowData.id
-                              ? { ...item, bio_ref_interval: e.target.value }
-                              : item
-                          )
-                        )
-                      }
-                    />
-                  )}
-                ></Column>
+
               </DataTable>
             </div>
             <div className="mt-5">

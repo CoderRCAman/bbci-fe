@@ -33,7 +33,7 @@ const menuItems = [
 ];
 
 export default function Sidebar() {
-    const {curTab,setCurTab} = useSQLite() ; 
+    const location = useLocation() ;
     return (
         <>
             <IonMenu contentId="main-content" className="font-sans">
@@ -48,12 +48,12 @@ export default function Sidebar() {
                     <div className="flex flex-col space-y-2">
                         {menuItems.map((item, index) => {
                             // Determine if the current link is active
-                            const isActive = item.path === curTab ;
+                            const isActive =  location.pathname.includes(item.path.substring(0,5)) ;
                             
                             return (
                                 <IonMenuToggle key={index} autoHide={true}>
                                     <Link 
-                                        onClick={()=>setCurTab(item.path)}
+                                       
                                         to={item.path}
                                         className={`
                                             flex items-center p-3  text-base

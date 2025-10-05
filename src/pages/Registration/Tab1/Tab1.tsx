@@ -26,7 +26,7 @@ import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { Geolocation } from "@capacitor/geolocation";
 import Header from "../../../components/Header";
 import { useSQLite } from "../../../utils/Sqlite";
-import { generateUniqueId } from "../../../utils/helper";
+import { generateUniqueId, saveToStore } from "../../../utils/helper";
 import { useHistory, useLocation } from "react-router";
 import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from "primereact/dropdown";
@@ -145,7 +145,7 @@ const Tab1: React.FC = () => {
       return;
     }
 
-    if (editFlag =="yes" && id) {
+    if (editFlag == "yes" && id) {
       // Update
       console.log(patient);
       await db?.run(
@@ -212,7 +212,7 @@ const Tab1: React.FC = () => {
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
         ]
       );
-      await sqlite?.saveToStore("patientdb");
+      await saveToStore(sqlite);
       setAlert((a) => ({
         ...a,
         show: true,
@@ -226,7 +226,11 @@ const Tab1: React.FC = () => {
 
   const getCurrentPosition = async () => {
     try {
-      const coordinates = await Geolocation.getCurrentPosition();
+      const coordinates = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 1000
+      });
       console.log("Current position:", coordinates);
       const { latitude, longitude } = coordinates.coords;
       setPatient((p) => ({ ...p, lat: latitude, long: longitude }));
@@ -242,10 +246,10 @@ const Tab1: React.FC = () => {
   console.log(errors);
   return (
     <IonPage>
-      <Header title={editFlag ==="yes" ? "Edit participants" : "Register Participant"} />
+      <Header title={editFlag === "yes" ? "Edit participants" : "Register Participant"} />
       <IonContent fullscreen>
         <form
-          className="min-h-full shadow-1 border rounded-md m-2 p-2 pt-5 flex flex-col gap-10"
+          className=" shadow-1 border rounded-md m-2 p-2 pt-5 flex flex-col gap-10"
           onSubmit={handleSubmit(onSubmit)}
         >
           <Controller
@@ -345,11 +349,11 @@ const Tab1: React.FC = () => {
                     required: "Gender is required",
                   }}
                   render={({ field: { onChange } }) => (
-                    <RadioButton
+                    <input
+                      type='radio'
                       value={"male"}
-                      className="border-2  rounded-full"
-                      checked={watch("gender") === "male"}
-                      onChange={(e) => onChange(e.value)}
+                      checked={watch('gender') === 'male'}
+                      onChange={e => onChange(e.target.value)}
                     />
                   )}
                 />
@@ -363,11 +367,11 @@ const Tab1: React.FC = () => {
                     required: "Gender is required",
                   }}
                   render={({ field: { onChange } }) => (
-                    <RadioButton
+                    <input
+                      type='radio'
                       value={"female"}
-                      className="border-2  rounded-full"
-                      checked={watch("gender") === "female"}
-                      onChange={(e) => onChange(e.value)}
+                      checked={watch('gender') === 'female'}
+                      onChange={e => onChange(e.target.value)}
                     />
                   )}
                 />
@@ -381,11 +385,11 @@ const Tab1: React.FC = () => {
                     required: "Gender is required",
                   }}
                   render={({ field: { onChange } }) => (
-                    <RadioButton
+                    <input
+                      type='radio'
                       value={"other"}
-                      className="border-2  rounded-full"
-                      checked={watch("gender") === "other"}
-                      onChange={(e) => onChange(e.value)}
+                      checked={watch('gender') === 'other'}
+                      onChange={e => onChange(e.target.value)}
                     />
                   )}
                 />
@@ -429,7 +433,7 @@ const Tab1: React.FC = () => {
 
                 return (
                   <Calendar
-                    className="border-1 p-2 focus:outline-none"
+                    className="border-1  focus:outline-none"
                     value={value ? new Date(value) : null}
                     onChange={(e) => onChange(e.value)}
                     showIcon
@@ -452,7 +456,7 @@ const Tab1: React.FC = () => {
         </form>
 
         <div className="flex justify-end p-2 gap-2  ">
-          <Link  to={`/tab5?id=${id}&edit=${editFlag}`}>
+          <Link to={`/tab5?id=${id}&edit=${editFlag}`}>
             <Button label="NEXT" className="px-3 py-2 rounded" />
           </Link>
         </div>

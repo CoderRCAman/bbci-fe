@@ -7,6 +7,7 @@ import { Button } from 'primereact/button';
 import ShortUUID from 'short-uuid';
 import { Link } from 'react-router-dom';
 import { useSQLite } from '../../../utils/Sqlite';
+import { saveToStore } from '../../../utils/helper';
 export interface RESIDENTIAL_TYPE {
     from_age: number,
     to_age: number,
@@ -115,7 +116,7 @@ export default function Tab5() {
         const query = `INSERT  OR IGNORE INTO residential_history (${columns.join(', ')}) VALUES\n  ${valuesList.join(',\n  ')};`;
         console.log(query); 
         await db?.run(query) ;
-        await sqlite?.saveToStore('patientdb');
+        await saveToStore(sqlite)
         try {
             await db?.run(query) ;    
         } catch (error) {

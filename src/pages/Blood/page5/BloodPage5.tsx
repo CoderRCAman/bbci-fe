@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { getInitialDataSet } from "./helper";
 import { InputNumber } from "primereact/inputnumber";
 import { validateRFTArray } from "../bHelper";
+import { saveToStore } from "../../../utils/helper";
 
 export default function BloodPage5() {
   const location = useLocation();
@@ -62,7 +63,6 @@ export default function BloodPage5() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
-      console.log(cbcs);
       const error = validateRFTArray(cbcs);
       if (error) {
         return setAlert({
@@ -73,32 +73,28 @@ export default function BloodPage5() {
       }
 
       const query = `
-          INSERT INTO gtgh_blood_report (id, sampleId, test_name, result, hl_flag, unit, bio_ref_interval, test_type)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)   
-          ON CONFLICT(id) DO UPDATE SET
-            sampleId=excluded.sampleId,
-            test_name=excluded.test_name,   
-            result=excluded.result,
-            hl_flag=excluded.hl_flag,
-            unit=excluded.unit,
-            bio_ref_interval=excluded.bio_ref_interval,
-            test_type=excluded.test_type
-        `;
+        INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type)
+        VALUES (?, ?, ?, ?, ?,  ?)   
+        ON CONFLICT(id) DO UPDATE SET
+          sampleId=excluded.sampleId,
+          test_name=excluded.test_name,   
+          result=excluded.result,         
+          unit=excluded.unit,
+          test_type=excluded.test_type
+      `;
       const values = cbcs.map((rft) => [
         rft.id,
         rft.sampleId || sampleId,
         rft.test_name,
         rft.result,
-        rft.hl_flag,
         rft.unit,
-        rft.bio_ref_interval,
         rft.test_type || "CBC",
       ]);
       for (let i = 0; i < values.length; i++) {
         const params = values[i];
         await db?.run(query, params);
       }
-      await sqlite?.saveToStore("patientdb");
+      await saveToStore(sqlite)
       console.log(values);
       setAlert({
         show: true,
@@ -129,7 +125,7 @@ export default function BloodPage5() {
             <div className="mt-10">
               <DataTable
                 value={cbcs}
-                tableStyle={{ minWidth: "60rem" }}
+                tableStyle={{ minWidth: "10rem" }}
                 // tableClassName="p-datatable-gridlines"
                 showGridlines
                 size="normal"
@@ -159,42 +155,13 @@ export default function BloodPage5() {
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                  ...item,
-                                  result: e.value || 0,
-                                }
+                                ...item,
+                                result: e.value || 0,
+                              }
                               : item
                           )
                         )
                       }
-                    />
-                  )}
-                ></Column>
-                <Column
-                  style={{ fontSize: "0.8rem" }}
-                  bodyClassName="border-b border-gray-300"
-                  field="h_l_flag"
-                  header="H/L Flag"
-                  body={(rowData) => (
-                    <Dropdown
-                      appendTo={document.body}
-                      onChange={(e) =>
-                        setCbcs((prev) =>
-                          prev.map((item) =>
-                            item.id === rowData.id
-                              ? { ...item, hl_flag: e.target.value }
-                              : item
-                          )
-                        )
-                      }
-                      optionLabel="name"
-                      optionValue="value"
-                      className="border h-10 flex items-center"
-                      placeholder="Select"
-                      value={rowData.hl_flag}
-                      options={[
-                        { name: "L", value: "L" },
-                        { name: "N", value: "N" },
-                      ]}
                     />
                   )}
                 ></Column>
@@ -204,57 +171,12 @@ export default function BloodPage5() {
                   field="unit"
                   header="Unit"
                   body={(rowData) => (
-                    <Dropdown
-                      appendTo={document.body}
-                      onChange={(e) =>
-                        setCbcs((prev) =>
-                          prev.map((item) =>
-                            item.id === rowData.id
-                              ? { ...item, unit: e.target.value }
-                              : item
-                          )
-                        )
-                      }
-                      dir=""
-                      value={rowData.unit}
-                      optionLabel="name"
-                      optionValue="value"
-                      className="border h-10 flex items-center"
-                      placeholder="Select"
-                      options={[
-                        { name: "10^3/uL", value: "10^3/uL" },
-                        { name: "%", value: "%" },
-                        { name: "10^6/uL", value: "10^6/uL" },
-                        { name: "g/dL", value: "g/dL" },
-                        { name: "10^3/uL", value: "10^3/uL" },
-                        { name: "fL", value: "fL" },
-                        { name: "pg", value: "pg" },
-                      ]}
-                    />
+                    <div>
+                      {rowData.unit}
+                    </div>
                   )}
                 ></Column>
-                <Column
-                  style={{ fontSize: "0.8rem" }}
-                  bodyClassName="border-b border-gray-300"
-                  field="bio_ref_interval"
-                  header="Biological Reference interval"
-                  body={(rowData) => (
-                    <InputText
-                      placeholder="Modify"
-                      value={rowData.bio_ref_interval}
-                      className="border p-2 "
-                      onChange={(e) =>
-                        setCbcs((prev) =>
-                          prev.map((item) =>
-                            item.id === rowData.id
-                              ? { ...item, bio_ref_interval: e.target.value }
-                              : item
-                          )
-                        )
-                      }
-                    />
-                  )}
-                ></Column>
+
               </DataTable>
             </div>
             <div className="mt-5">
