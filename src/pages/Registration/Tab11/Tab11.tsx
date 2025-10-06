@@ -24,19 +24,26 @@ export default function Tab11() {
     const searchParams = new URLSearchParams(location.search);
     useEffect(() => {
         setId(searchParams?.get('id') || '');
-        
+
     }, [location.pathname])
-    const { db, sqlite } = useSQLite();
+    const { db, sqlite, tabId } = useSQLite();
     const [data, setData] = useState<initialState[]>([]);
+    const [dirtyValuesProduct, setDirtyValuesProduct] = useState<TOBACCO_ALCOHOL_CONSUMPION[]>([]);
+    const [dirtyValuesMaster, setDirtyValuesMaster] = useState<initialState[]>([]);
     useEffect(() => {
         async function fetchInitialData() {
+            const id = searchParams.get('id') || '';
             try {
                 const res = await db?.query(`
                         select * from TOBACCO_ALCOHOL_CONSUMPTION where user_id = '${id}'
                     `)
+                const res2 = await db?.query(`
+                       select * from TOBACCO_ALCOHOL_CONSUMPTION_MASTER where user_id = '${id}'
+                    `)
                 const values = res?.values as TOBACCO_ALCOHOL_CONSUMPION[];
+                const masterValue = res2?.values as initialState[];
                 console.log(res)
-                const result = populateWithBackend(values, id);
+                const result = populateWithBackend(masterValue, values, id, tabId);
                 setData(result);
             } catch (error) {
                 console.log(error);
@@ -44,15 +51,92 @@ export default function Tab11() {
         }
         fetchInitialData();
     }, [db, location.pathname])
+    const handleChangeMaster = (id: string, field: string, value: any) => {
+        setData((prevState) => {
+            const updated = prevState.map((item) => {
+                if (item.id === id) {
+                    return { ...item, [field]: value };
+                }
+                return item;
+            });
+            const updatedItem = updated.find((item) => item.id === id);
+            setDirtyValuesMaster((prev) => {
+                const exists = prev.some(x => x.id === id);
+
+                if (exists) {
+                    // Update the field in the existing object
+                    return prev.map(item =>
+                        item.id === id ? { ...item, [field]: value } : item
+                    );
+                }
+
+                // Find the full updated item from your main data source
+                const updatedItem = data.find(item => item.id === id);
+                if (!updatedItem) return prev; // Fallback: shouldn't happen, but safe to handle
+
+                // Add new entry to dirty state, with updated field
+                return [...prev, { ...updatedItem, [field]: value }];
+            });
+            return updated;
+        });
+    }
+
+    const handleChangeProds = (
+        id: string,
+        type: string,
+        field: string,
+        value: any
+    ) => { 
+        console.log('heyhey')
+        setData(prevData => {
+            // Update data and extract updated product
+            let updatedProduct: TOBACCO_ALCOHOL_CONSUMPION | undefined;
+            const newData = prevData.map(section => {
+                if (section.product_type === type) {
+                    const newProducts = section.products.map(product => {
+                        if (product.id === id) {
+                            updatedProduct = { ...product, [field]: value };
+                            return updatedProduct;
+                        }
+                        return product;
+                    });
+                    return { ...section, products: newProducts };
+                }
+                return section;
+            });
+
+            // Now update dirtyValuesProduct *after* updating data
+            if (updatedProduct) {
+                setDirtyValuesProduct(prevDirty => {
+                    const exists = prevDirty.some(p => p.id === id);
+                    if (exists) {
+                        return prevDirty.map(p => (p.id === id ? updatedProduct! : p));
+                    }
+                    return [...prevDirty, updatedProduct!];
+                });
+            }
+
+            return newData;
+        });
+    };
+
+    console.log(dirtyValuesProduct)
+
+
     return (
         <IonPage>
             <Header title={0 ? "Edit Tobacco and Alcohol Consumption" :
                 "Tobacco and Alcohol Consumption"} />
             <IonContent class='' fullscreen>
-                <main className="p-2 space-y-20">
+                <main className="p-2 space-y-10">
                     <Accordion className="space-y-2 outline-none" activeIndex={0}>
                         <AccordionTab className="border-1 rounded  border-slate-200" header="Smoking tobacco" >
-                            <SmokingTobacco data={data?.[0]} />
+                            <SmokingTobacco
+                                handleChangeMaster={handleChangeMaster}
+                                data={data?.[0]}
+                                handleChangeProds={handleChangeProds}
+
+                            />
                         </AccordionTab>
                         <AccordionTab className="border-1 rounded  border-slate-200" header="Chewing tobacco" >
                             <ChewingTobacco data={data?.[1]} />
@@ -64,7 +148,9 @@ export default function Tab11() {
                             <Alcohol data={data?.[3]} user_id={id} setData={setData} />
                         </AccordionTab>
                     </Accordion>
-
+                    <div className="flex justify-end ">
+                        <Button label="Save" severity="success" className="py-2" />
+                    </div>
                 </main>
                 <IonAlert
                     isOpen={alert.show}

@@ -15,6 +15,7 @@ import { saveToStore } from "../../../utils/helper";
 export default function Tab8() {
   const { db, sqlite, tabId } = useSQLite();
   const [id, setId] = useState<string | null>("");
+  const [allowNext, setAllowNext] = useState(false);
   const [reading1, setReading1] = useState({
     height: 0,
     weight: 0,
@@ -50,6 +51,7 @@ export default function Tab8() {
         );
         console.log(res);
         if (res?.values?.length) {
+          setAllowNext(true)
           setReading1({
             height: res?.values?.[0]?.height || 0,
             weight: res?.values?.[0]?.weight || 0,
@@ -115,7 +117,6 @@ export default function Tab8() {
         tabId,
       ];
 
-      console.log(query, values);
 
       await db?.run(query, values);
       if (!isDisabledReading2) {
@@ -130,6 +131,7 @@ export default function Tab8() {
         await db?.run(query, values2);
       }
       await saveToStore(sqlite);
+      setAllowNext(true)
       setAlert({
         show: true,
         header: "Success",
@@ -223,9 +225,12 @@ export default function Tab8() {
               <Link to={"/tab7?id=" + id}>
                 <Button className="px-10 py-2 rounded" label="PREV" />
               </Link>
-              <Link to={"/tab9?id=" + id}>
-                <Button className="px-10 py-2 rounded" label="NEXT" />
-              </Link>
+              {
+                allowNext &&
+                <Link to={"/tab9?id=" + id}>
+                  <Button className="px-10 py-2 rounded" label="NEXT" />
+                </Link>
+              }
             </div>
           </main>
           <IonAlert

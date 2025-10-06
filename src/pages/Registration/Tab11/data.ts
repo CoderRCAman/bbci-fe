@@ -17,7 +17,9 @@ export interface TOBACCO_ALCOHOL_CONSUMPION {
     site_of_placement_NA?: number, //0 or 1 
     without_tobacco?: number // 0 or 1 
     consumption_unit_per_day?: number // for alcohol
-    is_other_product?: number // 0 or 1 
+    is_other_product?: number // 0 or 1
+    master_id?: string 
+    tab_id?: string
 }
 
 
@@ -27,6 +29,8 @@ export interface initialState {
     product_type: 'smoking_tobacco' | 'chewing_tobacco' | 'chewing_without_tobacco' | 'alcohol';
     consumed: number,
     products: TOBACCO_ALCOHOL_CONSUMPION[]
+    id: string 
+    tab_id?: string
 }
 
 export class TobaccoAlcoholConsumption {
@@ -48,13 +52,14 @@ export class TobaccoAlcoholConsumption {
     without_tobacco: number = 0;
     consumption_unit_per_day: number = 0;
     is_other_product: number = 0;
-
+    master_id: string = '';
+    tab_id: string = '';
     constructor(init?: Partial<TobaccoAlcoholConsumption>) {
         Object.assign(this, { ...this, ...init });
     }
 }
 
-export const generateDefaultState = (user_id: string) => {
+export const generateDefaultState = (user_id: string, masterData: initialState[],tab_id:string) => {
     const translator = shortUUID();
     const smokingProdArr = ["Manufactured Cigarette", "Bidi (Manufactured/Roll your own)"]
     const smokingProds = smokingProdArr.map(item => {
@@ -87,6 +92,7 @@ export const generateDefaultState = (user_id: string) => {
     }))
 
     const chewing_without_tobaccoArr = ['Paan (betel leaf) without areca nut']
+
     const chewing_without_tobaccoProds = chewing_without_tobaccoArr.map(item => {
         return new TobaccoAlcoholConsumption({
             id: translator.generate(),
@@ -121,34 +127,45 @@ export const generateDefaultState = (user_id: string) => {
         })
     )
 
+    const findExisting = (type: initialState['product_type']) =>
+        masterData.find(item => item.product_type === type);
+
     const initialState: initialState[] = [
+        findExisting('smoking_tobacco') ||
         {
             product_type: 'smoking_tobacco',
             consumed: 0,
-            products: smokingProds
+            products: smokingProds,
+            id: translator.generate(),
         },
+        findExisting('chewing_tobacco') ||
         {
             product_type: 'chewing_tobacco',
             consumed: 0,
             products: chewingTobaccoProds,
+            id: translator.generate(),
         },
+        findExisting('chewing_without_tobacco') ||
         {
             product_type: 'chewing_without_tobacco',
             consumed: 0,
-            products: chewing_without_tobaccoProds
+            products: chewing_without_tobaccoProds,
+            id: translator.generate(),
         },
+        findExisting('alcohol') ||
         {
             product_type: 'alcohol',
             consumed: 0,
-            products: alcoholProds
+            products: alcoholProds,
+            id: translator.generate(),
         }
     ]
     return initialState;
 }
 
-export const populateWithBackend = (backendData: TOBACCO_ALCOHOL_CONSUMPION[], user_id: string | '') => {
+export const populateWithBackend = (masterData: initialState[], backendData: TOBACCO_ALCOHOL_CONSUMPION[], user_id: string | '' , tab_id:string) => {
     const translator = shortUUID();
-    const defaultState = generateDefaultState(user_id);
+    const defaultState = generateDefaultState(user_id, masterData,tab_id);
     const normalize = (str?: string) => (str || '').trim().toLowerCase();
     // Group backend data by type
     const backendByType: Record<string, TOBACCO_ALCOHOL_CONSUMPION[]> = {};
@@ -190,13 +207,14 @@ export const populateWithBackend = (backendData: TOBACCO_ALCOHOL_CONSUMPION[], u
                     user_id,
                     type,
                     product: '',
-                    is_other_product: 1,
+                    is_other_product: 1,  
                 }));
             }
             return {
                 product_type: type,
                 consumed: 1, // ✅ Mark as consumed
-                products: mergedProducts
+                products: mergedProducts,
+                id: defaultGroup.id
             };
 
         } else {
@@ -215,7 +233,8 @@ export const populateWithBackend = (backendData: TOBACCO_ALCOHOL_CONSUMPION[], u
             return {
                 product_type: type,
                 consumed: 0, // ✅ Mark as NOT consumed
-                products
+                products,
+                id: defaultGroup.id
             };
         }
     });

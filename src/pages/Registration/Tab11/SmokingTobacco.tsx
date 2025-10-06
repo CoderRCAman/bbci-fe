@@ -9,7 +9,14 @@ const test = [
         product: "Bidi (Manufactured/Roll your own)"
     }
 ]
-export default function SmokingTobacco({data}:{data : initialState}) {
+export default function SmokingTobacco({ data, handleChangeMaster, handleChangeProds }: {
+    data: initialState,
+    handleChangeMaster: (id: string, field: string, value: any) => void
+    handleChangeProds: (id: string, type: string, field: string, value: any) => void
+
+}) {
+
+
     return (
         <div className="space-y-2 border p-3 shadow rounded">
             <h1 className="text-slate-600 font-semibold">
@@ -18,25 +25,61 @@ export default function SmokingTobacco({data}:{data : initialState}) {
             <div className="text-slate-600 ">
                 <p className="">Have you ever smoked regularly? </p>
                 <div className="flex gap-5">
-                    <div>
-                        <input type="radio" /> YES
+                    <div className="space-x-2">
+                        <input type="radio"
+                            value={1}
+                            checked={data?.consumed === 1 ? true : false}
+                            onChange={e => handleChangeMaster(data.id, "consumed", parseInt(e.target.value))}
+                        />
+                        <span>YES</span>
                     </div>
-                    <div>
-                        <input type="radio" /> NO
+                    <div className="space-x-2">
+                        <input type="radio" value={2}
+                            checked={data?.consumed === 2 ? true : false}
+                            onChange={e => handleChangeMaster(data.id, "consumed", parseInt(e.target.value))}
+                        />
+                        <span>NO</span>
                     </div>
-                    <div>
-                        <input type="radio" /> DON'T KNOW
+                    <div className="space-x-2">
+                        <input type="radio" value={8} checked={data?.consumed === 8 ? true : false}
+                            onChange={e => handleChangeMaster(data.id, "consumed", parseInt(e.target.value))}
+
+                        />
+                        <span>DON'T KNOW</span>
                     </div>
-                    <div>
-                        <input type="radio" /> Refused to answer</div>
+                    <div className="space-x-2">
+                        <input type="radio" value={9} checked={data?.consumed === 9 ? true : false}
+                            onChange={e => handleChangeMaster(data.id, "consumed", parseInt(e.target.value))}
+                        />
+                        <span>
+                            Refused to answer
+                        </span>
+                    </div>
+
                 </div>
                 <div className="mt-2 space-y-2">
-                    {test.map((item, index) => (
+                    {data?.products.map((item, index) => (
                         <div key={index} className="border p-2 rounded space-y-1">
                             <h1>{item.product}</h1>
                             <div className="flex gap-2">
-                                <div><input type="radio" /> YES</div>
-                                <div><input type="radio" /> NO</div>
+                                <div>
+                                    <input
+                                        value={1}
+                                        type="radio"
+                                        checked={item.consumes === 1}
+                                        onChange={e => handleChangeProds(data.id, item.type || '', "consumes", parseInt(e.target.value))}
+                                    />
+                                    YES
+                                </div>
+                                <div>
+                                    <input
+                                        value={2}
+                                        type="radio"
+                                        checked={item.consumes === 2}
+                                        onChange={e => handleChangeProds(data.id, item.product || '', "consumes", parseInt(e.target.value))}
+                                    />
+                                    NO
+                                </div>
                             </div>
                             <div className="space-y-5 pt-4">
                                 <div>

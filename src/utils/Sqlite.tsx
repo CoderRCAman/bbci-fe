@@ -42,10 +42,10 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => {},
-  setConflictedList: () => {},
+  setBaseUrl: () => { },
+  setConflictedList: () => { },
   tabId: "",
-  setTabId: () => {},
+  setTabId: () => { },
 });
 
 // Create a custom hook to use the context
@@ -182,7 +182,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
               without_tobacco INTEGER,
               consumption_unit_per_day INTEGER,
               is_other_product INTEGER,
-              tab_id TEXT
+              tab_id TEXT ,
+              master_id TEXT 
              );
         `;
         const query5 = `
@@ -267,6 +268,16 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             );
           `;
 
+        const query12 = `
+             CREATE TABLE IF NOT EXISTS TOBACCO_ALCOHOL_CONSUMPTION_MASTER (
+                id TEXT PRIMARY KEY , 
+                type TEXT , 
+                user_id TEXT ,
+                consumed INTEGER , 
+                tab_id TEXT 
+             );
+          `
+
         //synch flag -> 0 1 2
         // 0 -> never synched
         // 1 -> synched
@@ -283,6 +294,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query9);
         await newDb.execute(query10);
         await newDb.execute(query11);
+        await newDb.execute(query12);
         try {
           const migration1 = `
                     CREATE TABLE IF NOT EXISTS tracksync (
@@ -331,7 +343,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                     );
                 `;
           await newDb?.execute(query);
-        } catch (error) {}
+        } catch (error) { }
 
         setDb(newDb);
         setIsLoading(false);
