@@ -73,6 +73,7 @@ export default function PMHInput({
             <InputText
               disabled={data?.diagnosed !== 1}
               keyfilter="int"
+              value={data?.age_first_diagnosis?.toString() || ""}
               className="border-1 p-2"
               onChange={(e) =>
                 updateStateData(
@@ -103,13 +104,14 @@ export default function PMHInput({
           </FloatLabel>
         </div>
         <div>
+          <h1 className=" text-slate-500">Treatment received</h1>
           <Dropdown
             disabled={data?.diagnosed !== 1}
             value={data?.treatment_received}
             optionLabel="name"
             optionValue="value"
             className="border-1"
-            placeholder="Treatment Received"
+            placeholder="Select Treatment Received"
             options={[
               { name: "YES", value: 1 },
               { name: "NO", value: 2 },

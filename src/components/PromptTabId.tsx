@@ -1,25 +1,25 @@
-import { IonAlert } from "@ionic/react";
+import { IonAlert, IonToast } from "@ionic/react";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSQLite } from "../utils/Sqlite";
+import { saveToStore } from "../utils/helper";
 
-export default function PromptTabId({
-  visible,
-  setVisible,
-}: {
-  visible: boolean;
-  setVisible: (v: boolean) => void;
-}) {
-  const { db } = useSQLite();
-  const [tabId, setTabId] = useState<string>("");
+export default function PromptTabId() {
+  const { db, sqlite, tabId, setTabId } = useSQLite();
+  const [tabInput, setTabInput] = useState("");
+  const [visible, setVisible] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
     message: "",
   });
+  useEffect(() => {
+    if (tabId !== "t") setTabInput(tabId || "");
+    setVisible(tabId ? false : true);
+  }, [tabId]);
   const handleSave = async () => {
     try {
       if (!tabId) {
@@ -32,7 +32,10 @@ export default function PromptTabId({
       const query = `
          INSERT OR REPLACE INTO tablet_data (id, tab_id) VALUES (1, ?); 
         `;
-      await db?.run(query, [tabId]);
+      await db?.run(query, [tabInput]);
+      await saveToStore(sqlite);
+      setTabId(tabInput);
+      setVisible(false);
       setAlert({
         show: true,
         header: "Success",
@@ -49,39 +52,39 @@ export default function PromptTabId({
   return (
     <div>
       <Dialog
-        header="Header"
+        header="Tablet regstration"
         visible={visible}
         style={{ width: "50vw" }}
         onHide={() => {
           if (!visible) return;
-          setVisible(false);
+          //   setVisible(false);
         }}
       >
-        <FloatLabel>
-          <InputText
-            keyfilter="int"
-            className="border-1 p-2"
-            onChange={(e) => {
-              setTabId(e.target.value);
-            }}
-          />
-          <label>Enter Tablet Id</label>
+        <main className="py-5">
+          <FloatLabel>
+            <InputText
+              className="border-1 p-2"
+              value={tabInput}
+              onChange={(e) => {
+                setTabInput(e.target.value);
+              }}
+            />
+            <label>Enter Tablet Id</label>
+          </FloatLabel>
           <Button
             label="Save"
             className="mt-4"
-            disabled={!tabId?.trim()}
+            disabled={!tabInput?.trim()}
             onClick={() => {
               handleSave();
             }}
           />
-          <IonAlert
-            isOpen={alert.show}
-            onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
-            header={alert.header}
+          <IonToast
+            trigger={alert.show ? "show-toast" : undefined}
             message={alert.message}
-            buttons={["OK"]}
-          />
-        </FloatLabel>
+            duration={5000}
+          ></IonToast>
+        </main>
       </Dialog>
     </div>
   );

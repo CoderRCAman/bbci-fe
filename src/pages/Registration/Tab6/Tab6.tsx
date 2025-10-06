@@ -8,6 +8,7 @@ import { Button } from "primereact/button";
 import { Link } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
 import ShortUUID from "short-uuid";
+import { saveToStore } from "../../../utils/helper";
 const translator = ShortUUID();
 export interface PERSONAL_MEDICAL_HISTORY {
   diagnoss: string;
@@ -47,26 +48,23 @@ function generateDefaultData(user_id: string): PERSONAL_MEDICAL_HISTORY_DB[] {
 }
 
 export default function Tab6() {
-  const { db, sqlite } = useSQLite();
+  const { db, sqlite, tabId } = useSQLite();
   const location = useLocation();
   const [id, setId] = useState<string | null>("");
-  const [editFlag, setEditFlag] = useState(false);
   const [dataState, setDataState] = useState<PERSONAL_MEDICAL_HISTORY_DB[]>([]);
   const searchParams = new URLSearchParams(location.search);
+  const [allowNext, setAllowNext] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
     message: "",
   });
-  useEffect(() => {
-    setId(searchParams?.get("id"));
-    setEditFlag(searchParams?.get("edit") === "YES");
-  }, [location.pathname]);
 
   useEffect(() => {
     if (db === null) return;
+    setId(searchParams?.get("id"));
     fetchExistingData();
-  }, [db]);
+  }, [db, location.pathname]);
 
   const updateStateData = (id: string, field: string, value: any) => {
     console.log(id, field, value);
@@ -81,7 +79,8 @@ export default function Tab6() {
   };
 
   const fetchExistingData = async () => {
-    try {
+    try { 
+      const id = searchParams?.get("id");
       const res = await db?.query(
         `SELECT * FROM personal_medical_history  WHERE user_id = ?`,
         [id]
@@ -92,6 +91,7 @@ export default function Tab6() {
         setDataState(defaultData);
         return;
       }
+      setAllowNext(true);
       setDataState(res?.values as PERSONAL_MEDICAL_HISTORY_DB[]);
     } catch (error) {
       console.log(error);
@@ -112,10 +112,21 @@ export default function Tab6() {
             mode_of_treatment,
             mode_of_diagnosis,
             mode_of_diagnosis_other,
-            user_id
-          ) VALUES (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-          );`;
+            user_id,
+            tab_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+          ON CONFLICT(id) DO UPDATE SET
+            diagnoss = excluded.diagnoss,
+            diagnosed = excluded.diagnosed,
+            age_first_diagnosis = excluded.age_first_diagnosis,
+            year_of_first_diagnosis = excluded.year_of_first_diagnosis,
+            treatment_received = excluded.treatment_received,
+            mode_of_treatment = excluded.mode_of_treatment,
+            mode_of_diagnosis = excluded.mode_of_diagnosis,
+            mode_of_diagnosis_other = excluded.mode_of_diagnosis_other,
+            user_id = excluded.user_id;
+        `;
+
         const values = [
           item.id,
           item.diagnosis,
@@ -127,8 +138,16 @@ export default function Tab6() {
           item.mode_of_diagnosis,
           item.mode_of_diagnosis_other,
           item.user_id,
+          tabId,
         ];
         await db?.run(query, values);
+        await saveToStore(sqlite);
+        setAllowNext(true);
+        setAlert({
+          show: true,
+          header: "Success",
+          message: "Data saved successfully",
+        });
       }
     } catch (error) {
       console.log(error);
@@ -169,10 +188,10 @@ export default function Tab6() {
               />
             </div>
             <div className="pt-20 flex justify-end gap-2">
-              <Link to={"/tab5"}>
+              <Link to={`/tab5?id=${id}`}>
                 <Button className="px-10 py-2 rounded" label="PREV" />
               </Link>
-              <Link to={"/tab7"}>
+              <Link to={"/tab7?id=" + id}>
                 <Button className="px-10 py-2 rounded" label="NEXT" />
               </Link>
             </div>

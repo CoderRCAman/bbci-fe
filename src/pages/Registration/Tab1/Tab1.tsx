@@ -1,5 +1,5 @@
 // src/pages/Tab1.tsx
-import React, { useEffect, useState, } from "react";
+import React, { useEffect, useState } from "react";
 import { InputText } from "primereact/inputtext";
 import {
   IonContent,
@@ -47,6 +47,7 @@ interface Patient {
   i_name: string;
   i_emp_code: string;
   dob: string;
+  tab_id?: string;
 }
 
 const forcedStyle = {
@@ -71,7 +72,7 @@ const Tab1: React.FC = () => {
   const [id, setId] = useState<string | null>(null);
   const [editFlag, setEditFlag] = useState<string | null>(null);
   const location = useLocation();
-  const { db, sqlite } = useSQLite();
+  const { db, sqlite, tabId } = useSQLite();
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -100,8 +101,8 @@ const Tab1: React.FC = () => {
   //below checks if this is for edit purpose
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const id = searchParams.get('id')
-    const flag = searchParams.get('edit');
+    const id = searchParams.get("id");
+    const flag = searchParams.get("edit");
     setId(id);
     setEditFlag(flag);
     if (!db) return;
@@ -129,7 +130,7 @@ const Tab1: React.FC = () => {
         if ((res as any)?.values?.length > 0) {
           setPatient((res as any)?.values[0]);
         }
-      } catch (error) { }
+      } catch (error) {}
     }
     fetchPatient();
   }, [location.search, db]);
@@ -148,6 +149,13 @@ const Tab1: React.FC = () => {
     if (editFlag == "yes" && id) {
       // Update
       console.log(patient);
+      if (patient.tab_id !== tabId) {
+        return setAlert({
+          show: true,
+          header: "Error",
+          message: "Tab Id mismatch. Please contact admin.",
+        });
+      }
       await db?.run(
         `UPDATE patients SET name = ?, age = ?, gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
@@ -177,11 +185,13 @@ const Tab1: React.FC = () => {
          SET synch = 2 
          where patient_id = '${id}'
         `
-        )
+        );
       }
-      console.log(await db?.query(`
+      console.log(
+        await db?.query(`
             select * tracksync where user_id = ${id}
-        `))
+        `)
+      );
       sqlite?.saveToStore("patientdb");
       setAlert((a) => ({
         ...a,
@@ -194,8 +204,8 @@ const Tab1: React.FC = () => {
       const uniqueId = generateUniqueId(data.name);
       await db?.run(
         `INSERT INTO patients (id, i_name, i_emp_code, name, age, gender,
-         lat, long, time, dob, date , created_at , updated_at )
-         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,?)`,
+         lat, long, time, dob, date , created_at , updated_at , tab_id )
+         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ?)`,
         [
           uniqueId,
           data.i_name,
@@ -210,6 +220,7 @@ const Tab1: React.FC = () => {
           format(new Date(), "yyyy-MM-dd"),
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
+          tabId,
         ]
       );
       await saveToStore(sqlite);
@@ -220,7 +231,7 @@ const Tab1: React.FC = () => {
         message: "Added successfully",
       }));
       setId(uniqueId);
-      history.push(`/tab5?id=${uniqueId}`)
+      history.push(`/tab5?id=${uniqueId}`);
     }
   };
 
@@ -229,7 +240,7 @@ const Tab1: React.FC = () => {
       const coordinates = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         maximumAge: 0,
-        timeout: 1000
+        timeout: 1000,
       });
       console.log("Current position:", coordinates);
       const { latitude, longitude } = coordinates.coords;
@@ -246,7 +257,11 @@ const Tab1: React.FC = () => {
   console.log(errors);
   return (
     <IonPage>
-      <Header title={editFlag === "yes" ? "Edit participants" : "Register Participant"} />
+      <Header
+        title={
+          editFlag === "yes" ? "Edit participants" : "Register Participant"
+        }
+      />
       <IonContent fullscreen>
         <form
           className=" shadow-1 border rounded-md m-2 p-2 pt-5 flex flex-col gap-10"
@@ -309,10 +324,7 @@ const Tab1: React.FC = () => {
             onClick={getCurrentPosition}
             className="p-3 rounded-md"
           />
-          <div
-            className="flex border rounded-md w-full align-items-center gap-5 p-2 "
-
-          >
+          <div className="flex border rounded-md w-full align-items-center gap-5 p-2 ">
             <div className="flex align-items-center">
               <p>Latitude : </p>
               <p>{patient.lat}</p>
@@ -350,10 +362,10 @@ const Tab1: React.FC = () => {
                   }}
                   render={({ field: { onChange } }) => (
                     <input
-                      type='radio'
+                      type="radio"
                       value={"male"}
-                      checked={watch('gender') === 'male'}
-                      onChange={e => onChange(e.target.value)}
+                      checked={watch("gender") === "male"}
+                      onChange={(e) => onChange(e.target.value)}
                     />
                   )}
                 />
@@ -368,10 +380,10 @@ const Tab1: React.FC = () => {
                   }}
                   render={({ field: { onChange } }) => (
                     <input
-                      type='radio'
+                      type="radio"
                       value={"female"}
-                      checked={watch('gender') === 'female'}
-                      onChange={e => onChange(e.target.value)}
+                      checked={watch("gender") === "female"}
+                      onChange={(e) => onChange(e.target.value)}
                     />
                   )}
                 />
@@ -386,10 +398,10 @@ const Tab1: React.FC = () => {
                   }}
                   render={({ field: { onChange } }) => (
                     <input
-                      type='radio'
+                      type="radio"
                       value={"other"}
-                      checked={watch('gender') === 'other'}
-                      onChange={e => onChange(e.target.value)}
+                      checked={watch("gender") === "other"}
+                      onChange={(e) => onChange(e.target.value)}
                     />
                   )}
                 />
@@ -454,12 +466,13 @@ const Tab1: React.FC = () => {
             />
           </div>
         </form>
-
-        <div className="flex justify-end p-2 gap-2  ">
-          <Link to={`/tab5?id=${id}&edit=${editFlag}`}>
-            <Button label="NEXT" className="px-3 py-2 rounded" />
-          </Link>
-        </div>
+        {id && (
+          <div className="flex justify-end p-2 gap-2  ">
+            <Link to={`/tab5?id=${id}&edit=${editFlag}`}>
+              <Button label="NEXT" className="px-3 py-2 rounded" />
+            </Link>
+          </div>
+        )}
         <IonAlert
           isOpen={alert.show}
           onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}

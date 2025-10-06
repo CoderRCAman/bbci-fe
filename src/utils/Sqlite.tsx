@@ -16,6 +16,7 @@ import {
 
 // Import the JeepSqlite component for the web platform
 import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
+import { useLocation } from "react-router";
 
 // Define the shape of a patient
 
@@ -29,8 +30,8 @@ interface SQLiteContextValue {
   conflictedList: any[];
   setConflictedList: React.Dispatch<React.SetStateAction<any[]>>;
   setBaseUrl: React.Dispatch<React.SetStateAction<string | null>>;
-  curTab: string;
-  setCurTab: React.Dispatch<React.SetStateAction<string>>;
+  tabId: string;
+  setTabId: React.Dispatch<React.SetStateAction<string>>;
 }
 0;
 // Create the context with a default value
@@ -41,10 +42,10 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => { },
-  setConflictedList: () => { },
-  curTab: "/tab1",
-  setCurTab: () => { },
+  setBaseUrl: () => {},
+  setConflictedList: () => {},
+  tabId: "",
+  setTabId: () => {},
 });
 
 // Create a custom hook to use the context
@@ -64,7 +65,20 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
     "http://localhost:11142"
   );
   const [ConflictedList, setConflictedList] = useState<any[]>([]);
-  const [curTab, setCurTab] = useState<string>("/tab1");
+  const [tabId, setTabId] = useState<string>("t");
+  useEffect(() => {
+    if (!db) return;
+    async function fetchTabletData() {
+      try {
+        const res = await db?.query("select * from tablet_data where id = 1");
+        const tabId = res?.values?.[0]?.tab_id || "";
+        setTabId(tabId);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchTabletData();
+  }, [db]);
   useEffect(() => {
     const initDb = async () => {
       try {
@@ -117,7 +131,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         created_at TEXT ,
                         updated_at TEXT ,
                         updated_by TEXT DEFAULT 'UNKNOWN',
-                        tab_id TEXT,
+                        tab_id TEXT
                     );
                 `;
         const query2 = `
@@ -222,10 +236,36 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
           `;
         const query9 = `
             CREATE TABLE IF NOT EXISTS tablet_data (
-              id INTEGER PRIMARY KEY AUTO_INCREMENT,
-              tab_id TEXT,
+              id INTEGER PRIMARY KEY ,
+              tab_id TEXT
             );
         `;
+        const query10 = `
+            CREATE TABLE IF NOT EXISTS anthropometry (
+              id TEXT PRIMARY KEY NOT NULL ,
+              user_id TEXT ,
+              date TEXT ,
+              height REAL ,
+              weight REAL ,
+              tab_id TEXT
+            );          
+        `;
+
+        const query11 = `
+            CREATE TABLE IF NOT EXISTS indoor_air_pollution (
+              id TEXT PRIMARY KEY NOT NULL,
+              from_age INTEGER,
+              to_age INTEGER,
+              hours INTEGER,
+              minutes INTEGER,
+              ventilation INTEGER,
+              most_common_cooking_fuel INTEGER,
+              smokiness INTEGER,
+              most_cooking INTEGER,
+              user_id TEXT,
+              tab_id TEXT
+            );
+          `;
 
         //synch flag -> 0 1 2
         // 0 -> never synched
@@ -241,6 +281,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query7);
         await newDb.execute(query8);
         await newDb.execute(query9);
+        await newDb.execute(query10);
+        await newDb.execute(query11);
         try {
           const migration1 = `
                     CREATE TABLE IF NOT EXISTS tracksync (
@@ -289,7 +331,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                     );
                 `;
           await newDb?.execute(query);
-        } catch (error) { }
+        } catch (error) {}
 
         setDb(newDb);
         setIsLoading(false);
@@ -319,8 +361,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
     setBaseUrl,
     conflictedList: ConflictedList,
     setConflictedList,
-    curTab,
-    setCurTab,
+    tabId,
+    setTabId,
   };
 
   return (

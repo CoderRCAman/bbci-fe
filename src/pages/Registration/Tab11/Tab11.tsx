@@ -21,11 +21,10 @@ export default function Tab11() {
     });
     const location = useLocation();
     const [id, setId] = useState<string>('');
-    const [editFlag, setEditFlag] = useState(false);
     const searchParams = new URLSearchParams(location.search);
     useEffect(() => {
         setId(searchParams?.get('id') || '');
-        setEditFlag(searchParams?.get('edit') === 'YES');
+        
     }, [location.pathname])
     const { db, sqlite } = useSQLite();
     const [data, setData] = useState<initialState[]>([]);
@@ -76,12 +75,12 @@ export default function Tab11() {
                 />
                 <div className="pt-10 pb-2 px-2 flex justify-end gap-2">
                     <Link
-                        to={'/tab9'}
+                        to={'/tab9?id=' + id}
                     >
                         <Button className='px-10 py-2 rounded' label='PREV' />
                     </Link>
                     <Link
-                        to={'/tab12'}
+                        to={'/tab12?id=' + id}
                     >
                         <Button className='px-10 py-2 rounded' label='NEXT' />
                     </Link>

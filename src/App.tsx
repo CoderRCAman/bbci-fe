@@ -1,4 +1,4 @@
-import { Redirect, Route } from "react-router-dom";
+import { Redirect, Route, useLocation } from "react-router-dom";
 import {
   IonApp,
   IonIcon,
@@ -34,7 +34,7 @@ import "@ionic/react/css/core.css";
 /* Theme variables */
 import Sidebar from "./components/Sidebar";
 import { useEffect } from "react";
-import { SQLiteProvider } from "./utils/Sqlite";
+import { SQLiteProvider, useSQLite } from "./utils/Sqlite";
 import Tab4 from "./pages/Registration/Tab4/Tab4";
 import Tab5 from "./pages/Registration/Tab5/Tab5";
 import Tab6 from "./pages/Registration/Tab6/Tab6";
@@ -56,6 +56,7 @@ import BloodPage4 from "./pages/Blood/page4/BloodPage4";
 import BloodPage5 from "./pages/Blood/page5/BloodPage5";
 import BloodPage6 from "./pages/Blood/page6/BloodPage6";
 import BloodPage7 from "./pages/Blood/page7/BloodPage7";
+import PromptTabId from "./components/PromptTabId";
 
 setupIonicReact();
 
@@ -68,6 +69,7 @@ const App: React.FC = () => {
     };
     setupStatusBar();
   }, []);
+
   return (
     <SQLiteProvider>
       <IonApp>
@@ -141,14 +143,13 @@ const App: React.FC = () => {
                 <BloodPage4 />
               </Route>
               <Route path="/blood5">
-                <BloodPage5/>
+                <BloodPage5 />
               </Route>
               <Route path="/blood6">
-                <BloodPage6/>
+                <BloodPage6 />
               </Route>
               <Route path="/blood7">
-                <BloodPage7/>
-
+                <BloodPage7 />
               </Route>
             </IonRouterOutlet>
             {/* ----------------------------------------- */}
@@ -160,7 +161,8 @@ const App: React.FC = () => {
             <Route path="/food2">
               <FoodRecallPage2 />
             </Route>
-          </IonTabs>
+          </IonTabs> 
+          <PromptTabId  />
         </IonReactRouter>
       </IonApp>
     </SQLiteProvider>
