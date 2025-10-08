@@ -14,6 +14,7 @@ import {
   TOBACCO_ALCOHOL_CONSUMPION,
 } from "./data";
 import { useSQLite } from "../../../utils/Sqlite";
+import shortUUID from "short-uuid";
 
 export default function Tab11() {
   const [alert, setAlert] = useState({
@@ -130,6 +131,55 @@ export default function Tab11() {
     });
   };
 
+  const addNewOtherUi = (
+    type:
+      | "smoking_tobacco"
+      | "chewing_tobacco"
+      | "chewing_without_tobacco"
+      | "alcohol"
+  ) => {
+    const id = searchParams.get("id") || "";
+    const translator = shortUUID();
+    let newProd: TOBACCO_ALCOHOL_CONSUMPION = {
+      type: type,
+      user_id: id,
+      id: translator.generate(),
+      is_other_product: 1,
+    };
+    setData((d) =>
+      d.map((item) =>
+        item.product_type === type
+          ? { ...item, products: [...item.products, newProd] }
+          : item
+      )
+    );
+  };
+  const handleRemoveUi = (
+    id: string,
+    type:
+      | "smoking_tobacco"
+      | "chewing_tobacco"
+      | "chewing_without_tobacco"
+      | "alcohol"
+  ) => {
+    if (
+      data
+        .find((x) => x.product_type === type)
+        ?.products.filter((x) => x.is_other_product).length === 1
+    )
+      return;
+    setData((d) =>
+      d.map((item) =>
+        item.product_type === type
+          ? {
+              ...item,
+              products: item.products.filter((x) => x.id !== id),
+            }
+          : item
+      )
+    );
+  };
+
   console.log(dirtyValuesProduct, data);
 
   return (
@@ -162,6 +212,8 @@ export default function Tab11() {
                 data={data?.[1]}
                 handleChangeMaster={handleChangeMaster}
                 handleChangeProds={handleChangeProds}
+                addNewOtherUi={addNewOtherUi}
+                handleRemoveUi={handleRemoveUi}
               />
             </AccordionTab>
             <AccordionTab
