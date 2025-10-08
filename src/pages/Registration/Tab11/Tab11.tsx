@@ -9,8 +9,10 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import {
+  checkElibleToSave,
   initialState,
   populateWithBackend,
+  saveToDBAlcohol,
   TOBACCO_ALCOHOL_CONSUMPION,
 } from "./data";
 import { useSQLite } from "../../../utils/Sqlite";
@@ -180,7 +182,40 @@ export default function Tab11() {
     );
   };
 
-  console.log(dirtyValuesProduct, data);
+  async function handleSave() {
+    try {
+      if (!db || !sqlite) return;
+      if (db && !(await checkElibleToSave(db, id, tabId))) {
+        setAlert({
+          header: "Error",
+          message: "You are not eligible to save",
+          show: true,
+        });
+        return;
+      }
+      await saveToDBAlcohol(
+        db,
+        sqlite,
+        dirtyValuesMaster,
+        dirtyValuesProduct,
+        id,
+        tabId
+      );
+      setAlert({
+        header: "Success",
+        message: "Saved successfully",
+        show: true,
+      });
+    } catch (error) {
+      setAlert({
+        header: "Error",
+        message: "Something went wrong",
+        show: true,
+      });
+    }
+  }
+
+  console.log(dirtyValuesMaster, dirtyValuesProduct, data);
 
   return (
     <IonPage>
@@ -220,17 +255,34 @@ export default function Tab11() {
               className="border-1 rounded  border-slate-200"
               header="Chewing without tobacco"
             >
-              <ChewingWithoutTobacco data={data?.[2]} />
+              <ChewingWithoutTobacco
+                data={data?.[2]}
+                addNewOtherUi={addNewOtherUi}
+                handleRemoveUi={handleRemoveUi}
+                handleChangeMaster={handleChangeMaster}
+                handleChangeProds={handleChangeProds}
+              />
             </AccordionTab>
             <AccordionTab
               className="border-1 rounded  border-slate-200"
               header="Alcohol"
             >
-              <Alcohol data={data?.[3]} user_id={id} setData={setData} />
+              <Alcohol
+                data={data?.[3]}
+                addNewOtherUi={addNewOtherUi}
+                handleRemoveUi={handleRemoveUi}
+                handleChangeMaster={handleChangeMaster}
+                handleChangeProds={handleChangeProds}
+              />
             </AccordionTab>
           </Accordion>
           <div className="flex justify-end ">
-            <Button label="Save" severity="success" className="py-2" />
+            <Button
+              label="Save"
+              severity="success"
+              className="py-2"
+              onClick={handleSave}
+            />
           </div>
         </main>
         <IonAlert

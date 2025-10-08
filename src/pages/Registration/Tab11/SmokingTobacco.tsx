@@ -91,119 +91,121 @@ export default function SmokingTobacco({
           </div>
         </div>
         <div className="mt-2 space-y-2">
-          {data?.products.map((item, index) => (
-            <div key={index} className="border p-2 rounded space-y-1">
-              <h1>{item.product}</h1>
-              <div className="flex gap-2">
-                <div className="space-x-2">
-                  <input
-                    value={1}
-                    type="radio"
-                    checked={item.consumes === 1}
-                    onChange={(e) =>
-                      handleChangeProds(
-                        item.id,
-                        item.type || "",
-                        "consumes",
-                        parseInt(e.target.value)
-                      )
-                    }
-                  />
-                  <span>YES</span>
+          {data?.products
+            .filter((x) => x.is_other_product !== 1)
+            .map((item, index) => (
+              <div key={index} className="border p-2 rounded space-y-1">
+                <h1>{item.product}</h1>
+                <div className="flex gap-2">
+                  <div className="space-x-2">
+                    <input
+                      value={1}
+                      type="radio"
+                      checked={item.consumes === 1}
+                      onChange={(e) =>
+                        handleChangeProds(
+                          item.id,
+                          item.type || "",
+                          "consumes",
+                          parseInt(e.target.value)
+                        )
+                      }
+                    />
+                    <span>YES</span>
+                  </div>
+                  <div className="space-x-2">
+                    <input
+                      value={2}
+                      type="radio"
+                      checked={item.consumes === 2}
+                      onChange={(e) =>
+                        handleChangeProds(
+                          item.id,
+                          item.type || "",
+                          "consumes",
+                          parseInt(e.target.value)
+                        )
+                      }
+                    />
+                    <span>NO</span>
+                  </div>
                 </div>
-                <div className="space-x-2">
-                  <input
-                    value={2}
-                    type="radio"
-                    checked={item.consumes === 2}
-                    onChange={(e) =>
-                      handleChangeProds(
-                        item.id,
-                        item.type || "",
-                        "consumes",
-                        parseInt(e.target.value)
-                      )
-                    }
-                  />
-                  <span>NO</span>
+                <div className="space-y-7 pt-10">
+                  <div>
+                    <FloatLabel>
+                      <InputText
+                        keyfilter="int"
+                        className="border-1 p-2"
+                        value={item.from_age?.toString()}
+                        onChange={(e) =>
+                          handleChangeProds(
+                            item.id,
+                            item.type || "",
+                            "from_age",
+                            e.target.value ? parseInt(e.target.value) : ""
+                          )
+                        }
+                      />
+                      <label>From age</label>
+                    </FloatLabel>
+                  </div>
+                  <div>
+                    <FloatLabel>
+                      <InputText
+                        keyfilter="int"
+                        className="border-1 p-2"
+                        value={item.to_age?.toString()}
+                        onChange={(e) =>
+                          handleChangeProds(
+                            item.id,
+                            item.type || "",
+                            "to_age",
+                            e.target.value ? parseInt(e.target.value) : ""
+                          )
+                        }
+                      />
+                      <label>To age</label>
+                    </FloatLabel>
+                  </div>
+                  <div>
+                    <FloatLabel>
+                      <InputText
+                        keyfilter="int"
+                        className="border-1 p-2"
+                        value={item.number_per_day?.toString()}
+                        onChange={(e) =>
+                          handleChangeProds(
+                            item.id,
+                            item.type || "",
+                            "number_per_day",
+                            e.target.value ? parseInt(e.target.value) : ""
+                          )
+                        }
+                      />
+                      <label>Number per day</label>
+                    </FloatLabel>
+                  </div>
+                  <div>
+                    <FloatLabel>
+                      <InputText
+                        keyfilter="int"
+                        className="border-1 p-2"
+                        value={item.days_in_week?.toString()}
+                        onChange={(e) =>
+                          handleChangeProds(
+                            item.id,
+                            item.type || "",
+                            "days_in_week",
+                            e.target.value ? parseInt(e.target.value) : ""
+                          )
+                        }
+                      />
+                      <label>Days in a week</label>
+                    </FloatLabel>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-7 pt-10">
-                <div>
-                  <FloatLabel>
-                    <InputText
-                      keyfilter="int"
-                      className="border-1 p-2"
-                      value={item.from_age?.toString()}
-                      onChange={(e) =>
-                        handleChangeProds(
-                          item.id,
-                          item.type || "",
-                          "from_age",
-                          e.target.value ? parseInt(e.target.value) : ""
-                        )
-                      }
-                    />
-                    <label>From age</label>
-                  </FloatLabel>
-                </div>
-                <div>
-                  <FloatLabel>
-                    <InputText
-                      keyfilter="int"
-                      className="border-1 p-2"
-                      value={item.to_age?.toString()}
-                      onChange={(e) =>
-                        handleChangeProds(
-                          item.id,
-                          item.type || "",
-                          "to_age",
-                          e.target.value ? parseInt(e.target.value) : ""
-                        )
-                      }
-                    />
-                    <label>To age</label>
-                  </FloatLabel>
-                </div>
-                <div>
-                  <FloatLabel>
-                    <InputText
-                      keyfilter="int"
-                      className="border-1 p-2"
-                      value={item.number_per_day?.toString()}
-                      onChange={(e) =>
-                        handleChangeProds(
-                          item.id,
-                          item.type || "",
-                          "number_per_day",
-                          e.target.value ? parseInt(e.target.value) : ""
-                        )
-                      }
-                    />
-                    <label>Number per day</label>
-                  </FloatLabel>
-                </div>
-                <div>
-                  <FloatLabel>
-                    <InputText
-                      keyfilter="int"
-                      className="border-1 p-2"
-                      value={item.days_in_week?.toString()}
-                      onChange={(e) =>
-                        handleChangeProds(
-                          item.id,
-                          item.type || "",
-                          "days_in_week",
-                          e.target.value ? parseInt(e.target.value) : ""
-                        )
-                      }
-                    />
-                    <label>Days in a week</label>
-                  </FloatLabel>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))}
 
           {/* -------------------------------------------------------------- */}
           {data?.products

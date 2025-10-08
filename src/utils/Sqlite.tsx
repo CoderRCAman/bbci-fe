@@ -42,10 +42,10 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => { },
-  setConflictedList: () => { },
+  setBaseUrl: () => {},
+  setConflictedList: () => {},
   tabId: "",
-  setTabId: () => { },
+  setTabId: () => {},
 });
 
 // Create a custom hook to use the context
@@ -173,6 +173,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
               to_age INTEGER,
               number_per_day INTEGER,
               days_in_week INTEGER,
+              days_in_month INTEGER,
               duration_placement_hr INTEGER,
               duration_placement_min INTEGER,
               site_of_placement_L INTEGER,
@@ -276,7 +277,22 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                 consumed INTEGER , 
                 tab_id TEXT 
              );
-          `
+          `;
+
+        const query13 = `
+             CREATE TABLE IF NOT EXISTS demographic_info (
+               id TEXT PRIMARY KEY ,
+               user_id TEXT,
+               religion TEXT,
+               marital_status TEXT,
+               highest_education TEXT,
+               highest_education_spouse TEXT,
+               household_income TEXT,
+               mother_tongue TEXT,
+               place_of_birth TEXT,
+               tab_id TEXT
+             );
+          `;
 
         //synch flag -> 0 1 2
         // 0 -> never synched
@@ -295,6 +311,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query10);
         await newDb.execute(query11);
         await newDb.execute(query12);
+        await newDb.execute(query13);
         try {
           const migration1 = `
                     CREATE TABLE IF NOT EXISTS tracksync (
@@ -343,7 +360,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                     );
                 `;
           await newDb?.execute(query);
-        } catch (error) { }
+        } catch (error) {}
 
         setDb(newDb);
         setIsLoading(false);

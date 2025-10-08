@@ -191,7 +191,7 @@ export default function Tab6() {
               <Link to={`/tab5?id=${id}`}>
                 <Button className="px-10 py-2 rounded" label="PREV" />
               </Link>
-              <Link to={"/tab7?id=" + id}>
+              <Link to={"/tab8?id=" + id}>
                 <Button className="px-10 py-2 rounded" label="NEXT" />
               </Link>
             </div>
