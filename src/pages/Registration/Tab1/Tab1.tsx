@@ -238,7 +238,7 @@ const Tab1: React.FC = () => {
   const getCurrentPosition = async () => {
     try {
       const coordinates = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: true,
+        // enableHighAccuracy: true,
         maximumAge: 0,
         timeout: 1000,
       });

@@ -46,10 +46,12 @@ const data = [
       "Buddhist",
       "Other",
     ],
+    field: 'religion'
   },
   {
     type: "Marital status",
     data: ["Unmarried", "Married", "Widowed", "Divorce/seperated", "Other"],
+    field: "marital_status"
   },
   {
     type: "Highest level of education received by the subject",
@@ -64,6 +66,7 @@ const data = [
       "Graduate and above",
       "Dont't know",
     ],
+    field: 'highest_education'
   },
   {
     type: "Highest level of education received by the spouse",
@@ -78,6 +81,7 @@ const data = [
       "Graduate and above",
       "Dont't know",
     ],
+    field: "highest_education_spouse"
   },
   {
     type: "What is your household income",
@@ -92,6 +96,7 @@ const data = [
       "Does not know",
       "Deoes not want to disclose",
     ],
+    field: 'household_income'
   },
 ];
 
@@ -147,7 +152,6 @@ export default function Tab12() {
           show: true,
         });
       }
-      console.log(demographicInfo);
       const query = `
                     INSERT INTO demographic_info (
                     id,

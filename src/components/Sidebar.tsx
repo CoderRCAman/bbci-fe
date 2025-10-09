@@ -45,7 +45,7 @@ export default function Sidebar() {
                 </IonHeader>
 
                 <IonContent className="ion-padding [--background:theme(colors.slate.900)]">
-                    <div className="flex flex-col space-y-2">
+                    <div className="flex flex-col ">
                         {menuItems.map((item, index) => {
                             // Determine if the current link is active
                             const isActive =  location.pathname.includes(item.path.substring(0,5)) ;

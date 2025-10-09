@@ -23,6 +23,8 @@ import { CSSProperties, useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import axios from "axios";
 import ShowConflicts from "../../../components/ShowConflicts";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
 const forcedStyle = {
   contentPad: {
     padding: "15px",
@@ -283,58 +285,51 @@ const Tab3: React.FC = () => {
       <Header title="Synch" />
       <IonContent style={forcedStyle.contentPad} fullscreen>
         <main className="space-y-5" style={forcedStyle.contentPad}>
-          <IonInput
-            onIonInput={(e) => setBaseUrl(e.detail.value!)}
-            style={forcedStyle.ionInput}
-            placeholder="Enter IP/URL of the server to synch"
-          />
-          <h2>Tables to synch</h2>
+          <h1 className="font-bold text-red-400 italic">NOTE THIS PAGE REQUIRES US TO HAVE FULL SCHEMA STRUCTURE FOR ALL THE TABLE! TECHNICALLY UNDERCONSTRUCTION</h1>
+          <h2 className="text-lg font-semibold text-slate-600">Tables to synch</h2>
           {patients?.length == 0 && updatedPatient?.length == 0 ? (
             <div
               style={{
-                color: "gray",
+                color: "gray", 
               }}
+              
             >
               NO TABLES TO SYNCH
             </div>
           ) : (
             <>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#f2f2f2" }}>
-                    <th style={thStyle}>Index</th>
-                    <th style={thStyle}>ID</th>
-                    <th style={thStyle}>Name</th>
-                    <th style={thStyle}>Synched Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {patients.map((item, index) => (
-                    <tr key={item.id} style={{ textAlign: "center" }}>
-                      <td style={tdStyle}>{index + 1}</td>
-                      <td style={tdStyle}>{item.id}</td>
-                      <td style={tdStyle}>{item.name}</td>
-                      <td style={tdStyle}>
-                        <span style={{ color: getStatusColor(item.synch) }}>
-                          {getStatus(item.synch)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {updatedPatient.map((item, index) => (
-                    <tr key={item.id} style={{ textAlign: "center" }}>
-                      <td style={tdStyle}>{index + 1}</td>
-                      <td style={tdStyle}>{item.id}</td>
-                      <td style={tdStyle}>{item.name}</td>
-                      <td style={tdStyle}>
-                        <span style={{ color: getStatusColor(item.synch) }}>
-                          {getStatus(item.synch)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <DataTable value={patients}
+                tableStyle={{ minWidth: '6rem' }}
+                // tableClassName="p-datatable-gridlines" 
+
+                paginator
+                rows={10}
+                showGridlines
+                size='normal'
+                className="border "
+              >
+                <Column
+                  header="#"
+                  body={(rowData, options) => options.rowIndex + 1}
+                  style={{ width: '50px' }}
+                  bodyClassName="border-b border-gray-300 "
+                />
+                <Column field="id" sortable header="Id"
+                  bodyClassName="border-b border-gray-300 "
+                ></Column>
+                <Column field="name" sortable header="Name"
+                  bodyClassName="border-b border-gray-300 "
+                ></Column>
+                <Column sortable header="Synch status"
+                  body={(rowData) => (
+                    <span style={{ color: getStatusColor(rowData.synch) }}>
+                      {getStatus(rowData.synch)}
+                    </span>
+                  )}
+                  bodyClassName="border-b border-gray-300 "
+                ></Column>
+              </DataTable>
+
               <IonButton
                 onClick={() => handleUnSynched()}
                 style={forcedStyle.btnPadd}

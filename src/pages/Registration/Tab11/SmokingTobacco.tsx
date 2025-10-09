@@ -110,6 +110,7 @@ export default function SmokingTobacco({
                           parseInt(e.target.value)
                         )
                       }
+                      disabled={data.consumed !== 1}
                     />
                     <span>YES</span>
                   </div>
@@ -126,6 +127,7 @@ export default function SmokingTobacco({
                           parseInt(e.target.value)
                         )
                       }
+                      disabled={data.consumed !== 1}
                     />
                     <span>NO</span>
                   </div>
@@ -145,6 +147,7 @@ export default function SmokingTobacco({
                             e.target.value ? parseInt(e.target.value) : ""
                           )
                         }
+                        disabled={data.consumed !== 1 || item.consumes !== 1}
                       />
                       <label>From age</label>
                     </FloatLabel>
@@ -163,6 +166,7 @@ export default function SmokingTobacco({
                             e.target.value ? parseInt(e.target.value) : ""
                           )
                         }
+                        disabled={data.consumed !== 1 || item.consumes !== 1}
                       />
                       <label>To age</label>
                     </FloatLabel>
@@ -181,6 +185,7 @@ export default function SmokingTobacco({
                             e.target.value ? parseInt(e.target.value) : ""
                           )
                         }
+                        disabled={data.consumed !== 1 || item.consumes !== 1}
                       />
                       <label>Number per day</label>
                     </FloatLabel>
@@ -199,6 +204,7 @@ export default function SmokingTobacco({
                             e.target.value ? parseInt(e.target.value) : ""
                           )
                         }
+                        disabled={data.consumed !== 1 || item.consumes !== 1}
                       />
                       <label>Days in a week</label>
                     </FloatLabel>
@@ -210,8 +216,8 @@ export default function SmokingTobacco({
           {/* -------------------------------------------------------------- */}
           {data?.products
             .filter((p) => p.is_other_product === 1)
-            .map((p) => (
-              <div className="border p-2 rounded space-y-7">
+            .map((p,index) => (
+              <div key={index} className="border p-2 rounded space-y-7">
                 <h1>Other</h1>
 
                 <div className="flex gap-2">
@@ -228,6 +234,7 @@ export default function SmokingTobacco({
                         e.target.value
                       )
                     }
+                    disabled={data.consumed !== 1}
                   />
                 </div>
                 <div className="space-y-5 pt-4">
@@ -245,6 +252,7 @@ export default function SmokingTobacco({
                             e.target.value ? parseInt(e.target.value) : ""
                           )
                         }
+                        disabled={data.consumed !== 1}
                       />
                       <label>From age</label>
                     </FloatLabel>
@@ -263,6 +271,7 @@ export default function SmokingTobacco({
                             e.target.value ? parseInt(e.target.value) : ""
                           )
                         }
+                        disabled={data.consumed !== 1}
                       />
                       <label>To age</label>
                     </FloatLabel>
@@ -281,6 +290,7 @@ export default function SmokingTobacco({
                             e.target.value ? parseInt(e.target.value) : ""
                           )
                         }
+                        disabled={data.consumed !== 1}
                       />
                       <label>Number per day</label>
                     </FloatLabel>
@@ -299,6 +309,7 @@ export default function SmokingTobacco({
                             e.target.value ? parseInt(e.target.value) : ""
                           )
                         }
+                        disabled={data.consumed !== 1}
                       />
                       <label>Days in a week</label>
                     </FloatLabel>

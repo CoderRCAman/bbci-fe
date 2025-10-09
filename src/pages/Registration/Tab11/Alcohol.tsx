@@ -131,6 +131,7 @@ export default function Alcohol({
                         parseInt(e.target.value)
                       )
                     }
+                    disabled={data?.consumed !== 1}
                   />{" "}
                   YES
                 </div>
@@ -147,6 +148,7 @@ export default function Alcohol({
                         parseInt(e.target.value)
                       )
                     }
+                    disabled={data?.consumed !== 1}
                   />{" "}
                   NO
                 </div>
@@ -168,6 +170,7 @@ export default function Alcohol({
                             : parseInt(e.target.value)
                         )
                       }
+                      disabled={item?.consumes !== 1}
                     />
                     <label>From age</label>
                   </FloatLabel>
@@ -188,6 +191,7 @@ export default function Alcohol({
                             : parseInt(e.target.value)
                         )
                       }
+                      disabled={item?.consumes !== 1}
                     />
                     <label>To age</label>
                   </FloatLabel>
@@ -208,6 +212,7 @@ export default function Alcohol({
                             : parseInt(e.target.value)
                         )
                       }
+                      disabled={item?.consumes !== 1}
                     />
                     <label>Number per day</label>
                   </FloatLabel>
@@ -232,6 +237,7 @@ export default function Alcohol({
                               : parseInt(e.target.value)
                           )
                         }
+                        disabled={item?.consumes !== 1}
                       />
                     </div>
                     <div className="flex gap-2">
@@ -250,6 +256,7 @@ export default function Alcohol({
                               : parseInt(e.target.value)
                           )
                         }
+                        disabled={item?.consumes !== 1}
                       />
                     </div>
                   </div>
@@ -272,6 +279,7 @@ export default function Alcohol({
                               : parseInt(e.target.value)
                           )
                         }
+                        disabled={item?.consumes !== 1}
                       />
                       <label>Consumption Unit per day *(ml/ Glass)</label>
                     </FloatLabel>
@@ -292,6 +300,7 @@ export default function Alcohol({
               handleRemoveUi={handleRemoveUi}
               addNewOtherUi={addNewOtherUi}
               handleChangeProds={handleChangeProds}
+              isDisabled={data.consumed !== 1}
             />
           ))}
       </div>

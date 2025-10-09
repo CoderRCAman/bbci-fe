@@ -125,6 +125,7 @@ export default function ChewingWithoutTobacco({
                         parseInt(e.target.value)
                       )
                     }
+                    disabled={data.consumed !== 1}
                   />{" "}
                   YES
                 </div>
@@ -141,6 +142,7 @@ export default function ChewingWithoutTobacco({
                         parseInt(e.target.value)
                       )
                     }
+                    disabled={data.consumed !== 1}
                   />{" "}
                   NO
                 </div>
@@ -162,6 +164,7 @@ export default function ChewingWithoutTobacco({
                         )
                       }
                       value={item?.from_age?.toString()}
+                      disabled={item.consumes !== 1}
                     />
                     <label>From age</label>
                   </FloatLabel>
@@ -182,6 +185,7 @@ export default function ChewingWithoutTobacco({
                         )
                       }
                       value={item?.to_age?.toString()}
+                      disabled={item.consumes !== 1}
                     />
                     <label>To age</label>
                   </FloatLabel>
@@ -202,6 +206,8 @@ export default function ChewingWithoutTobacco({
                         )
                       }
                       value={item?.number_per_day?.toString()}
+                      disabled={item.consumes !== 1}
+
                     />
                     <label>Number per day</label>
                   </FloatLabel>
@@ -222,6 +228,7 @@ export default function ChewingWithoutTobacco({
                         )
                       }
                       value={item?.days_in_week?.toString()}
+                      disabled={item.consumes !== 1}
                     />
                     <label>Days in a week</label>
                   </FloatLabel>
@@ -245,6 +252,7 @@ export default function ChewingWithoutTobacco({
                               : parseInt(e.target.value)
                           )
                         }
+                        disabled={item.consumes !== 1}
                       />
                     </div>
                     <div>:</div>
@@ -263,6 +271,7 @@ export default function ChewingWithoutTobacco({
                               : parseInt(e.target.value)
                           )
                         }
+                        disabled={item.consumes !== 1}
                       />
                     </div>
                     <div>MINUTES</div>
@@ -286,6 +295,7 @@ export default function ChewingWithoutTobacco({
                             parseInt(e.target.value)
                           )
                         }
+                        disabled={item.consumes !== 1}
                       />{" "}
                       L
                     </div>
@@ -305,6 +315,7 @@ export default function ChewingWithoutTobacco({
                             parseInt(e.target.value) /*  */
                           )
                         }
+                        disabled={item.consumes !== 1}
                       />{" "}
                       R
                     </div>
@@ -323,6 +334,7 @@ export default function ChewingWithoutTobacco({
                             parseInt(e.target.value) /*  */
                           )
                         }
+                        disabled={item.consumes !== 1}
                       />{" "}
                       F
                     </div>
@@ -343,6 +355,7 @@ export default function ChewingWithoutTobacco({
                             parseInt(e.target.value) /*  */
                           )
                         }
+                        disabled={item.consumes !== 1}
                       />{" "}
                       n/a
                     </div>
@@ -362,6 +375,7 @@ export default function ChewingWithoutTobacco({
                 handleRemoveUi={handleRemoveUi}
                 addNewOtherUi={addNewOtherUi}
                 handleChangeProds={handleChangeProds}
+                isDisabled={data.consumed !== 1}
               />
             ))}
         </div>

@@ -8,6 +8,7 @@ export default function OtherAlcohol({
   handleRemoveUi,
   handleChangeProds,
   addNewOtherUi,
+  isDisabled
 }: {
   addNewOtherUi: any;
   data: TOBACCO_ALCOHOL_CONSUMPION;
@@ -18,6 +19,7 @@ export default function OtherAlcohol({
     field: string,
     value: any
   ) => void;
+  isDisabled: boolean;
 }) {
   return (
     <div className="mt-5">
@@ -30,6 +32,7 @@ export default function OtherAlcohol({
             type="text"
             className="border-b-2 focus:outline-none focus:border-slate-500 w-[60%]"
             value={data.product}
+            disabled={isDisabled}
           />
         </div>
         <div className="space-y-5 pt-4">
@@ -49,6 +52,7 @@ export default function OtherAlcohol({
                       : parseInt(e.target.value)
                   )
                 }
+                disabled={isDisabled}
               />
               <label>From age</label>
             </FloatLabel>
@@ -59,6 +63,17 @@ export default function OtherAlcohol({
                 keyfilter="int"
                 className="border-1 p-2"
                 value={data?.to_age?.toString()}
+                onChange={e =>
+                  handleChangeProds(
+                    data.id,
+                    "alcohol",
+                    "to_age",
+                    isNaN(parseInt(e.target.value))
+                      ? 0
+                      : parseInt(e.target.value)
+                  )
+                }
+                disabled={isDisabled}
               />
               <label>To age</label>
             </FloatLabel>
@@ -79,6 +94,7 @@ export default function OtherAlcohol({
                       : parseInt(e.target.value)
                   )
                 }
+                disabled={isDisabled}
               />
               <label>Number per day</label>
             </FloatLabel>
@@ -99,6 +115,7 @@ export default function OtherAlcohol({
                       : parseInt(e.target.value)
                   )
                 }
+                disabled={isDisabled}
               />
               <label>Days in a week</label>
             </FloatLabel>
@@ -122,6 +139,7 @@ export default function OtherAlcohol({
                         : parseInt(e.target.value)
                     )
                   }
+                  disabled={isDisabled}
                 />
               </div>
               <div>:</div>
@@ -140,6 +158,7 @@ export default function OtherAlcohol({
                         : parseInt(e.target.value)
                     )
                   }
+                  disabled={isDisabled}
                 />
               </div>
               <div>MINUTES</div>
@@ -163,6 +182,7 @@ export default function OtherAlcohol({
                       e.target.value
                     )
                   }
+                  disabled={isDisabled}
                 />{" "}
                 L
               </div>
@@ -182,6 +202,7 @@ export default function OtherAlcohol({
                       e.target.value
                     )
                   }
+                  disabled={isDisabled}
                 />{" "}
                 R
               </div>
@@ -200,6 +221,7 @@ export default function OtherAlcohol({
                       e.target.value
                     )
                   }
+                  disabled={isDisabled}
                 />{" "}
                 F
               </div>
@@ -218,6 +240,7 @@ export default function OtherAlcohol({
                       e.target.value
                     )
                   }
+                  disabled={isDisabled}
                 />{" "}
                 n/a
               </div>
@@ -231,7 +254,7 @@ export default function OtherAlcohol({
             onClick={() => addNewOtherUi(data.type)}
           />
           <Button
-            onClick={() => handleRemoveUi(data.id , data.type)}
+            onClick={() => handleRemoveUi(data.id, data.type)}
             label="REMOVE"
             className="rounded px-10 py-2"
             severity="danger"

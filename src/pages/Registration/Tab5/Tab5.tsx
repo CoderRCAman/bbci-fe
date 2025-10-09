@@ -67,7 +67,8 @@ export default function Tab5() {
   useEffect(() => {
     if (!db) return;
     const curId = searchParams?.get("id");
-    setId(curId);
+    setId(curId); 
+    console.log(curId)
     setEditFlag(searchParams?.get("edit"));
     const loadExisting = async () => {
       try {
@@ -100,40 +101,52 @@ export default function Tab5() {
         message: "SOME FIELDS WERE MISSING!",
       });
     }
-    const columns = [
-      "from_age",
-      "to_age",
-      "city",
-      "village",
-      "state",
-      "code",
-      "id",
-      "user_id",
-      "tab_id",
-    ];
-
-    const valuesList = residentialData.map((item) => {
-      const values = [
-        item.from_age,
-        item.to_age,
-        item.city ? `'${item.city}'` : "NULL",
-        item.village ? `'${item.village}'` : "NULL",
-        `'${item.state}'`,
-        item.code,
-        `'${item.id}'`,
-        `'${id}'`,
-        `'${tabId}'`,
-      ];
-
-      return `(${values.join(", ")})`;
-    });
-    const query = `INSERT  OR IGNORE INTO residential_history (${columns.join(
-      ", "
-    )}) VALUES\n  ${valuesList.join(",\n  ")};`;
-    console.log(query);
     try {
+      const columns = [
+        "from_age",
+        "to_age",
+        "city",
+        "village",
+        "state",
+        "code",
+        "id",
+        "user_id",
+        "tab_id",
+      ];
+      const updateColumns = columns.filter(col => col !== 'id');
+
+      const valuesList = residentialData.map(item => {
+        const values = [
+          item.from_age,
+          item.to_age,
+          item.city ? `'${item.city}'` : "NULL",
+          item.village ? `'${item.village}'` : "NULL",
+          `'${item.state}'`,
+          item.code,
+          `'${item.id}'`,
+          `'${id}'`,
+          `'${tabId}'`,
+        ];
+        return `(${values.join(", ")})`;
+      });
+
+      const updateSet = updateColumns
+        .map(col => `${col} = excluded.${col}`)
+        .join(", ");
+
+      const query = `
+    INSERT INTO residential_history (${columns.join(", ")})
+    VALUES
+    ${valuesList.join(",\n")}
+    ON CONFLICT(id) DO UPDATE SET
+    ${updateSet};
+  `;
+
+      console.log("Executing query:\n", query);
       await db?.run(query);
+
       await saveToStore(sqlite);
+
       setAlert({
         show: true,
         header: "SUCCESS",
@@ -144,11 +157,11 @@ export default function Tab5() {
       setAlert({
         show: true,
         header: "FAILED",
-        message: "SOME ERROR OCCURED!",
+        message: "SOME ERROR OCCURRED!",
       });
-      console.log(error);
-      return;
+      console.error(error);
     }
+
   };
   const handleSaveUpdated = () => {
     //for updated records

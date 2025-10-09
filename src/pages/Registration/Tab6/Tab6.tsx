@@ -79,7 +79,7 @@ export default function Tab6() {
   };
 
   const fetchExistingData = async () => {
-    try { 
+    try {
       const id = searchParams?.get("id");
       const res = await db?.query(
         `SELECT * FROM personal_medical_history  WHERE user_id = ?`,
@@ -191,9 +191,12 @@ export default function Tab6() {
               <Link to={`/tab5?id=${id}`}>
                 <Button className="px-10 py-2 rounded" label="PREV" />
               </Link>
-              <Link to={"/tab8?id=" + id}>
-                <Button className="px-10 py-2 rounded" label="NEXT" />
-              </Link>
+              {
+                allowNext &&
+                <Link to={"/tab8?id=" + id}>
+                  <Button className="px-10 py-2 rounded" label="NEXT" />
+                </Link>
+              }
             </div>
           </main>
           <IonAlert

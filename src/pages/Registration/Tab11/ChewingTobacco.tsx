@@ -126,6 +126,7 @@ export default function ChewingTobacco({
                         parseInt(e.target.value)
                       )
                     }
+                    disabled={data.consumed !== 1}
                   />{" "}
                   YES
                 </div>
@@ -142,6 +143,7 @@ export default function ChewingTobacco({
                         parseInt(e.target.value)
                       )
                     }
+                    disabled={data.consumed !== 1}
                   />{" "}
                   NO
                 </div>
@@ -161,6 +163,7 @@ export default function ChewingTobacco({
                           e.target.value ? parseInt(e.target.value) : ""
                         )
                       }
+                      disabled={data.consumed !== 1 || item.consumes !== 1}
                     />
                     <label>From age</label>
                   </FloatLabel>
@@ -179,6 +182,7 @@ export default function ChewingTobacco({
                           e.target.value ? parseInt(e.target.value) : ""
                         )
                       }
+                      disabled={data.consumed !== 1 || item.consumes !== 1}
                     />
                     <label>To age</label>
                   </FloatLabel>
@@ -197,13 +201,25 @@ export default function ChewingTobacco({
                           e.target.value ? parseInt(e.target.value) : ""
                         )
                       }
+                      disabled={data.consumed !== 1 || item.consumes !== 1}
                     />
                     <label>Number per day</label>
                   </FloatLabel>
                 </div>
                 <div>
                   <FloatLabel>
-                    <InputText keyfilter="int" className="border-1 p-2" />
+                    <InputText keyfilter="int" className="border-1 p-2"
+                      onChange={(e) =>
+                        handleChangeProds(
+                          item.id,
+                          item.type || "",
+                          "days_in_week",
+                          e.target.value ? parseInt(e.target.value) : ""
+                        )
+                      }
+                      value={item.days_in_week?.toString()}
+                      disabled={data.consumed !== 1 || item.consumes !== 1}
+                    />
                     <label>Days in a week</label>
                   </FloatLabel>
                 </div>
@@ -224,6 +240,7 @@ export default function ChewingTobacco({
                             e.target.value ? parseInt(e.target.value) : ""
                           )
                         }
+                        disabled={data.consumed !== 1 || item.consumes !== 1}
                       />
                     </div>
                     <div>:</div>
@@ -240,6 +257,7 @@ export default function ChewingTobacco({
                             e.target.value ? parseInt(e.target.value) : ""
                           )
                         }
+                        disabled={data.consumed !== 1 || item.consumes !== 1}
                       />
                     </div>
                     <div>MINUTES</div>
@@ -272,6 +290,7 @@ export default function ChewingTobacco({
                             );
                           }
                         }}
+                        disabled={data.consumed !== 1 || item.consumes !== 1}
                       />{" "}
                       L
                     </div>
@@ -300,6 +319,7 @@ export default function ChewingTobacco({
                             );
                           }
                         }}
+                        disabled={data.consumed !== 1 || item.consumes !== 1}
                       />{" "}
                       R
                     </div>
@@ -327,6 +347,7 @@ export default function ChewingTobacco({
                             );
                           }
                         }}
+                        disabled={data.consumed !== 1 || item.consumes !== 1}
                       />{" "}
                       F
                     </div>
@@ -354,6 +375,7 @@ export default function ChewingTobacco({
                             );
                           }
                         }}
+                        disabled={data.consumed !== 1 || item.consumes !== 1}
                       />{" "}
                       n/a
                     </div>
@@ -372,6 +394,7 @@ export default function ChewingTobacco({
             handleRemoveUi={handleRemoveUi}
             addNewOtherUi={addNewOtherUi}
             handleChangeProds={handleChangeProds}
+            isDisabled={data.consumed !== 1}
           />
         ))}
       </div>

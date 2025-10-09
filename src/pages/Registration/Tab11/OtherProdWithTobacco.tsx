@@ -8,6 +8,7 @@ export default function OtherProdWithTobacco({
   handleRemoveUi,
   addNewOtherUi,
   handleChangeProds,
+  isDisabled
 }: {
   data: TOBACCO_ALCOHOL_CONSUMPION;
   handleChangeProds: (
@@ -31,6 +32,7 @@ export default function OtherProdWithTobacco({
       | "chewing_without_tobacco"
       | "alcohol"
   ) => void;
+  isDisabled: boolean
 }) {
   return (
     <div className="mt-5">
@@ -46,6 +48,7 @@ export default function OtherProdWithTobacco({
             onChange={(e) =>
               handleChangeProds(data.id, data.type, "product", e.target.value)
             }
+            disabled={isDisabled}
           />
         </div>
         <div className="space-y-5 pt-4">
@@ -65,6 +68,7 @@ export default function OtherProdWithTobacco({
                       : parseInt(e.target.value)
                   )
                 }
+                disabled={isDisabled}
               />
               <label>From age</label>
             </FloatLabel>
@@ -85,6 +89,7 @@ export default function OtherProdWithTobacco({
                       : parseInt(e.target.value)
                   )
                 }
+                disabled={isDisabled}
               />
               <label>To age</label>
             </FloatLabel>
@@ -105,6 +110,7 @@ export default function OtherProdWithTobacco({
                       : parseInt(e.target.value)
                   )
                 }
+                disabled={isDisabled}
               />
               <label>Number per day</label>
             </FloatLabel>
@@ -125,6 +131,7 @@ export default function OtherProdWithTobacco({
                       : parseInt(e.target.value)
                   )
                 }
+                disabled={isDisabled}
               />
               <label>Days in a week</label>
             </FloatLabel>
@@ -148,6 +155,7 @@ export default function OtherProdWithTobacco({
                         : parseInt(e.target.value)
                     )
                   }
+                  disabled={isDisabled}
                 />
               </div>
               <div>:</div>
@@ -166,6 +174,7 @@ export default function OtherProdWithTobacco({
                         : parseInt(e.target.value)
                     )
                   }
+                  disabled={isDisabled}
                 />
               </div>
               <div>MINUTES</div>
@@ -198,6 +207,7 @@ export default function OtherProdWithTobacco({
                       );
                     }
                   }}
+                  disabled={isDisabled}
                 />{" "}
                 L
               </div>
@@ -226,6 +236,7 @@ export default function OtherProdWithTobacco({
                       );
                     }
                   }}
+                  disabled={isDisabled}
                 />{" "}
                 R
               </div>
@@ -253,6 +264,7 @@ export default function OtherProdWithTobacco({
                       );
                     }
                   }}
+                  disabled={isDisabled}
                 />{" "}
                 F
               </div>
@@ -280,6 +292,7 @@ export default function OtherProdWithTobacco({
                       );
                     }
                   }}
+                  disabled={isDisabled}
                 />{" "}
                 n/a
               </div>
