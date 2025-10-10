@@ -42,10 +42,10 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => {},
-  setConflictedList: () => {},
+  setBaseUrl: () => { },
+  setConflictedList: () => { },
   tabId: "",
-  setTabId: () => {},
+  setTabId: () => { },
 });
 
 // Create a custom hook to use the context
@@ -294,6 +294,30 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
              );
           `;
 
+        const query14 = `
+          CREATE TABLE IF NOT EXISTS  FAMILY_HISTORY_OF_CANCER_MASTER (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            brothers INTEGER NOT NULL,
+            sisters INTEGER NOT NULL,
+            sons INTEGER NOT NULL,
+            daughters INTEGER NOT NULL,
+            history_of_cancer INTEGER
+          );
+        `
+        const query15 = `
+          CREATE TABLE IF NOT EXISTS  FAMILY_HISTORY_OF_CANCER_RELATIVES (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            relation TEXT NOT NULL,
+            code INTEGER NOT NULL,
+            age_at_diagnosis INTEGER NOT NULL,
+            cancer_site TEXT NOT NULL,
+            treatment_received INTEGER 
+          );
+
+        `
+
         //synch flag -> 0 1 2
         // 0 -> never synched
         // 1 -> synched
@@ -312,6 +336,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query11);
         await newDb.execute(query12);
         await newDb.execute(query13);
+        await newDb.execute(query14);
+        await newDb.execute(query15);
         try {
           const migration1 = `
                     CREATE TABLE IF NOT EXISTS tracksync (

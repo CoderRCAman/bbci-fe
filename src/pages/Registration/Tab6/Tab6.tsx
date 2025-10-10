@@ -193,7 +193,7 @@ export default function Tab6() {
               </Link>
               {
                 allowNext &&
-                <Link to={"/tab8?id=" + id}>
+                <Link to={"/tab7?id=" + id}>
                   <Button className="px-10 py-2 rounded" label="NEXT" />
                 </Link>
               }
