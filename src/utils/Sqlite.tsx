@@ -17,6 +17,7 @@ import {
 // Import the JeepSqlite component for the web platform
 import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
 import { useLocation } from "react-router";
+import { trackTable } from "./query";
 
 // Define the shape of a patient
 
@@ -316,7 +317,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             treatment_received INTEGER 
           );
 
-        `
+        ` 
+        const query16 = trackTable ; 
 
         //synch flag -> 0 1 2
         // 0 -> never synched
@@ -338,6 +340,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query13);
         await newDb.execute(query14);
         await newDb.execute(query15);
+        await newDb.execute(query16);
         try {
           const migration1 = `
                     CREATE TABLE IF NOT EXISTS tracksync (
