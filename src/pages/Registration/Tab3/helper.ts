@@ -27,7 +27,8 @@ const Tables = [
   "TOBACCO_ALCOHOL_CONSUMPTION_MASTER",
   "demographic_info",
   "FAMILY_HISTORY_OF_CANCER_MASTER",
-  "FAMILY_HISTORY_OF_CANCER_RELATIVES",
+  "FAMILY_HISTORY_OF_CANCER_RELATIVES", 
+  "deletedRecords"
 ];
 
 // Retry failed requests up to 3 times
@@ -134,6 +135,8 @@ export async function PULL_FROM_CLOUD(
   setPullState: React.Dispatch<
     React.SetStateAction<{
       show: boolean;
+      applyingPatch: boolean;
+      appliedPatch: boolean;
       data: {
         table_name: string;
         display_name: string;

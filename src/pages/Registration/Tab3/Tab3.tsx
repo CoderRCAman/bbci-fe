@@ -22,6 +22,8 @@ export type TABLE_INFO = {
 };
 const initialPullState = {
   show: false,
+  applyingPatch: false,
+  appliedPatch: false,
   data: [
     { table_name: "patients", display_name: "Participants", status: false },
     {
@@ -204,10 +206,19 @@ export default function Tab3() {
         });
 
       const pulled: TABLE_INFO[] = await PULL_FROM_CLOUD(setPullState);
-
+      setPullState((prev) => ({ ...prev, applyingPatch: true }));
       for (const { table_name, table_data } of pulled) {
         console.log(`⬇️ Syncing table: ${table_name}`);
-
+        if (table_name === "deletedRecords") {
+          //delete from db
+          let deleteQueries = table_data
+            .map(
+              (row) => `DELETE FROM ${row.table_name} WHERE id = '${row.rowId}';`
+            )
+            .join(" ");
+          await db?.execute(deleteQueries);
+          continue;
+        }
         if (!table_data || table_data.length === 0) continue;
 
         const statements: { statement: string; values: any[] }[] = [];
@@ -236,6 +247,12 @@ export default function Tab3() {
           console.log(`✅ Table ${table_name} synced successfully.`);
         } catch (err) {
           console.error(`❌ Error syncing table ${table_name}:`, err);
+        } finally {
+          setPullState((prev) => ({
+            ...prev,
+            appliedPatch: true,
+            applyingPatch: false,
+          }));
         }
       }
       for (const { table_data } of pulled) {
@@ -318,7 +335,9 @@ export default function Tab3() {
             />
           </div>
           {pushing && (
-            <div className="mt-10 p-2 border-2 rounded text-emerald-500 border-emerald-500 text-center">We are synchronizing your data to cloud hang tight! . . . </div>
+            <div className="mt-10 p-2 border-2 rounded text-emerald-500 border-emerald-500 text-center">
+              We are synchronizing your data to cloud hang tight! . . .{" "}
+            </div>
           )}
           {pullState.show && (
             <div className="mt-10 border-2 p-2 rounded">
@@ -347,6 +366,23 @@ export default function Tab3() {
                   </span>
                 </div>
               ))}
+              {pullState.applyingPatch && (
+                <div className="border-t py-2 ">
+                  <p>Please wait while pulled data is being patched . . .</p>
+                </div>
+              )}
+              {pullState.appliedPatch && (
+                <div className="border-t py-2 ">
+                  <p className="flex items-center font-bold">
+                    <IonIcon
+                      icon={checkmarkCircleOutline}
+                      color={"success"}
+                      style={{ fontSize: 24, marginRight: 10 }}
+                    />
+                    Applied patches successfully!
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </main>
