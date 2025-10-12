@@ -10,6 +10,7 @@ import { useSQLite } from "../../../utils/Sqlite";
 import shortUUID from "short-uuid";
 import { differenceInMonths, set } from "date-fns";
 import { saveToStore } from "../../../utils/helper";
+import { checkElibleToSave } from "../Tab11/data";
 
 // dont create seperate table for this one!
 export default function Tab8() {
@@ -51,7 +52,7 @@ export default function Tab8() {
         );
         console.log(res);
         if (res?.values?.length) {
-          setAllowNext(true)
+          setAllowNext(true);
           setReading1({
             height: res?.values?.[0]?.height || 0,
             weight: res?.values?.[0]?.weight || 0,
@@ -79,7 +80,13 @@ export default function Tab8() {
 
   const handleSave = async () => {
     try {
-      console.log(isDisabledReading2);
+      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+        return setAlert({
+          header: "Restricted access",
+          message: "This user was registered with a different tab id.",
+          show: true,
+        });
+      }
       if (
         reading1.height === 0 ||
         reading1.weight === 0 ||
@@ -117,7 +124,6 @@ export default function Tab8() {
         tabId,
       ];
 
-
       await db?.run(query, values);
       if (!isDisabledReading2) {
         const values2 = [
@@ -131,7 +137,7 @@ export default function Tab8() {
         await db?.run(query, values2);
       }
       await saveToStore(sqlite);
-      setAllowNext(true)
+      setAllowNext(true);
       setAlert({
         show: true,
         header: "Success",
@@ -155,61 +161,68 @@ export default function Tab8() {
           <main className="p-2 space-y-5">
             <div className="p-2 border rounded-md">
               <p className="text-slate-500">Reading 1</p>
-              <div className="mt-2 flex items-start flex-col ">
+              <div className="mt-2 flex gap-2 items-start flex-col ">
                 <label className="text-slate-500">Height (in cm)</label>
 
-                <InputNumber
+                <InputText
+                  keyfilter={"int"}
                   id="result_blood"
-                  maxFractionDigits={2}
-                  minFractionDigits={2}
-                  className=""
+                  className="p-2 border"
                   onChange={(e) =>
-                    setReading1((prev) => ({ ...prev, height: e.value || 0 }))
+                    setReading1((prev) => ({
+                      ...prev,
+                      height: parseInt(e.target.value) || 0,
+                    }))
                   }
-                  value={reading1.height}
+                  value={reading1.height.toString()}
                 />
               </div>
-              <div className="mt-3 flex items-start flex-col ">
+              <div className="mt-3 flex gap-2 items-start flex-col ">
                 <label className=" text-slate-500 ">Weight (in kg)</label>
-                <InputNumber
+                <InputText
                   id="result_blood"
-                  maxFractionDigits={2}
-                  minFractionDigits={2}
                   onChange={(e) =>
-                    setReading1((prev) => ({ ...prev, weight: e.value || 0 }))
+                    setReading1((prev) => ({
+                      ...prev,
+                      weight: parseInt(e.target.value) || 0,
+                    }))
                   }
-                  value={reading1.weight}
+                  value={reading1.weight.toString()}
+                  className="p-2 border"
                 />
               </div>
             </div>
             <div className="p-2 border rounded-md">
               <p className="text-slate-500">Reading 2</p>
-              <div className="mt-2 flex items-start flex-col ">
+              <div className="mt-2 flex gap-2 items-start flex-col ">
                 <label className="text-slate-500">Height (in cm)</label>
 
-                <InputNumber
+                <InputText
                   disabled={isDisabledReading2}
                   id="result_blood"
-                  maxFractionDigits={2}
-                  minFractionDigits={2}
-                  className=""
+                  className="p-2 border"
                   onChange={(e) =>
-                    setReading2((prev) => ({ ...prev, height: e.value || 0 }))
+                    setReading2((prev) => ({
+                      ...prev,
+                      height: parseInt(e.target.value) || 0,
+                    }))
                   }
-                  value={reading2.height}
+                  value={reading2.height.toString()}
                 />
               </div>
-              <div className="mt-3 flex items-start flex-col ">
+              <div className="mt-3 gap-2 flex items-start flex-col ">
                 <label className=" text-slate-500 ">Weight (in kg)</label>
-                <InputNumber
+                <InputText
                   disabled={isDisabledReading2}
                   id="result_blood"
-                  maxFractionDigits={2}
-                  minFractionDigits={2}
                   onChange={(e) =>
-                    setReading2((prev) => ({ ...prev, weight: e.value || 0 }))
+                    setReading2((prev) => ({
+                      ...prev,
+                      weight: parseInt(e.target.value) || 0,
+                    }))
                   }
-                  value={reading2.weight}
+                  value={reading2.weight.toString()}
+                  className="p-2 border"
                 />
               </div>
             </div>
@@ -225,12 +238,9 @@ export default function Tab8() {
               <Link to={"/tab7?id=" + id}>
                 <Button className="px-10 py-2 rounded" label="PREV" />
               </Link>
-              {
-                allowNext &&
-                <Link to={"/tab9?id=" + id}>
-                  <Button className="px-10 py-2 rounded" label="NEXT" />
-                </Link>
-              }
+              <Link to={"/tab9?id=" + id}>
+                <Button className="px-10 py-2 rounded" label="NEXT" />
+              </Link>
             </div>
           </main>
           <IonAlert

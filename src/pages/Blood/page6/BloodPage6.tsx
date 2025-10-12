@@ -16,13 +16,14 @@ import shortUUID from "short-uuid";
 import { validateRFTArray } from "../bHelper";
 import { InputNumber } from "primereact/inputnumber";
 import { saveToStore } from "../../../utils/helper";
+import { checkElibleToSave } from "../../Registration/Tab11/data";
 
 export default function BloodPage6() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
   const [sampleId, setSampleId] = useState("");
-  const { db, sqlite } = useSQLite();
+  const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [biochem, setBiochem] = useState<RFTType[]>([]);
   const [alert, setAlert] = useState({
@@ -62,14 +63,14 @@ export default function BloodPage6() {
           res2?.values?.length
             ? (res2?.values as RFTType[])
             : [
-              {
-                sampleId: sampleId,
-                test_name: "Uric Acid",
-                result: 0,
-                unit: "mg/dL",
-                id: shortUUID().generate(),
-              },
-            ]
+                {
+                  sampleId: sampleId,
+                  test_name: "Uric Acid",
+                  result: 0,
+                  unit: "mg/dL",
+                  id: shortUUID().generate(),
+                },
+              ]
         );
       } catch (error) {
         console.log(error);
@@ -79,6 +80,13 @@ export default function BloodPage6() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
+      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+        return setAlert({
+          header: "Restricted access",
+          message: "This user was registered with a different tab id.",
+          show: true,
+        });
+      }
       const error = validateRFTArray(biochem);
       if (error) {
         return setAlert({
@@ -89,8 +97,8 @@ export default function BloodPage6() {
       }
 
       const query = `
-          INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type)
-          VALUES (?, ?, ?, ?, ?,  ?)   
+          INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type,user_id)
+          VALUES (?, ?, ?, ?, ?,  ? , ?)   
           ON CONFLICT(id) DO UPDATE SET
             sampleId=excluded.sampleId,
             test_name=excluded.test_name,   
@@ -105,12 +113,13 @@ export default function BloodPage6() {
         rft.result,
         rft.unit,
         rft.test_type || "BIOCHEM",
+        id,
       ]);
       for (let i = 0; i < values.length; i++) {
         const params = values[i];
         await db?.run(query, params);
       }
-      await saveToStore(sqlite)
+      await saveToStore(sqlite);
       console.log(values);
       setAlert({
         show: true,
@@ -160,21 +169,19 @@ export default function BloodPage6() {
                   field="result"
                   header="Result"
                   body={(rowData) => (
-                    <InputNumber
+                    <InputText
                       placeholder="Modify"
                       value={rowData.result}
-                      minFractionDigits={0}
-                      maxFractionDigits={2}
-                      className=""
+                      className="p-2 border"
                       id="result_blood"
                       onChange={(e) =>
                         setBiochem((prev) =>
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                ...item,
-                                result: e.value || 0,
-                              }
+                                  ...item,
+                                  result: parseInt(e.target.value) || 0,
+                                }
                               : item
                           )
                         )
@@ -188,11 +195,8 @@ export default function BloodPage6() {
                   bodyClassName="border-b border-gray-300"
                   field="unit"
                   header="Unit"
-                  body={(rowData) => (
-                    <div>{rowData.unit}</div>
-                  )}
+                  body={(rowData) => <div>{rowData.unit}</div>}
                 ></Column>
-
               </DataTable>
             </div>
             <div className="mt-5">

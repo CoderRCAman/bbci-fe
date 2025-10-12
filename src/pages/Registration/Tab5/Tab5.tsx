@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
 import { saveToStore } from "../../../utils/helper";
 import { set } from "date-fns";
+import { checkElibleToSave } from "../Tab11/data";
 export interface RESIDENTIAL_TYPE {
   from_age: number;
   to_age: number;
@@ -45,7 +46,7 @@ export default function Tab5() {
   });
   const [allowNext, setAllowNext] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
-
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
   const handleAddNewUi = () => {
     console.log("hello");
     const translator = ShortUUID();
@@ -62,13 +63,14 @@ export default function Tab5() {
   };
   const handleRemoveUi = (id: string) => {
     if (residentialData.length === 1) return;
+    setRemovedIds((prev) => [...prev, id]);
     setResidentialData((d) => d.filter((x) => x.id !== id));
   };
   useEffect(() => {
     if (!db) return;
     const curId = searchParams?.get("id");
-    setId(curId); 
-    console.log(curId)
+    setId(curId);
+    console.log(curId);
     setEditFlag(searchParams?.get("edit"));
     const loadExisting = async () => {
       try {
@@ -92,7 +94,13 @@ export default function Tab5() {
     loadExisting();
   }, [db, location.pathname]);
   const handleSaveFresh = async () => {
-    console.log("hilo");
+    if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      return setAlert({
+        header: "Restricted access",
+        message: "This user was registered with a different tab id.",
+        show: true,
+      });
+    }
     //for fresh records
     if (!isResidentialDataValid(residentialData)) {
       return setAlert({
@@ -113,9 +121,9 @@ export default function Tab5() {
         "user_id",
         "tab_id",
       ];
-      const updateColumns = columns.filter(col => col !== 'id');
+      const updateColumns = columns.filter((col) => col !== "id");
 
-      const valuesList = residentialData.map(item => {
+      const valuesList = residentialData.map((item) => {
         const values = [
           item.from_age,
           item.to_age,
@@ -131,7 +139,7 @@ export default function Tab5() {
       });
 
       const updateSet = updateColumns
-        .map(col => `${col} = excluded.${col}`)
+        .map((col) => `${col} = excluded.${col}`)
         .join(", ");
 
       const query = `
@@ -139,14 +147,18 @@ export default function Tab5() {
     VALUES
     ${valuesList.join(",\n")}
     ON CONFLICT(id) DO UPDATE SET
-    ${updateSet};
+    ${updateSet}; 
   `;
 
       console.log("Executing query:\n", query);
       await db?.run(query);
 
+      const qRemovedIds = removedIds.map((id) => `'${id}'`).join(", ");
+      if (qRemovedIds) {
+        const q = `DELETE FROM residential_history WHERE id IN (${qRemovedIds})`;
+        await db?.run(q);
+      }
       await saveToStore(sqlite);
-
       setAlert({
         show: true,
         header: "SUCCESS",
@@ -161,7 +173,6 @@ export default function Tab5() {
       });
       console.error(error);
     }
-
   };
   const handleSaveUpdated = () => {
     //for updated records
@@ -220,11 +231,10 @@ export default function Tab5() {
             <Link to={`/tab1?id=${id}&edit=no`}>
               <Button label="PREV" className="px-10 py-2  rounded-md" />
             </Link>
-            {allowNext && (
-              <Link to={`/tab6?id=${id}`}>
-                <Button label="NEXT" className="px-10 py-2  rounded-md" />
-              </Link>
-            )}
+
+            <Link to={`/tab6?id=${id}`}>
+              <Button label="NEXT" className="px-10 py-2  rounded-md" />
+            </Link>
           </div>
         </IonContent>
       </IonPage>

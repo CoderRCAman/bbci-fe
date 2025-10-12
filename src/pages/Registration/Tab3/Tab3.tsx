@@ -1,379 +1,355 @@
-import {
-  IonAccordion,
-  IonAccordionGroup,
-  IonAlert,
-  IonButton,
-  IonCol,
-  IonContent,
-  IonGrid,
-  IonHeader,
-  IonInput,
-  IonItem,
-  IonLabel,
-  IonPage,
-  IonRow,
-  IonTitle,
-  IonToolbar,
-} from "@ionic/react";
-import ExploreContainer from "../../../components/ExploreContainer";
-import "./Tab3.css";
+import { IonAlert, IonContent, IonIcon, IonPage } from "@ionic/react";
+import React, { useCallback, useEffect, useState } from "react";
 import Header from "../../../components/Header";
 import { useSQLite } from "../../../utils/Sqlite";
-import { CSSProperties, useEffect, useState } from "react";
 import { useLocation } from "react-router";
-import axios from "axios";
-import ShowConflicts from "../../../components/ShowConflicts";
+import { set } from "date-fns";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-const forcedStyle = {
-  contentPad: {
-    padding: "15px",
-  },
-  ionInput: {
-    border: "1px",
-    borderStyle: "solid",
-    padding: "20px",
-    borderRadius: "5px",
-    borderColor: "#c9c9c9",
-  },
-  btnPadd: { marginTop: "30px" },
+import { Button } from "primereact/button";
+import { PULL_FROM_CLOUD, PUSH_TO_CLOUD } from "./helper";
+import { saveToStore } from "../../../utils/helper";
+import { checkmarkCircleOutline, cloudDownloadOutline } from "ionicons/icons";
+export type UNSYNC_RECORD = {
+  id: number;
+  rowId: string;
+  synch: number;
+  table_name: string;
+};
+export type TABLE_INFO = {
+  table_name: string;
+  table_data: any[];
+};
+const initialPullState = {
+  show: false,
+  data: [
+    { table_name: "patients", display_name: "Participants", status: false },
+    {
+      table_name: "residential_history",
+      display_name: "Residential History",
+      status: false,
+    },
+    {
+      table_name: "personal_medical_history",
+      display_name: "Personal Medical History",
+      status: false,
+    },
+    {
+      table_name: "TOBACCO_ALCOHOL_CONSUMPTION",
+      display_name: "Tobacco Alcohol Consumption",
+      status: false,
+    },
+    { table_name: "ENDOSCOPY", display_name: "Endoscopy", status: false },
+    { table_name: "blood_sample", display_name: "Blood Sample", status: false },
+    {
+      table_name: "blood_tube_collection",
+      display_name: "Blood Tube Collection",
+      status: false,
+    },
+    {
+      table_name: "gtgh_blood_report",
+      display_name: "Gtgh Blood Report",
+      status: false,
+    },
+    {
+      table_name: "anthropometry",
+      display_name: "Anthropometry",
+      status: false,
+    },
+    {
+      table_name: "indoor_air_pollution",
+      display_name: "Indoor Air Pollution",
+      status: false,
+    },
+    {
+      table_name: "TOBACCO_ALCOHOL_CONSUMPTION_MASTER",
+      display_name: "Tobacco Alcohol Consumption Master",
+      status: false,
+    },
+    {
+      table_name: "demographic_info",
+      display_name: "Demographic Info",
+      status: false,
+    },
+    {
+      table_name: "FAMILY_HISTORY_OF_CANCER_MASTER",
+      display_name: "Family History Of Cancer Master",
+      status: false,
+    },
+    {
+      table_name: "FAMILY_HISTORY_OF_CANCER_RELATIVES",
+      display_name: "Family History Of Cancer Relatives",
+      status: false,
+    },
+  ],
 };
 
-function getStatusColor(status: number): string {
-  switch (status) {
-    case 0:
-      return "red"; // red
-    case 1:
-      return "green"; // green
-    case 2:
-      return "red"; // yellow
-    default:
-      return "red";
-  }
-}
-
-const thStyle: CSSProperties = {
-  padding: "10px",
-  border: "1px",
-  borderStyle: "solid",
-  borderColor: "#ddd",
-  textAlign: "center",
-};
-
-const tdStyle = {
-  padding: "10px",
-  border: "1px",
-  borderStyle: "solid",
-  borderColor: "#ddd",
-};
-function getStatus(status: number): string {
-  switch (status) {
-    case 0:
-      return "Not Synched"; // red
-    case 1:
-      return "Synched"; // green
-    case 2:
-      return "Updated(NOT SYNCHED)"; // yellow
-    default:
-      return "NA";
-  }
-}
-
-const Tab3: React.FC = () => {
-  const { db, sqlite, baseUrl, setBaseUrl } = useSQLite();
+export default function Tab3() {
+  const { db, sqlite } = useSQLite();
+  const [insertOrUpdatedRecords, setInsertOrUpdatedRecords] = useState<
+    TABLE_INFO[]
+  >([]);
+  const [deletedRecords, setDeletedRecords] = useState<UNSYNC_RECORD[]>([]); //for this we only need to send id thats it!
+  const [userInfos, setUserInfos] = useState<any[]>([]);
   const location = useLocation();
-  const [patients, setPatients] = useState<any[]>([]);
-  const [updatedPatient, setUpdatedPatients] = useState<any[]>([]);
-  const [conflictedList, setConflictedList] = useState<any[]>([])
-  // const [conflictedList , setConflictedList] = useState<any[]>([]) ;
+  const [pullState, setPullState] = useState(initialPullState);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
     message: "",
   });
-  async function fetchUnSynched() {
+  const [pushing, setPushing] = useState(false);
+  async function fetchUnsyncedRecords() {
     try {
-      const res = await db?.query(
-        "select p.* , t.synch from patients p join tracksync t on p.id = t.patient_id where t.synch = 0 ;"
-      );
-      const updatedRows = await db?.query(
-        "select p.* , t.synch from patients  p join tracksync t on p.id = t.patient_id where t.synch = 2 ;"
-      );
-      console.log(await db?.query('select * from tracksync'))
-      setPatients(res?.values ?? []);
-      setUpdatedPatients(updatedRows?.values ?? []);
-      console.log("res:", res);
-      console.log("updatedRows:", updatedRows);
-    } catch (error) {
-      setAlert((a) => ({
-        ...a,
-        show: true,
-        header: "DB Error",
-        message: String(error),
-      }));
-      console.log(error);
-    }
-  }
+      const res = await db?.query(`
+             SELECT * FROM tracksync where synch = 0 OR synch = 2 or synch = 3
+            `);
+      const tracks = (res?.values as UNSYNC_RECORD[]) ?? [];
+      const temp1 = tracks.filter(
+        (track) => track.synch == 0 || track.synch == 2
+      ); //here holds records which are either 0 or 2
+      const temp2 = tracks.filter((track) => track.synch == 3); //here holds records which are 3
+      //set deleted records
+      setDeletedRecords(temp2);
+      let records: any[] = [];
+      //now fetch the records which are 0 or 2
+      let existing: TABLE_INFO[] = [];
+      for (const item of temp1) {
+        const res = await db?.query(`
+             SELECT * FROM ${item.table_name} where id = '${item.rowId}'
+            `);
+        const tableName = item.table_name; // replace with actual table name
+        const newRecords = res?.values as any[];
 
-  async function handleRevertBack() {
-    try {
-      await db?.execute("UPDATE tracksync set synch = 0");
-      await fetchUnSynched();
-    } catch (error) {
-      console.log("THIS ERROR OCCURED DURING REVERT BACK", error);
-    }
-  }
-
-  async function handleUpdateParticipants(conflictedList: any[]) {
-    try {
-      const conflictedIds = conflictedList.map((item) => item?.at(-1)?.Value1);
-      const ids = patients
-        .filter((item) => !conflictedIds.includes(item.id))
-        .map((pat) => pat.id);
-      const ids2 = updatedPatient
-        .filter((item) => !conflictedIds.includes(item.id))
-        .map((pat) => pat.id);
-      let str = ids.reduce(
-        (accumulator, currentValue) => accumulator + ` '${currentValue}' ,`,
-        "( "
-      );
-      str;
-      str = str.slice(0, -1);
-      str += " )";
-      if (patients.length > 0) {
-        console.log(str);
-        await db?.run(
-          `update tracksync set synch = 1 where patient_id in ${str} ;`
+        // check if table already exists
+        let existingIndex = existing.findIndex(
+          (item) => item.table_name === tableName
         );
+        if (existingIndex === -1) {
+          existing.push({
+            table_name: tableName,
+            table_data: newRecords,
+          });
+        } else {
+          existing[existingIndex].table_data =
+            existing[existingIndex].table_data.concat(newRecords);
+        }
+        records = records.concat(res?.values as any[]);
       }
-
-      str = ids2.reduce(
-        (accumulator, currentValue) => accumulator + ` '${currentValue}' ,`,
-        "( "
+      setInsertOrUpdatedRecords(existing);
+      const ids = records.map((record) =>
+        record?.user_id ? record.user_id : record.id
       );
-      str;
-      str = str.slice(0, -1);
-      str += " )";
-      if (updatedPatient.length > 0) {
-        console.log(str);
-        await db?.run(
-          `update tracksync set synch = 1 where patient_id in ${str} ;`
-        );
-      }
-      await sqlite?.saveToStore("patientdb");
+      const q = `SELECT * FROM patients WHERE id IN (${ids
+        .map((id) => `'${id}'`)
+        .join(",")})`;
+      const res2 = await db?.query(q);
+      console.log(res2, q);
+      setUserInfos(res2?.values as any[]);
     } catch (error) {
       console.log(error);
     }
   }
   useEffect(() => {
-    fetchUnSynched();
-  }, [location.pathname, db]);
-
-  async function handleUnSynched() {
-    const participants = [];
-    participants.push(patients, updatedPatient);
+    setPullState(initialPullState);
+    fetchUnsyncedRecords();
+  }, [db, location.pathname]);
+  console.log(insertOrUpdatedRecords, deletedRecords);
+  const handlePush = async () => {
     try {
-      if (!baseUrl) {
-        return setAlert((a) => ({
-          ...a,
-          show: true,
-          header: "Failed",
-          message: "Provide ip/URL to server",
-        }));
-      }
-      const res = await axios.post(`${baseUrl}/api/patient`, participants, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (res.status === 200) {
-        setAlert((a) => ({
-          ...a,
-          show: true,
-          header: "Success",
-          message: res.data.message,
-        }));
-        await handleUpdateParticipants(res.data.conflictedData);
-        await fetchUnSynched();
-        console.log(res.data)
-        if (res.data.conflictedData.length > 0) {
-          setConflictedList(res.data.conflictedData);
-          return;
-        }
-        await handleSynchBack();
-      }
-    } catch (error) {
-      setAlert((a) => ({
-        ...a,
-        show: true,
-        header: "Failed",
-        message: "Synched files failed!",
-      }));
-    }
-  }
-
-  async function handleSynchBack() {
-    try {
-      if (!baseUrl) {
-        return setAlert((a) => ({
-          ...a,
-          show: true,
-          header: "Failed",
-          message: "Provide ip/URL to server",
-        }));
-      }
-      const res = await axios.get(`${baseUrl}/api/patient`);
-      const data = res.data.patients;
-      const ids = data.map((item: any) => item.id);
-      console.log(data);
-      let vals = data
-        .map(
-          (row: any) => `('${row.Id}' , '${row.Name}' , ${row.Age},
-      '${row.Gender}' , ${row.Lat} , ${row.Long} , '${row.I_Name}' , '${row.I_Emp_Code}',
-      '${row.CreatedAt}' , '${row.UpdatedAt}' , '${row.Date}' , '${row.Time}' ,'${row.UpdatedBy}'
-       , '${row.Dob}' , '${row._rev}' )`
+      setPushing(true);
+      await PUSH_TO_CLOUD(insertOrUpdatedRecords, deletedRecords);
+      const ids = Array.from(
+        new Set(
+          deletedRecords
+            .map((record) => record.rowId)
+            .concat(
+              insertOrUpdatedRecords
+                .map((record) => record.table_data.map((record) => record.id))
+                .flat()
+            )
         )
-        .join(",");
-      let query = `
-          INSERT INTO patients (id, name , age , gender  , lat, long , i_name ,
-            i_emp_code , created_at , updated_at , date , time , updated_by, dob,
-            _rev
-          )
-          VALUES
-            ${vals}
-            ON CONFLICT(id) DO UPDATE SET
-            name = excluded.name, 
-            age = excluded.age,
-            gender = excluded.gender,
-            lat = excluded.lat,
-            long = excluded.long,
-            dob = excluded.dob ,
-            updated_by = excluded.updated_by ,
-            i_emp_code = excluded.i_emp_code ,
-            i_name = excluded.i_name ,
-            time = excluded.time ,
-            date = excluded.date ,
-            _rev = excluded._rev;
-          `;
-      vals = data.map((row: any) => `('${row.Id}' , 1 )`).join(",");
-
-      let tabsyncQuery = `
-        INSERT INTO tracksync ( patient_id , synch)
-        VALUES 
-        ${vals} 
-        ON CONFLICT(patient_id) DO UPDATE SET 
-        synch = 1 ; 
-      `;
-      // console.log(query, tabsyncQuery)
-      await db?.run(query);
-      await db?.run(tabsyncQuery);
-      await sqlite?.saveToStore("patientdb");
-      setAlert((a) => ({
-        ...a,
+      );
+      await db?.run(`
+         UPDATE tracksync
+         SET synch = 1
+         WHERE rowId IN (${ids.map((id) => `'${id}'`).join(",")})
+        `);
+      await saveToStore(sqlite);
+      setAlert({
         show: true,
         header: "Success",
-        message: "Everything synched!",
-      }));
+        message: "Pushed Successfully",
+      });
+      setPushing(false);
+      await fetchUnsyncedRecords();
     } catch (error) {
       console.log(error);
-      throw error;
+      setAlert({
+        show: true,
+        header: "Error",
+        message: "Something went wrong!",
+      });
     }
-  }
+  };
+  const handlePull = async () => {
+    try {
+      setPullState(initialPullState);
+      if (insertOrUpdatedRecords.length > 0 || deletedRecords.length > 0)
+        return setAlert({
+          show: true,
+          header: "Warning!",
+          message:
+            "You have made changes that needs to be synched to our cloud first!",
+        });
+
+      const pulled: TABLE_INFO[] = await PULL_FROM_CLOUD(setPullState);
+
+      for (const { table_name, table_data } of pulled) {
+        console.log(`⬇️ Syncing table: ${table_name}`);
+
+        if (!table_data || table_data.length === 0) continue;
+
+        const statements: { statement: string; values: any[] }[] = [];
+        for (const row of table_data) {
+          const columns = Object.keys(row);
+          const placeholders = columns.map(() => "?").join(",");
+          const updateSet = columns
+            .filter((col) => col !== "id")
+            .map((col) => `${col} = excluded.${col}`)
+            .join(", ");
+
+          const query = `
+          INSERT INTO ${table_name} (${columns.join(",")})
+          VALUES (${placeholders})
+          ON CONFLICT(id) DO UPDATE SET
+          ${updateSet};
+        `;
+
+          const values = columns.map((col) => row[col]);
+          statements.push({ statement: query, values });
+        }
+
+        try {
+          // ✅ Execute all inserts/updates atomically (no manual BEGIN/COMMIT)
+          await db?.executeSet(statements);
+          console.log(`✅ Table ${table_name} synced successfully.`);
+        } catch (err) {
+          console.error(`❌ Error syncing table ${table_name}:`, err);
+        }
+      }
+      for (const { table_data } of pulled) {
+        await db?.run(
+          `UPDATE  tracksync SET synch = 1 WHERE rowId in (${table_data
+            .map((record) => `'${record.id}'`)
+            .join(",")}) `
+        );
+      }
+      await saveToStore(sqlite);
+      setAlert({
+        show: true,
+        header: "Success",
+        message: "Pulled Successfully",
+      });
+      console.log(pulled);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <IonPage>
-      <Header title="Synch" />
-      <IonContent style={forcedStyle.contentPad} fullscreen>
-        <main className="space-y-5" style={forcedStyle.contentPad}>
-          <h1 className="font-bold text-red-400 italic">NOTE THIS PAGE REQUIRES US TO HAVE FULL SCHEMA STRUCTURE FOR ALL THE TABLE! TECHNICALLY UNDERCONSTRUCTION</h1>
-          <h2 className="text-lg font-semibold text-slate-600">Tables to synch</h2>
-          {patients?.length == 0 && updatedPatient?.length == 0 ? (
-            <div
-              style={{
-                color: "gray", 
-              }}
-              
-            >
-              NO TABLES TO SYNCH
+      <Header title={"Sync Data"} />
+      <IonContent class="" fullscreen>
+        <main className="p-2 text-slate-600">
+          <h1 className="text-xl font-semibold">Records to be synched!</h1>
+          {insertOrUpdatedRecords.length == 0 && deletedRecords.length == 0 ? (
+            <div className=" rounded flex mt-10 justify-center ">
+              <p className="border-1 p-2 rounded text-emerald-500 border-emerald-500">
+                No records to be synched
+              </p>
             </div>
           ) : (
             <>
-              <DataTable value={patients}
-                tableStyle={{ minWidth: '6rem' }}
-                // tableClassName="p-datatable-gridlines" 
-
-                paginator
-                rows={10}
-                showGridlines
-                size='normal'
-                className="border "
-              >
-                <Column
-                  header="#"
-                  body={(rowData, options) => options.rowIndex + 1}
-                  style={{ width: '50px' }}
-                  bodyClassName="border-b border-gray-300 "
-                />
-                <Column field="id" sortable header="Id"
-                  bodyClassName="border-b border-gray-300 "
-                ></Column>
-                <Column field="name" sortable header="Name"
-                  bodyClassName="border-b border-gray-300 "
-                ></Column>
-                <Column sortable header="Synch status"
-                  body={(rowData) => (
-                    <span style={{ color: getStatusColor(rowData.synch) }}>
-                      {getStatus(rowData.synch)}
-                    </span>
-                  )}
-                  bodyClassName="border-b border-gray-300 "
-                ></Column>
-              </DataTable>
-
-              <IonButton
-                onClick={() => handleUnSynched()}
-                style={forcedStyle.btnPadd}
-              >
-                Synch to Database
-              </IonButton>
+              <div className="mt-5 space-y-2">
+                <DataTable
+                  paginator
+                  rows={10}
+                  value={userInfos}
+                  className="border"
+                >
+                  <Column
+                    field="id"
+                    header="ID"
+                    bodyClassName="border-y border-gray-300 "
+                  />
+                  <Column
+                    field="name"
+                    header="Name"
+                    bodyClassName="border-y border-gray-300 "
+                  />
+                  <Column
+                    bodyClassName="border-y border-gray-300 "
+                    field="status"
+                    header="Status"
+                    body={() => (
+                      <span style={{ color: "red", fontWeight: 500 }}>
+                        Sync Required
+                      </span>
+                    )}
+                  ></Column>
+                </DataTable>
+                <div>
+                  <Button
+                    label="Synch"
+                    className="px-6 py-2"
+                    onClick={handlePush}
+                  />
+                </div>
+              </div>
             </>
           )}
-          {
-            conflictedList.length > 0 ?
-              <ShowConflicts
-                conflictedList={conflictedList}
-              />
-              :
-              <></>
-          }
-
-
-          <IonAccordionGroup style={{ marginTop: "50px" }}>
-            <IonAccordion value="first">
-              <IonItem slot="header" color="light">
-                <IonLabel>Do you want to revert back every record?</IonLabel>
-              </IonItem>
-              <div className="ion-padding" slot="content">
-                <IonButton onClick={() => handleRevertBack()}>
-                  Revert Back(it will Revert everything)
-                </IonButton>
-              </div>
-            </IonAccordion>
-          </IonAccordionGroup>
-          <IonAccordionGroup style={{ marginTop: "50px" }}>
-            <IonAccordion value="first">
-              <IonItem slot="header" color="light">
-                <IonLabel>Synch back!</IonLabel>
-              </IonItem>
-              <div className="ion-padding" slot="content">
-                <IonButton id="confirm-trigger">
-                  Synch back from server
-                </IonButton>
-              </div>
-            </IonAccordion>
-          </IonAccordionGroup>
+          <div className="mt-10 flex justify-end">
+            <Button
+              label="Pull from cloud"
+              severity="contrast"
+              onClick={handlePull}
+              disabled={pullState.show || pushing}
+            />
+          </div>
+          {pushing && (
+            <div className="mt-10 p-2 border-2 rounded text-emerald-500 border-emerald-500 text-center">We are synchronizing your data to cloud hang tight! . . . </div>
+          )}
+          {pullState.show && (
+            <div className="mt-10 border-2 p-2 rounded">
+              {pullState?.data?.map((table) => (
+                <div
+                  key={table.table_name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <IonIcon
+                    icon={
+                      table.status
+                        ? checkmarkCircleOutline
+                        : cloudDownloadOutline
+                    }
+                    color={table.status ? "success" : "primary"}
+                    style={{ fontSize: 24, marginRight: 10 }}
+                  />
+                  <span>
+                    {table.status
+                      ? `Pulled ${table.display_name} successfully!`
+                      : `Pulling ${table.display_name} ${"..."}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </main>
-
         <IonAlert
           isOpen={alert.show}
           onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
@@ -381,40 +357,7 @@ const Tab3: React.FC = () => {
           message={alert.message}
           buttons={["OK"]}
         />
-        <IonAlert
-          header="Are you sure you want to synch back from the server!"
-          trigger="confirm-trigger"
-          buttons={[
-            {
-              text: "Cancel",
-              role: "cancel",
-              handler: () => {
-                console.log("<<<< Alert canceled >>>>");
-              },
-            },
-            {
-              text: "OK",
-              role: "confirm",
-              handler: async () => {
-                console.log("<<<< Alert confirmed >>>>");
-                try {
-                  handleSynchBack();
-                } catch (error) {
-                  setAlert((a) => ({
-                    ...a,
-                    show: true,
-                    header: "Error!",
-                    message: "Something went wrong during synch back!",
-                  }));
-                }
-              },
-            },
-          ]}
-        // onDidDismiss={({ detail }) => console.log(`Dismissed with role: ${detail.role}`)}
-        ></IonAlert>
       </IonContent>
     </IonPage>
   );
-};
-
-export default Tab3;
+}

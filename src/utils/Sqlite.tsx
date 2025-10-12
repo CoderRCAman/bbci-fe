@@ -17,7 +17,12 @@ import {
 // Import the JeepSqlite component for the web platform
 import { JeepSqlite } from "jeep-sqlite/dist/components/jeep-sqlite";
 import { useLocation } from "react-router";
-import { trackTable } from "./query";
+import {
+  trackTable,
+  trackTableDeleteTriggers,
+  trackTableInsertTriggers,
+  trackTableUpdateTriggers,
+} from "./query";
 
 // Define the shape of a patient
 
@@ -43,10 +48,10 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => { },
-  setConflictedList: () => { },
+  setBaseUrl: () => {},
+  setConflictedList: () => {},
   tabId: "",
-  setTabId: () => { },
+  setTabId: () => {},
 });
 
 // Create a custom hook to use the context
@@ -222,7 +227,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             volume INTEGER , 
             characteristic TEXT , 
             blood_sample_id TEXT,
-            tab_id TEXT
+            tab_id TEXT ,
+            user_id TEXT
           )
         `;
         const query8 = `
@@ -234,7 +240,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             sampleId TEXT ,
             test_type TEXT ,
             sample_id TEXT,
-            tab_id TEXT
+            tab_id TEXT ,
+            user_id TEXT
       )
           `;
         const query9 = `
@@ -305,7 +312,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             daughters INTEGER NOT NULL,
             history_of_cancer INTEGER
           );
-        `
+        `;
         const query15 = `
           CREATE TABLE IF NOT EXISTS  FAMILY_HISTORY_OF_CANCER_RELATIVES (
             id TEXT PRIMARY KEY,
@@ -317,9 +324,11 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             treatment_received INTEGER 
           );
 
-        ` 
-        const query16 = trackTable ; 
-
+        `;
+        const query16 = trackTable;
+        const query17 = trackTableInsertTriggers;
+        const query18 = trackTableUpdateTriggers;
+        const query19 = trackTableDeleteTriggers;
         //synch flag -> 0 1 2
         // 0 -> never synched
         // 1 -> synched
@@ -341,40 +350,9 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query14);
         await newDb.execute(query15);
         await newDb.execute(query16);
-        try {
-          const migration1 = `
-                    CREATE TABLE IF NOT EXISTS tracksync (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    patient_id TEXT UNIQUE,
-                    synch INT DEFAULT 0,
-                    FOREIGN KEY (patient_id) REFERENCES patients(id));`;
-          await newDb.execute(migration1);
-        } catch (error) {
-          console.log("--------- tracksync table already exist! ---------");
-        }
-
-        try {
-          const triger1 = `
-                    CREATE TRIGGER insert_tracksync_on_patient_insert
-                    AFTER INSERT ON patients
-                    FOR EACH ROW
-                    BEGIN
-                        INSERT INTO tracksync (patient_id, synch)
-                        VALUES (NEW.id, 0);
-                    END;
-                    `;
-          await newDb.execute(triger1);
-        } catch (error) {
-          console.log("--------- Trigger1 already exist! ---------");
-        }
-
-        try {
-          const migration2 = "ALTER TABLE patients ADD COLUMN _rev TEXT;";
-          await newDb?.execute(migration2);
-        } catch (error) {
-          console.log("--------- _rev colum already exist ----------");
-        }
-
+        await newDb.execute(query17);
+        await newDb.execute(query18);
+        await newDb.execute(query19);
         setDb(newDb);
         setIsLoading(false);
       } catch (err: any) {

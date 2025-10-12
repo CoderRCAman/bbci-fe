@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
 import ShortUUID from "short-uuid";
 import { saveToStore } from "../../../utils/helper";
+import { checkElibleToSave } from "../Tab11/data";
 const translator = ShortUUID();
 export interface PERSONAL_MEDICAL_HISTORY {
   diagnoss: string;
@@ -54,6 +55,7 @@ export default function Tab6() {
   const [dataState, setDataState] = useState<PERSONAL_MEDICAL_HISTORY_DB[]>([]);
   const searchParams = new URLSearchParams(location.search);
   const [allowNext, setAllowNext] = useState(false);
+  const [dirtyIds, setDirtyIds] = useState<string[]>([]);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -68,6 +70,7 @@ export default function Tab6() {
 
   const updateStateData = (id: string, field: string, value: any) => {
     console.log(id, field, value);
+    setDirtyIds((prev) => (prev.some((x) => x === id) ? prev : [...prev, id]));
     setDataState((prevState) => {
       return prevState.map((item) => {
         if (item.id === id) {
@@ -100,7 +103,15 @@ export default function Tab6() {
   const handleSave = async () => {
     try {
       if (!id) return;
+      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+        return setAlert({
+          header: "Restricted access",
+          message: "This user was registered with a different tab id.",
+          show: true,
+        });
+      }
       for (const item of dataState) {
+        if (!dirtyIds.includes(item.id)) continue;
         const query = `
           INSERT INTO personal_medical_history (
             id,
@@ -141,14 +152,14 @@ export default function Tab6() {
           tabId,
         ];
         await db?.run(query, values);
-        await saveToStore(sqlite);
-        setAllowNext(true);
-        setAlert({
-          show: true,
-          header: "Success",
-          message: "Data saved successfully",
-        });
       }
+      await saveToStore(sqlite);
+      setAllowNext(true);
+      setAlert({
+        show: true,
+        header: "Success",
+        message: "Data saved successfully",
+      });
     } catch (error) {
       console.log(error);
       setAlert({
@@ -191,12 +202,10 @@ export default function Tab6() {
               <Link to={`/tab5?id=${id}`}>
                 <Button className="px-10 py-2 rounded" label="PREV" />
               </Link>
-              {
-                allowNext &&
-                <Link to={"/tab7?id=" + id}>
-                  <Button className="px-10 py-2 rounded" label="NEXT" />
-                </Link>
-              }
+
+              <Link to={"/tab7?id=" + id}>
+                <Button className="px-10 py-2 rounded" label="NEXT" />
+              </Link>
             </div>
           </main>
           <IonAlert

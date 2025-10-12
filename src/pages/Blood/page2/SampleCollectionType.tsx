@@ -57,7 +57,6 @@ export default function SampleCollectionType({
             <p>Specify Other:</p>
             <FloatLabel>
               <InputText
-                keyfilter="int"
                 className="border-1 w-[300px] p-2"
                 value={data["blood_collection_tube_other"]}
                 onChange={(e) =>
@@ -74,7 +73,7 @@ export default function SampleCollectionType({
                   )
                 }
               />
-              <label>From Age</label>
+              <label>Specify</label>
             </FloatLabel>
           </div>
         ) : (
@@ -117,9 +116,8 @@ export default function SampleCollectionType({
                   (item) => item.id === data.id
                 );
                 if (index === -1) return;
-                draft.collection_tubes![index]!.volume = parseInt(
-                  e.target.value
-                );
+                draft.collection_tubes![index]!.volume =
+                  parseInt(e.target.value) || 0;
               })
             )
           }

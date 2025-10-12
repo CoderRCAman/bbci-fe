@@ -10,6 +10,7 @@ import shortUUID from "short-uuid";
 import { immerable } from "immer";
 import { ErrorDetectionBloodSample, saveBloodSampleRecord } from "./helper";
 import { Link } from "react-router-dom";
+import { checkElibleToSave } from "../../Registration/Tab11/data";
 export interface BLOOD_SAMPLE_COLLECTION {
   blood_collection_tube: string;
   blood_collection_tube_other: string;
@@ -18,6 +19,7 @@ export interface BLOOD_SAMPLE_COLLECTION {
   characteristic: string;
   id: string;
   blood_sample_id?: string;
+  user_id?: string;
 }
 
 export interface BLOOD_SAMPLE {
@@ -40,6 +42,7 @@ class BloodSample implements BLOOD_SAMPLE_COLLECTION {
   volume: number = 0;
   characteristic: string = "";
   id: string = "";
+  user_id?: string | undefined = "";
   [immerable] = true;
   constructor(init?: Partial<BLOOD_SAMPLE_COLLECTION>) {
     Object.assign(this, { ...this, ...init });
@@ -52,7 +55,7 @@ export default function BloodPage2() {
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
   const [sampleId, setSampleId] = useState("");
-  const { db, sqlite } = useSQLite();
+  const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [bloodSample, setBloodSample] = useState<BLOOD_SAMPLE>({
     id: shortUUID().generate(),
@@ -113,6 +116,7 @@ export default function BloodPage2() {
                 volume: 0,
                 characteristic: "",
                 id: shortUUID().generate(),
+                user_id: curId,
               }),
             ],
           });
@@ -133,6 +137,7 @@ export default function BloodPage2() {
                     volume: 0,
                     characteristic: "",
                     id: shortUUID().generate(),
+                    user_id: curId,
                   }),
                 ]
               : res2?.values,
@@ -145,6 +150,13 @@ export default function BloodPage2() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
+      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+        return setAlert({
+          header: "Restricted access",
+          message: "This user was registered with a different tab id.",
+          show: true,
+        });
+      }
       const err = ErrorDetectionBloodSample(bloodSample);
       if (err) {
         return setAlert({

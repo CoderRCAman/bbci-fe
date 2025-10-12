@@ -8,6 +8,7 @@ import { Button } from "primereact/button";
 import { Link } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
 import { saveToStore } from "../../../utils/helper";
+import { checkElibleToSave } from "../Tab11/data";
 export interface INDOOR_AIR_POLLUTION {
   id: string;
   from_age: number;
@@ -97,7 +98,13 @@ export default function Tab9() {
 
   const handleSaveFresh = async () => {
     //for fresh records
-    console.log("hello");
+    if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      return setAlert({
+        header: "Restricted access",
+        message: "This user was registered with a different tab id.",
+        show: true,
+      });
+    }
     if (!isIndoorAirPollutionDataValid(indoorAirData)) {
       return setAlert({
         show: true,
@@ -208,11 +215,9 @@ export default function Tab9() {
             <Link to={"/tab8?id=" + id}>
               <Button className="px-10 py-2 rounded" label="PREV" />
             </Link>
-            {allowNext && (
-              <Link to={"/tab11?id=" + id}>
-                <Button className="px-10 py-2 rounded" label="NEXT" />
-              </Link>
-            )}
+            <Link to={"/tab11?id=" + id}>
+              <Button className="px-10 py-2 rounded" label="NEXT" />
+            </Link>
           </div>
         </main>
       </IonContent>

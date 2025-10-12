@@ -79,7 +79,7 @@ export default function PMHInput({
                 updateStateData(
                   data.id,
                   "age_first_diagnosis",
-                  parseInt(e.target.value)
+                  parseInt(e.target.value) || 0
                 )
               }
             />

@@ -35,6 +35,7 @@ import { RadioButton } from "primereact/radiobutton";
 import { Calendar } from "primereact/calendar";
 import RenderError from "../../../components/RenderError";
 import { Link } from "react-router-dom";
+import { checkElibleToSave } from "../Tab11/data";
 
 interface Patient {
   id?: string;
@@ -146,8 +147,16 @@ const Tab1: React.FC = () => {
       return;
     }
 
-    if (editFlag == "yes" && id) {
+    if (id) {
       // Update
+      if (db && !(await checkElibleToSave(db, id, tabId))) {
+        return setAlert({
+          header: "Restricted access",
+          message: "This user was registered with a different tab id.",
+          show: true,
+        });
+      }
+
       console.log(patient);
       if (patient.tab_id !== tabId) {
         return setAlert({
@@ -174,25 +183,7 @@ const Tab1: React.FC = () => {
           id,
         ]
       );
-      const checkRes = await db?.query(`
-            select * tracksync where user_id = ${id}
-        `);
-      const check = checkRes?.values?.[0] || null;
-      if (check && (check.sync == 1 || check.sync == 2)) {
-        await db?.run(
-          `
-         UPDATE tracksync 
-         SET synch = 2 
-         where patient_id = '${id}'
-        `
-        );
-      }
-      console.log(
-        await db?.query(`
-            select * tracksync where user_id = ${id}
-        `)
-      );
-      sqlite?.saveToStore("patientdb");
+      await saveToStore(sqlite);
       setAlert((a) => ({
         ...a,
         show: true,
@@ -231,7 +222,7 @@ const Tab1: React.FC = () => {
         message: "Added successfully",
       }));
       setId(uniqueId);
-      history.push(`/tab5?id=${uniqueId}`);
+      // history.push(`/tab5?id=${uniqueId}`);
     }
   };
 

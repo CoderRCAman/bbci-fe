@@ -10,15 +10,16 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Link } from "react-router-dom";
 import { validateRFTArray } from "../bHelper";
-import { InputNumber } from "primereact/inputnumber";
 import { saveToStore } from "../../../utils/helper";
+import { InputText } from "primereact/inputtext";
+import { checkElibleToSave } from "../../Registration/Tab11/data";
 
 export default function BloodPage4() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
   const [sampleId, setSampleId] = useState("");
-  const { db, sqlite } = useSQLite();
+  const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [lfts, setLfts] = useState<RFTType[]>([]);
   const [alert, setAlert] = useState({
@@ -59,6 +60,13 @@ export default function BloodPage4() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
+      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+        return setAlert({
+          header: "Restricted access",
+          message: "This user was registered with a different tab id.",
+          show: true,
+        });
+      }
       const error = validateRFTArray(lfts);
       if (error) {
         return setAlert({
@@ -69,8 +77,8 @@ export default function BloodPage4() {
       }
 
       const query = `
-        INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type)
-        VALUES (?, ?, ?, ?, ?,  ?)   
+        INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type , user_id)
+        VALUES (?, ?, ?, ?, ?,  ? , ?)   
         ON CONFLICT(id) DO UPDATE SET
           sampleId=excluded.sampleId,
           test_name=excluded.test_name,   
@@ -85,12 +93,13 @@ export default function BloodPage4() {
         rft.result,
         rft.unit,
         rft.test_type || "LFT",
+        id,
       ]);
       for (let i = 0; i < values.length; i++) {
         const params = values[i];
         await db?.run(query, params);
       }
-      await saveToStore(sqlite)
+      await saveToStore(sqlite);
       console.log(values);
       setAlert({
         show: true,
@@ -139,21 +148,20 @@ export default function BloodPage4() {
                   field="result"
                   header="Result"
                   body={(rowData) => (
-                    <InputNumber
+                    <InputText
                       placeholder="Modify"
+                      keyfilter={"int"}
                       value={rowData.result}
-                      minFractionDigits={0}
-                      maxFractionDigits={2}
-                      className=""
+                      className="p-2 border"
                       id="result_blood"
                       onChange={(e) =>
                         setLfts((prev) =>
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                ...item,
-                                result: e.value || 0,
-                              }
+                                  ...item,
+                                  result: parseInt(e.target.value) || 0,
+                                }
                               : item
                           )
                         )
@@ -166,13 +174,8 @@ export default function BloodPage4() {
                   bodyClassName="border-b border-gray-300"
                   field="unit"
                   header="Unit"
-                  body={(rowData) => (
-                    <div>
-                      {rowData.unit}
-                    </div>
-                  )}
+                  body={(rowData) => <div>{rowData.unit}</div>}
                 ></Column>
-
               </DataTable>
             </div>
             <div className="mt-5">

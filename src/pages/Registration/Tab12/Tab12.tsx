@@ -46,12 +46,12 @@ const data = [
       "Buddhist",
       "Other",
     ],
-    field: 'religion'
+    field: "religion",
   },
   {
     type: "Marital status",
     data: ["Unmarried", "Married", "Widowed", "Divorce/seperated", "Other"],
-    field: "marital_status"
+    field: "marital_status",
   },
   {
     type: "Highest level of education received by the subject",
@@ -66,7 +66,7 @@ const data = [
       "Graduate and above",
       "Dont't know",
     ],
-    field: 'highest_education'
+    field: "highest_education",
   },
   {
     type: "Highest level of education received by the spouse",
@@ -81,7 +81,7 @@ const data = [
       "Graduate and above",
       "Dont't know",
     ],
-    field: "highest_education_spouse"
+    field: "highest_education_spouse",
   },
   {
     type: "What is your household income",
@@ -96,7 +96,7 @@ const data = [
       "Does not know",
       "Deoes not want to disclose",
     ],
-    field: 'household_income'
+    field: "household_income",
   },
 ];
 
@@ -145,10 +145,10 @@ export default function Tab12() {
   async function handleSave() {
     try {
       if (!db || !sqlite) return;
-      if (!(await checkElibleToSave(db, id || "", tabId))) {
+      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
         return setAlert({
-          header: "Error",
-          message: "You are not eligible to save",
+          header: "Restricted access",
+          message: "This user was registered with a different tab id.",
           show: true,
         });
       }

@@ -57,7 +57,7 @@ const Tab2: React.FC = () => {
   return (
     <IonPage>
       <Header
-        title='Patient list'
+        title='Participants list'
       />
       <IonContent fullscreen>
         <main className='p-2'>
