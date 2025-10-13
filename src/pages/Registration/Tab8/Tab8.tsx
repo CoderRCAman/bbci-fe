@@ -21,13 +21,13 @@ export default function Tab8() {
     height: 0,
     weight: 0,
     id: shortUUID().generate(),
-    date: new Date().toISOString(),
+    date: new Date().toLocaleString('sv-SE').replace('T', ' '),
   });
   const [reading2, setReading2] = useState({
     height: 0,
     weight: 0,
     id: shortUUID().generate(),
-    date: new Date().toISOString(),
+    date: new Date().toLocaleString('sv-SE').replace('T', ' '),
   });
   const [alert, setAlert] = useState({
     show: false,
@@ -57,7 +57,7 @@ export default function Tab8() {
             height: res?.values?.[0]?.height || 0,
             weight: res?.values?.[0]?.weight || 0,
             id: res?.values?.[0]?.id || shortUUID().generate(),
-            date: res?.values?.[0]?.date || new Date().toISOString(),
+            date: res?.values?.[0]?.date || new Date().toLocaleString('sv-SE').replace('T', ' '),
           });
           setIsDisabledReading2(
             differenceInMonths(new Date(), new Date(reading1.date)) <= 3
@@ -67,7 +67,7 @@ export default function Tab8() {
               height: res?.values?.[1]?.height || 0,
               weight: res?.values?.[1]?.weight || 0,
               id: res?.values?.[1]?.id || shortUUID().generate(),
-              date: res?.values?.[1]?.date || new Date().toISOString(),
+              date: res?.values?.[1]?.date || new Date().toLocaleString('sv-SE').replace('T', ' '),
             });
           }
         }

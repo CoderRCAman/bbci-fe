@@ -60,10 +60,10 @@ export default function BloodPage2() {
   const [bloodSample, setBloodSample] = useState<BLOOD_SAMPLE>({
     id: shortUUID().generate(),
     user_id: id,
-    date_collected: new Date().toString(),
-    time_collected: new Date().toString(),
-    last_meal_date: new Date().toString(),
-    last_meal_time: new Date().toString(),
+    date_collected: new Date().toLocaleString('sv-SE').replace('T', ' '),
+    time_collected: new Date().toLocaleString('sv-SE').replace('T', ' '),
+    last_meal_date: new Date().toLocaleString('sv-SE').replace('T', ' '),
+    last_meal_time: new Date().toLocaleString('sv-SE').replace('T', ' '),
     received_blood_last_6_months: 2,
     sample_classification: "",
     is_sample_collected: 0,
@@ -101,10 +101,10 @@ export default function BloodPage2() {
           setBloodSample({
             id: shortUUID().generate(),
             user_id: curId,
-            date_collected: new Date().toISOString(),
-            time_collected: new Date().toISOString(),
-            last_meal_date: new Date().toISOString(),
-            last_meal_time: new Date().toISOString(),
+            date_collected: new Date().toLocaleString('sv-SE').replace('T', ' '),
+            time_collected: new Date().toLocaleString('sv-SE').replace('T', ' '),
+            last_meal_date: new Date().toLocaleString('sv-SE').replace('T', ' '),
+            last_meal_time: new Date().toLocaleString('sv-SE').replace('T', ' '),
             received_blood_last_6_months: 2,
             sample_classification: "",
             is_sample_collected: 0,
@@ -127,19 +127,20 @@ export default function BloodPage2() {
         setBloodSample((prev) => ({
           ...prev,
           ...res1?.values?.[0],
+        
           collection_tubes:
             res2?.values?.length == 0
               ? [
-                  new BloodSample({
-                    blood_collection_tube: "",
-                    blood_collection_tube_other: "",
-                    identification_code_tube: "",
-                    volume: 0,
-                    characteristic: "",
-                    id: shortUUID().generate(),
-                    user_id: curId,
-                  }),
-                ]
+                new BloodSample({
+                  blood_collection_tube: "",
+                  blood_collection_tube_other: "",
+                  identification_code_tube: "",
+                  volume: 0,
+                  characteristic: "",
+                  id: shortUUID().generate(),
+                  user_id: curId,
+                }),
+              ]
               : res2?.values,
         }));
       } catch (error) {
@@ -212,7 +213,7 @@ export default function BloodPage2() {
     if (bloodSample.collection_tubes.length > 0) return;
     addNewCollectionTube();
   }, [location.pathname]);
-
+  console.log(bloodSample)
   return (
     <>
       <IonPage>
@@ -353,7 +354,7 @@ export default function BloodPage2() {
                   onChange={(e) =>
                     setBloodSample({
                       ...bloodSample,
-                      date_collected: e.value?.toISOString() || "",
+                      date_collected: e.value?.toLocaleString('sv-SE').replace('T', ' ') || "",
                     })
                   }
                   showIcon
@@ -369,7 +370,7 @@ export default function BloodPage2() {
                     onChange={(e) => {
                       setBloodSample({
                         ...bloodSample,
-                        time_collected: e.value?.toISOString() || "",
+                        time_collected: e.value?.toLocaleString('sv-SE').replace('T', ' ') || "",
                       });
                     }}
                     timeOnly
@@ -393,7 +394,7 @@ export default function BloodPage2() {
                     onChange={(e) =>
                       setBloodSample({
                         ...bloodSample,
-                        last_meal_date: e.value?.toISOString() || "",
+                        last_meal_date: e.value?.toLocaleString('sv-SE').replace('T', ' ') || "",
                       })
                     }
                   />
@@ -408,7 +409,7 @@ export default function BloodPage2() {
                       onChange={(e) => {
                         setBloodSample({
                           ...bloodSample,
-                          last_meal_time: e.value?.toISOString() || "",
+                          last_meal_time: e.value?.toLocaleString('sv-SE').replace('T', ' ') || "",
                         });
                       }}
                       timeOnly

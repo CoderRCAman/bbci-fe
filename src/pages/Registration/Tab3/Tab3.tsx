@@ -209,7 +209,7 @@ export default function Tab3() {
       setPullState((prev) => ({ ...prev, applyingPatch: true }));
       for (const { table_name, table_data } of pulled) {
         console.log(`⬇️ Syncing table: ${table_name}`);
-        if (table_name === "deletedRecords") {
+        if (table_name === "deletedRecords" && table_data.length > 0) {
           //delete from db
           let deleteQueries = table_data
             .map(
@@ -247,14 +247,13 @@ export default function Tab3() {
           console.log(`✅ Table ${table_name} synced successfully.`);
         } catch (err) {
           console.error(`❌ Error syncing table ${table_name}:`, err);
-        } finally {
-          setPullState((prev) => ({
-            ...prev,
-            appliedPatch: true,
-            applyingPatch: false,
-          }));
         }
       }
+      setPullState((prev) => ({
+        ...prev,
+        appliedPatch: true,
+        applyingPatch: false,
+      }));
       for (const { table_data } of pulled) {
         await db?.run(
           `UPDATE  tracksync SET synch = 1 WHERE rowId in (${table_data
@@ -273,7 +272,7 @@ export default function Tab3() {
       console.log(error);
     }
   };
-
+  console.log(pullState)
   return (
     <IonPage>
       <Header title={"Sync Data"} />

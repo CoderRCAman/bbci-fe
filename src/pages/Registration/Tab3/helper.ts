@@ -44,7 +44,7 @@ export async function PUSH_TO_CLOUD(
       const { table_name, table_data } = item;
       for (let i = 0; i < table_data.length; i += LIMIT) {
         const chunk = table_data.slice(i, i + LIMIT);
-        queue.add(async () => {
+        await queue.add(async () => {
           try {
             await api.post(`/push`, {
               table_name,
@@ -61,7 +61,7 @@ export async function PUSH_TO_CLOUD(
       }
     }
     if (deletedRecords.length > 0) {
-      queue.add(async () => {
+      await queue.add(async () => {
         try {
           await api.post(`/push`, {
             table_name: "",
