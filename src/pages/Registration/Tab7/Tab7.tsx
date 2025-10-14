@@ -61,6 +61,7 @@ export default function Tab7() {
   const { db, sqlite, tabId } = useSQLite();
   const searchParams = new URLSearchParams(location.search);
   const [familyHistoryMaster, setfamilyHistoryMaster] = useState(initialState);
+  const [removedIds, setRemovedIds] = useState<string[]>([])
   const [familyHistoryRelatives, setfamilyHistoryRelatives] = useState(
     initialStateRelatives
   );
@@ -115,6 +116,7 @@ export default function Tab7() {
   };
   const handleRemoveUi = (id: string) => {
     if (familyHistoryRelatives.length === 1) return;
+    setRemovedIds((prev) => [...prev, id]);
     setfamilyHistoryRelatives((d) => d.filter((x) => x.id !== id));
   };
   const handleChangeRelative = (id: string, field: string, value: any) => {
@@ -203,6 +205,10 @@ export default function Tab7() {
           ];
 
           await db?.run(query, values);
+          for (const id of removedIds) {
+            await db?.run(`delete from FAMILY_HISTORY_OF_CANCER_RELATIVES where id = '${id}'`)
+          }
+
         }
       }
       setAlert({
@@ -220,6 +226,7 @@ export default function Tab7() {
       });
     }
   };
+  console.log(familyHistoryMaster)
   return (
     <IonPage>
       <Header
@@ -228,6 +235,7 @@ export default function Tab7() {
       <IonContent class="" fullscreen>
         <main className="p-2 text-slate-600">
           <DataTable
+            key={familyHistoryMaster?.[0]?.history_of_cancer}
             value={familyHistoryMaster}
             tableStyle={{ minWidth: "6rem" }}
             rows={10}
@@ -408,12 +416,14 @@ export default function Tab7() {
               diagnosis of cancer
             </h1>
             <DataTable
+              stripedRows
               tableStyle={{ minWidth: "60rem" }}
               // tableClassName="p-datatable-gridlines"
               value={familyHistoryRelatives}
               showGridlines
               size="normal"
               className="border !border-b-0 text-slate-600"
+              key={familyHistoryMaster?.[0].history_of_cancer}
             >
               <Column
                 style={{ fontSize: "0.8rem" }}
@@ -432,6 +442,7 @@ export default function Tab7() {
                     className="border-1 p-2 "
                     value={rowData.relation}
                     placeholder="relation"
+                    disabled={familyHistoryMaster?.[0]?.history_of_cancer !== 1}
                     onChange={(e) =>
                       handleChangeRelative(
                         rowData.id,
@@ -449,7 +460,8 @@ export default function Tab7() {
                 header="Relative code"
                 body={(rowData) => (
                   <Dropdown
-                    // onChange={(e) => onChange(e.value)}
+                    // onChange={(e) => onChange(e.value)} 
+                    disabled={familyHistoryMaster?.[0]?.history_of_cancer !== 1}
                     optionLabel="name"
                     value={rowData.code}
                     optionValue="value"
@@ -470,6 +482,7 @@ export default function Tab7() {
                 header="Age at diagnosis"
                 body={(rowData) => (
                   <InputText
+                    disabled={familyHistoryMaster?.[0]?.history_of_cancer !== 1}
                     keyfilter={"int"}
                     className="border-1 p-2 "
                     value={rowData.age_at_diagnosis}
@@ -490,6 +503,7 @@ export default function Tab7() {
                 header="Cancer Site"
                 body={(rowData) => (
                   <InputText
+                    disabled={familyHistoryMaster?.[0]?.history_of_cancer !== 1}
                     className="border-1 p-2 "
                     value={rowData.cancer_site}
                     onChange={(e) =>
@@ -511,6 +525,7 @@ export default function Tab7() {
                   <div>
                     <div className="space-x-2">
                       <input
+                        disabled={familyHistoryMaster?.[0]?.history_of_cancer !== 1}
                         type="radio"
                         value={1}
                         checked={rowData.treatment_received === 1}
@@ -527,6 +542,7 @@ export default function Tab7() {
                     <div className="space-x-2">
                       <input
                         type="radio"
+                        disabled={familyHistoryMaster?.[0]?.history_of_cancer !== 1}
                         value={2}
                         checked={rowData.treatment_received === 2}
                         onChange={(e) =>

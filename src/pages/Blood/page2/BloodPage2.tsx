@@ -11,6 +11,7 @@ import { immerable } from "immer";
 import { ErrorDetectionBloodSample, saveBloodSampleRecord } from "./helper";
 import { Link } from "react-router-dom";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
+import { saveToStore } from "../../../utils/helper";
 export interface BLOOD_SAMPLE_COLLECTION {
   blood_collection_tube: string;
   blood_collection_tube_other: string;
@@ -69,6 +70,7 @@ export default function BloodPage2() {
     is_sample_collected: 0,
     collection_tubes: [],
   });
+  const [removedIds, setRemovedIds] = useState<string[]>([])
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -127,7 +129,7 @@ export default function BloodPage2() {
         setBloodSample((prev) => ({
           ...prev,
           ...res1?.values?.[0],
-        
+
           collection_tubes:
             res2?.values?.length == 0
               ? [
@@ -167,7 +169,13 @@ export default function BloodPage2() {
         });
       }
       await saveBloodSampleRecord(bloodSample, db, sqlite);
+      console.log(removedIds)
+      for (const removedId of removedIds) {
+        await db?.run(`delete from blood_tube_collection where id = '${removedId}'`)
+      }
+      await saveToStore(sqlite);
       setSampleId(bloodSample.id);
+
       setAlert({
         header: "Success",
         show: true,
@@ -200,6 +208,7 @@ export default function BloodPage2() {
   };
   const removeCollectionTube = (id: string) => {
     if (bloodSample.collection_tubes.length === 1) return;
+    setRemovedIds(prev => [...prev, id])
     const updatedTubes = bloodSample.collection_tubes.filter(
       (tube) => tube.id !== id
     );

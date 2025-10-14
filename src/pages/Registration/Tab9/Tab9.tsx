@@ -43,6 +43,7 @@ export default function Tab9() {
   const [editFlag, setEditFlag] = useState(false);
   const [allowNext, setAllowNext] = useState(false);
   const searchParams = new URLSearchParams(location.search);
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
   const [indoorAirData, setIndoorAirData] = useState<INDOOR_AIR_POLLUTION[]>(
     []
   );
@@ -93,6 +94,7 @@ export default function Tab9() {
   };
   const handleRemoveUi = (id: string) => {
     if (indoorAirData.length === 1) return;
+    setRemovedIds(prev => [...prev, id]);
     setIndoorAirData((d) => d.filter((x) => x.id !== id));
   };
 
@@ -153,6 +155,9 @@ export default function Tab9() {
         ];
         console.log(query, values);
         await db?.run(query, values);
+      }
+      for (const id of removedIds) {
+        await db?.run(`DELETE FROM indoor_air_pollution WHERE id = ?`, [id]);
       }
       setAllowNext(true);
       await saveToStore(sqlite);

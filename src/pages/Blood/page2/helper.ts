@@ -110,7 +110,7 @@ export const saveBloodSampleRecord = async (
       console.log(q);
       await db?.execute(q);
     }
-    await saveToStore(sqlite);
+   
   } catch (error) {
     console.log(error) ;
     throw error
