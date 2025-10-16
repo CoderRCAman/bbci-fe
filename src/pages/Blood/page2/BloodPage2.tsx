@@ -12,6 +12,7 @@ import { ErrorDetectionBloodSample, saveBloodSampleRecord } from "./helper";
 import { Link } from "react-router-dom";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
 import { saveToStore } from "../../../utils/helper";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 export interface BLOOD_SAMPLE_COLLECTION {
   blood_collection_tube: string;
   blood_collection_tube_other: string;
@@ -58,6 +59,7 @@ export default function BloodPage2() {
   const [sampleId, setSampleId] = useState("");
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
+  const [editFlag, setEditFlag] = useState(false);
   const [bloodSample, setBloodSample] = useState<BLOOD_SAMPLE>({
     id: shortUUID().generate(),
     user_id: id,
@@ -78,8 +80,10 @@ export default function BloodPage2() {
   });
   useEffect(() => {
     const curId = searchParams.get("id") || "";
+    const edit = searchParams.get("edit") || "";
     setId(curId);
     const sampleId = searchParams.get("sampleId") || "";
+    if (edit === "yes") setEditFlag(true);
     setBloodSample((prev) => ({ ...prev, user_id: curId }));
     setSampleId(sampleId);
     if (!db) return;
@@ -153,7 +157,8 @@ export default function BloodPage2() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+
+      if (db && sampleId && editFlag && !(await checkElibleToSave(db, sampleId || "", tabId, 'blood_sample'))) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -168,7 +173,7 @@ export default function BloodPage2() {
           show: true,
         });
       }
-      await saveBloodSampleRecord(bloodSample, db, sqlite);
+      await saveBloodSampleRecord(bloodSample, db, sqlite, tabId);
       console.log(removedIds)
       for (const removedId of removedIds) {
         await db?.run(`delete from blood_tube_collection where id = '${removedId}'`)
@@ -228,6 +233,7 @@ export default function BloodPage2() {
       <IonPage>
         <Header title={"Blood sample report"} />
         <IonContent fullscreen>
+          <ShowRegisteredTab id={sampleId || ''} table_name="blood_sample" />
           <main className="p-2">
             <div className="p-2 shadow border rounded text-slate-600">
               <p className="text-lg  font-semibold">Participant's details</p>
@@ -526,7 +532,7 @@ export default function BloodPage2() {
                 <Link to="/blood1">
                   <Button label="PREV" className="px-10 py-2 rounded" />
                 </Link>
-                <Link to={`/blood3?id=${id}&sampleId=${bloodSample?.id}`}>
+                <Link to={`/blood3?id=${id}&sampleId=${bloodSample?.id}&edit=${editFlag ? 'yes' : 'no'}`}>
                   <Button label="NEXT" className="px-10 py-2 rounded" />
                 </Link>
               </div>

@@ -8,10 +8,10 @@ export interface TOBACCO_ALCOHOL_CONSUMPION {
   id: string;
   user_id: string;
   type:
-    | "smoking_tobacco"
-    | "chewing_tobacco"
-    | "chewing_without_tobacco"
-    | "alcohol";
+  | "smoking_tobacco"
+  | "chewing_tobacco"
+  | "chewing_without_tobacco"
+  | "alcohol";
   product?: string;
   consumes?: number;
   from_age?: number;
@@ -34,10 +34,10 @@ export interface TOBACCO_ALCOHOL_CONSUMPION {
 
 export interface initialState {
   product_type:
-    | "smoking_tobacco"
-    | "chewing_tobacco"
-    | "chewing_without_tobacco"
-    | "alcohol";
+  | "smoking_tobacco"
+  | "chewing_tobacco"
+  | "chewing_without_tobacco"
+  | "alcohol";
   consumed: number;
   products: TOBACCO_ALCOHOL_CONSUMPION[];
   id: string;
@@ -295,11 +295,13 @@ export const populateWithBackend = (
 export const checkElibleToSave = async (
   db: SQLiteDBConnection,
   user_id: string,
-  tab_id: string
+  tab_id: string,
+  table_name: string = "patients",
 ) => {
   try {
+    if (!table_name) return false;
     const res = await db.query(
-      `select * from patients where id = '${user_id}'`
+      `select * from ${table_name} where id = '${user_id}'`
     );
     const user = res?.values?.[0];
     if (!user) return false;
@@ -325,8 +327,9 @@ export const saveToDBAlcohol = async (
       type,
       user_id,
       consumed,
-      tab_id
-    ) VALUES (?, ?, ?, ?, ?)
+      tab_id,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?,?)
     ON CONFLICT(id) DO UPDATE SET
       type = excluded.type,
       user_id = excluded.user_id,
@@ -341,6 +344,7 @@ export const saveToDBAlcohol = async (
         user_id,
         data.consumed,
         tab_id,
+        new Date().toLocaleString('sv-SE').replace('T', ' '),
       ];
       await db.run(queryM, values);
     }
@@ -350,9 +354,9 @@ export const saveToDBAlcohol = async (
       id, user_id, type, product, consumes, from_age, to_age, number_per_day,
       days_in_week, days_in_month, duration_placement_hr, duration_placement_min,
       site_of_placement_L, site_of_placement_R, site_of_placement_F, site_of_placement_NA,
-      without_tobacco, consumption_unit_per_day, is_other_product, tab_id, master_id
+      without_tobacco, consumption_unit_per_day, is_other_product, tab_id, master_id , created_at
     ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?
     )
     ON CONFLICT(id) DO UPDATE SET
       user_id = excluded.user_id,
@@ -400,6 +404,7 @@ export const saveToDBAlcohol = async (
         data.is_other_product,
         tab_id,
         data.master_id,
+        new Date().toLocaleString('sv-SE').replace('T', ' '),
       ];
 
       await db.run(query, values);

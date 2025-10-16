@@ -11,6 +11,7 @@ import shortUUID from "short-uuid";
 import { differenceInMonths, set } from "date-fns";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 
 // dont create seperate table for this one!
 export default function Tab8() {
@@ -107,8 +108,9 @@ export default function Tab8() {
             date,
             height,
             weight,
-            tab_id 
-        ) VALUES (?, ?, ?, ?, ?,?)
+            tab_id ,
+            created_at
+        ) VALUES (?, ?, ?, ?, ?, ? , ?)
         ON CONFLICT(id) DO UPDATE SET
             user_id = excluded.user_id,
             date = excluded.date,
@@ -122,6 +124,7 @@ export default function Tab8() {
         reading1.height,
         reading1.weight,
         tabId,
+        new Date().toLocaleString('sv-SE').replace('T', ' '),
       ];
 
       await db?.run(query, values);
@@ -158,6 +161,7 @@ export default function Tab8() {
       <IonPage>
         <Header title={0 ? "Edit Anthropometry" : "Anthropometry"} />
         <IonContent class="" fullscreen>
+          <ShowRegisteredTab id={id || ''} />
           <main className="p-2 space-y-5">
             <div className="p-2 border rounded-md">
               <p className="text-slate-500">Reading 1</p>

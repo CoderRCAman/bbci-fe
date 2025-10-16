@@ -48,10 +48,10 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => {},
-  setConflictedList: () => {},
+  setBaseUrl: () => { },
+  setConflictedList: () => { },
   tabId: "",
-  setTabId: () => {},
+  setTabId: () => { },
 });
 
 // Create a custom hook to use the context
@@ -150,7 +150,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         village TEXT , 
                         state TEXT , 
                         code INTEGER , 
-                        tab_id TEXT
+                        tab_id TEXT ,
+                        created_at TEXT
                     );
                 `;
         const query3 = `
@@ -165,7 +166,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         mode_of_diagnosis TEXT ,
                         mode_of_diagnosis_other TEXT ,
                         user_id TEXT,
-                        tab_id TEXT
+                        tab_id TEXT,
+                        created_at TEXT
                     );
                 `;
         const query4 = `
@@ -190,7 +192,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
               consumption_unit_per_day INTEGER,
               is_other_product INTEGER,
               tab_id TEXT ,
-              master_id TEXT 
+              master_id TEXT ,
+              created_at TEXT
              );
         `;
         const query5 = `
@@ -201,7 +204,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             endoscopy_pdf_filename TEXT,
             user_id TEXT ,
             date TEXT,
-            tab_id TEXT
+            tab_id TEXT ,
+            created_at TEXT
             );
         `;
         const query6 = `
@@ -215,7 +219,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             received_blood_last_6_months INTEGER , 
             sample_classification TEXT , 
             is_sample_collected INTEGER,
-            tab_id TEXT 
+            tab_id TEXT ,
+            created_at TEXT
           )
         `;
         const query7 = `
@@ -228,7 +233,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             characteristic TEXT , 
             blood_sample_id TEXT,
             tab_id TEXT ,
-            user_id TEXT
+            user_id TEXT,
+            created_at TEXT
           )
         `;
         const query8 = `
@@ -241,7 +247,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             test_type TEXT ,
             sample_id TEXT,
             tab_id TEXT ,
-            user_id TEXT
+            user_id TEXT ,
+            created_at TEXT
       )
           `;
         const query9 = `
@@ -257,7 +264,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
               date TEXT ,
               height REAL ,
               weight REAL ,
-              tab_id TEXT
+              tab_id TEXT ,
+              created_at TEXT
             );          
         `;
 
@@ -273,7 +281,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
               smokiness INTEGER,
               most_cooking INTEGER,
               user_id TEXT,
-              tab_id TEXT
+              tab_id TEXT ,
+              created_at TEXTF
             );
           `;
 
@@ -283,7 +292,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                 type TEXT , 
                 user_id TEXT ,
                 consumed INTEGER , 
-                tab_id TEXT 
+                tab_id TEXT ,
+                created_at TEXT
              );
           `;
 
@@ -298,7 +308,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                household_income TEXT,
                mother_tongue TEXT,
                place_of_birth TEXT,
-               tab_id TEXT
+               tab_id TEXT ,
+               created_at TEXT
              );
           `;
 
@@ -310,7 +321,9 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             sisters INTEGER NOT NULL,
             sons INTEGER NOT NULL,
             daughters INTEGER NOT NULL,
-            history_of_cancer INTEGER
+            history_of_cancer INTEGER ,
+            tab_id TEXT ,
+            created_at TEXT
           );
         `;
         const query15 = `
@@ -321,7 +334,9 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             code INTEGER NOT NULL,
             age_at_diagnosis INTEGER NOT NULL,
             cancer_site TEXT NOT NULL,
-            treatment_received INTEGER 
+            treatment_received INTEGER , 
+            tab_id TEXT ,
+            created_at TEXTF
           );
 
         `;

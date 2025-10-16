@@ -10,6 +10,7 @@ import { useSQLite } from "../../../utils/Sqlite";
 import shortUUID from "short-uuid";
 import { checkElibleToSave } from "../Tab11/data";
 import { saveToStore } from "../../../utils/helper";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 export interface DEMOGRAPHIC_INFO {
   id: string;
   user_id: string;
@@ -117,6 +118,7 @@ export default function Tab12() {
   useEffect(() => {
     if (db === null) return;
     const id = searchParams?.get("id") || "";
+    setId(id)
     async function fetchExisting() {
       try {
         const res = await db?.query(
@@ -163,8 +165,9 @@ export default function Tab12() {
                     household_income,
                     mother_tongue,
                     place_of_birth,
-                    tab_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    tab_id ,
+                    created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                     religion = excluded.religion,
                     marital_status = excluded.marital_status,
@@ -186,6 +189,7 @@ export default function Tab12() {
         demographicInfo.mother_tongue,
         demographicInfo.place_of_birth,
         tabId,
+        new Date().toLocaleString('sv-SE').replace('T', ' '),
       ];
       await db.run(query, values);
       await saveToStore(sqlite);
@@ -205,6 +209,7 @@ export default function Tab12() {
         title={0 ? "Edit Demographic Information" : "Demographic Information"}
       />
       <IonContent class="" fullscreen>
+        <ShowRegisteredTab id={id || ''} />
         <main className="p-2 space-y-5">
           {data.map((d, index) => (
             <DemoInput
@@ -252,7 +257,7 @@ export default function Tab12() {
           buttons={["OK"]}
         />
         <div className="pt-10 pb-2 flex justify-end gap-2">
-          <Link to={"/tab11"}>
+          <Link to={"/tab11?id=" + id}>
             <Button className="px-10 py-2 rounded" label="PREV" />
           </Link>
         </div>

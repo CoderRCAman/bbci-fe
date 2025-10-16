@@ -111,7 +111,7 @@ export default function BloodPage1() {
                 size='normal'
               >
                 <Column field="id" sortable header="Sample Id"
-                  body={(rowData) => <Link to={`/blood2?id=${rowData.user_id}&sampleId=${rowData.id}`}>{rowData.id}</Link>}
+                  body={(rowData) => <Link to={`/blood2?id=${rowData.user_id}&sampleId=${rowData.id}&edit=yes`}>{rowData.id}</Link>}
                 ></Column>
                 <Column field="name" sortable header="Name"></Column>
                 <Column field="user_id" sortable header="User Id"></Column>

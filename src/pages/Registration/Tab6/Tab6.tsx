@@ -10,6 +10,7 @@ import { useSQLite } from "../../../utils/Sqlite";
 import ShortUUID from "short-uuid";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 const translator = ShortUUID();
 export interface PERSONAL_MEDICAL_HISTORY {
   diagnoss: string;
@@ -124,8 +125,9 @@ export default function Tab6() {
             mode_of_diagnosis,
             mode_of_diagnosis_other,
             user_id,
-            tab_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+            tab_id ,
+            created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?)
           ON CONFLICT(id) DO UPDATE SET
             diagnoss = excluded.diagnoss,
             diagnosed = excluded.diagnosed,
@@ -150,6 +152,7 @@ export default function Tab6() {
           item.mode_of_diagnosis_other,
           item.user_id,
           tabId,
+          new Date().toLocaleString('sv-SE').replace('T', ' '),
         ];
         await db?.run(query, values);
       }
@@ -179,6 +182,7 @@ export default function Tab6() {
           }
         />
         <IonContent class="" fullscreen>
+          <ShowRegisteredTab id={id || ''} />
           <main className="p-2 space-y-2">
             {data.map((d, index) => (
               <PMHInput

@@ -17,12 +17,14 @@ import { validateRFTArray } from "../bHelper";
 import { InputNumber } from "primereact/inputnumber";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 
 export default function BloodPage6() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
   const [sampleId, setSampleId] = useState("");
+  const [editFlag, setEditFlag] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [biochem, setBiochem] = useState<RFTType[]>([]);
@@ -34,8 +36,10 @@ export default function BloodPage6() {
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     const sampleId = searchParams.get("sampleId") || "";
+    const edit = searchParams.get("edit") || "";
     setSampleId(sampleId);
     setId(curId);
+    setEditFlag(edit === "yes");
     setBiochem([
       {
         sampleId: sampleId,
@@ -63,14 +67,14 @@ export default function BloodPage6() {
           res2?.values?.length
             ? (res2?.values as RFTType[])
             : [
-                {
-                  sampleId: sampleId,
-                  test_name: "Uric Acid",
-                  result: 0,
-                  unit: "mg/dL",
-                  id: shortUUID().generate(),
-                },
-              ]
+              {
+                sampleId: sampleId,
+                test_name: "Uric Acid",
+                result: 0,
+                unit: "mg/dL",
+                id: shortUUID().generate(),
+              },
+            ]
         );
       } catch (error) {
         console.log(error);
@@ -80,7 +84,7 @@ export default function BloodPage6() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (db && editFlag && !(await checkElibleToSave(db, sampleId || "", tabId, 'blood_sample'))) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -97,8 +101,8 @@ export default function BloodPage6() {
       }
 
       const query = `
-          INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type,user_id)
-          VALUES (?, ?, ?, ?, ?,  ? , ?)   
+          INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type, user_id, created_at)
+          VALUES (?, ?, ?, ?, ?,  ? , ? , ?)   
           ON CONFLICT(id) DO UPDATE SET
             sampleId=excluded.sampleId,
             test_name=excluded.test_name,   
@@ -114,6 +118,7 @@ export default function BloodPage6() {
         rft.unit,
         rft.test_type || "BIOCHEM",
         id,
+        new Date().toLocaleString('sv-SE').replace('T', ' '),
       ]);
       for (let i = 0; i < values.length; i++) {
         const params = values[i];
@@ -135,6 +140,7 @@ export default function BloodPage6() {
       <IonPage>
         <Header title={"Biochemistry test"} />
         <IonContent fullscreen>
+          <ShowRegisteredTab id={sampleId || ''} table_name="blood_sample" />
           <main className="p-2">
             <div className="p-2 shadow border rounded text-slate-600">
               <p className="text-lg  font-semibold">Participant's details</p>
@@ -179,9 +185,9 @@ export default function BloodPage6() {
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                  ...item,
-                                  result: parseInt(e.target.value) || 0,
-                                }
+                                ...item,
+                                result: parseInt(e.target.value) || 0,
+                              }
                               : item
                           )
                         )
@@ -209,10 +215,10 @@ export default function BloodPage6() {
             </div>
 
             <div className="flex gap-2 mt-5 justify-end ">
-              <Link to={`/blood5?id=${id}&sampleId=${sampleId}`}>
+              <Link to={`/blood5?id=${id}&sampleId=${sampleId}&edit=${editFlag ? "yes" : "no"}`}>
                 <Button label="PREV" className="px-5 py-2 rounded" />
               </Link>
-              <Link to={`/blood7?id=${id}&sampleId=${sampleId}`}>
+              <Link to={`/blood7?id=${id}&sampleId=${sampleId}&edit=${editFlag ? "yes" : "no"}`}>
                 <Button label="NEXT" className="px-5 py-2 rounded" />
               </Link>
             </div>

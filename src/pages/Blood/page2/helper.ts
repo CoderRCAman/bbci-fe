@@ -50,7 +50,8 @@ export const ErrorDetectionBloodSample = (
 export const saveBloodSampleRecord = async (
   bloodSample: BLOOD_SAMPLE,
   db: SQLiteDBConnection | null,
-  sqlite: SQLiteConnection | null
+  sqlite: SQLiteConnection | null,
+  tabId: string
 ) => {
   try {
     console.log(bloodSample);
@@ -59,8 +60,8 @@ export const saveBloodSampleRecord = async (
                   INSERT INTO blood_sample (
                     id, user_id, date_collected, time_collected,
                     last_meal_date, received_blood_last_6_months,
-                    sample_classification, is_sample_collected, last_meal_time
-                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    sample_classification, is_sample_collected, last_meal_time , tab_id , created_at
+                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ?)
                   ON CONFLICT(id) DO UPDATE SET
                     user_id = excluded.user_id,
                     date_collected = excluded.date_collected,
@@ -70,6 +71,7 @@ export const saveBloodSampleRecord = async (
                     sample_classification = excluded.sample_classification,
                     is_sample_collected = excluded.is_sample_collected,
                     last_meal_time = excluded.last_meal_time;
+                    
                 `;
     const values = [
       bloodSample.id,
@@ -81,6 +83,8 @@ export const saveBloodSampleRecord = async (
       bloodSample.sample_classification,
       bloodSample.is_sample_collected,
       bloodSample.last_meal_time,
+      tabId,
+      new Date().toLocaleString('sv-SE').replace('T', ' '),
     ];
     await db?.run(query, values);
     for (let i = 0; i < bloodCollectionTube.length; i++) {
@@ -94,10 +98,12 @@ export const saveBloodSampleRecord = async (
                 volume,
                 characteristic,
                 blood_sample_id ,
-                user_id 
+                user_id,
+                tab_id ,
+                created_at
                 ) VALUES ('${item.id}', '${item.blood_collection_tube}',
                 '${item.blood_collection_tube_other}', '${item.identification_code_tube}', 
-                ${item.volume}, '${item.characteristic}', '${bloodSample.id}' , '${bloodSample.user_id}')
+                ${item.volume}, '${item.characteristic}', '${bloodSample.id}' , '${bloodSample.user_id}' , '${tabId}' , '${new Date().toLocaleString('sv-SE').replace('T', ' ')}')
                 ON CONFLICT(id) DO UPDATE SET
                 blood_collection_tube = excluded.blood_collection_tube,
                 blood_collection_tube_other = excluded.blood_collection_tube_other,
@@ -110,9 +116,9 @@ export const saveBloodSampleRecord = async (
       console.log(q);
       await db?.execute(q);
     }
-   
+
   } catch (error) {
-    console.log(error) ;
+    console.log(error);
     throw error
   }
 };

@@ -36,6 +36,7 @@ import { Calendar } from "primereact/calendar";
 import RenderError from "../../../components/RenderError";
 import { Link } from "react-router-dom";
 import { checkElibleToSave } from "../Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 
 interface Patient {
   id?: string;
@@ -131,7 +132,7 @@ const Tab1: React.FC = () => {
         if ((res as any)?.values?.length > 0) {
           setPatient((res as any)?.values[0]);
         }
-      } catch (error) {}
+      } catch (error) { }
     }
     fetchPatient();
   }, [location.search, db]);
@@ -250,10 +251,11 @@ const Tab1: React.FC = () => {
     <IonPage>
       <Header
         title={
-          editFlag === "yes" ? "Edit participants" : "Register Participant"
+          id ? "Edit participants" : "Register Participant"
         }
       />
       <IonContent fullscreen>
+        <ShowRegisteredTab id={id || ''} />
         <form
           className=" shadow-1 border rounded-md m-2 p-2 pt-5 flex flex-col gap-10"
           onSubmit={handleSubmit(onSubmit)}

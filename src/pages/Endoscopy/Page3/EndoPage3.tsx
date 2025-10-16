@@ -9,6 +9,7 @@ import { Button } from "primereact/button";
 import { Link } from "react-router-dom";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 
 export default function EndoPage3() {
   const location = useLocation();
@@ -16,6 +17,7 @@ export default function EndoPage3() {
   const [pdfFileName, setPdfFileName] = useState("");
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
+  const [editFlag, setEditFlag] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [endoId, setEndoId] = useState("");
@@ -27,8 +29,10 @@ export default function EndoPage3() {
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     const endoIdd = searchParams.get("endoId") || "";
+    const edit = searchParams.get("edit") || "";
     setId(curId);
     setEndoId(searchParams.get("endoId") || "");
+    setEditFlag(edit === "yes");
     async function fetchCurrentUser() {
       try {
         const query = `
@@ -52,7 +56,7 @@ export default function EndoPage3() {
   }, [location.pathname, db]);
   const AddMediaReportFilenames = async () => {
     try {
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (db && editFlag && !(await checkElibleToSave(db, endoId || "", tabId, 'ENDOSCOPY'))) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -88,6 +92,7 @@ export default function EndoPage3() {
       <IonPage>
         <Header title={"Collect VIDEO report / PDF report"} />
         <IonContent class="" fullscreen>
+          <ShowRegisteredTab id={endoId} table_name="ENDOSCOPY" />
           <main className="p-2">
             <div className="shadow p-2 border rounded text-slate-600">
               <p className="text-lg  font-semibold">Participant's details</p>
@@ -127,7 +132,7 @@ export default function EndoPage3() {
               />
             </div>
             <div className="flex justify-end mt-2">
-              <Link to={`/endo2?id=${id}&endoId=${endoId}`}>
+              <Link to={`/endo2?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
                 <Button label="PREV" className="px-10 py-2 rounded" />
               </Link>
             </div>

@@ -17,12 +17,14 @@ import { getInitialDataSet } from "./helper";
 import { validateRFTArray } from "../bHelper";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 
 export default function BloodPage7() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
   const [sampleId, setSampleId] = useState("");
+  const [editFlag, setEditFlag] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [ttis, setTtis] = useState<RFTType[]>([]);
@@ -35,6 +37,8 @@ export default function BloodPage7() {
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     const sampleId = searchParams.get("sampleId") || "";
+    const edit = searchParams.get("edit") || "";
+    setEditFlag(edit === "yes");
     setSampleId(sampleId);
     setId(curId);
     setTtis(getInitialDataSet(sampleId));
@@ -65,7 +69,7 @@ export default function BloodPage7() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (db && editFlag && !(await checkElibleToSave(db, sampleId || "", tabId, 'blood_sample'))) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -82,8 +86,8 @@ export default function BloodPage7() {
       }
 
       const query = `
-          INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type,user_id)
-          VALUES (?, ?, ?, ?, ?,  ? , ?)   
+          INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type,user_id, created_at)
+          VALUES (?, ?, ?, ?, ?,  ? , ? , ?)   
           ON CONFLICT(id) DO UPDATE SET
             sampleId=excluded.sampleId,
             test_name=excluded.test_name,   
@@ -99,6 +103,7 @@ export default function BloodPage7() {
         rft.unit,
         rft.test_type || "ttis",
         id,
+        new Date().toLocaleString('sv-SE').replace('T', ' '),
       ]);
       for (let i = 0; i < values.length; i++) {
         const params = values[i];
@@ -120,6 +125,7 @@ export default function BloodPage7() {
       <IonPage>
         <Header title={"Transfusion-Transmissible Infections (TTIs) & Sugar"} />
         <IonContent fullscreen>
+          <ShowRegisteredTab id={sampleId || ''} table_name="blood_sample" />
           <main className="p-2">
             <div className="p-2 shadow border rounded text-slate-600">
               <p className="text-lg  font-semibold">Participant's details</p>
@@ -163,9 +169,9 @@ export default function BloodPage7() {
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                  ...item,
-                                  result: parseInt(e.target.value) || 0,
-                                }
+                                ...item,
+                                result: parseInt(e.target.value) || 0,
+                              }
                               : item
                           )
                         )
@@ -193,7 +199,7 @@ export default function BloodPage7() {
             </div>
 
             <div className="flex gap-2 mt-5 justify-end ">
-              <Link to={`/blood6?id=${id}&sampleId=${sampleId}`}>
+              <Link to={`/blood6?id=${id}&sampleId=${sampleId}&edit=${editFlag ? 'yes' : 'no'}`}>
                 <Button label="PREV" className="px-5 py-2 rounded" />
               </Link>
             </div>

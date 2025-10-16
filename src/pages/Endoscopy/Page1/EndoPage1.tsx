@@ -111,7 +111,7 @@ export default function EndoPage1() {
                 size='normal'
               >
                 <Column field="id" sortable header="Id"
-                  body={(rowData) => <Link to={`/endo2?endoId=${rowData.id}&id=${rowData.user_id}`}>{rowData.id}</Link>}
+                  body={(rowData) => <Link to={`/endo2?endoId=${rowData.id}&id=${rowData.user_id}&edit=yes`}>{rowData.id}</Link>}
                 ></Column>
                 <Column field="user_id" sortable header="User Id"></Column>
                 <Column field="name" sortable header="Name"></Column>

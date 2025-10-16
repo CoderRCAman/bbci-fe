@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 export interface INDOOR_AIR_POLLUTION {
   id: string;
   from_age: number;
@@ -128,8 +129,9 @@ export default function Tab9() {
                 smokiness,
                 most_cooking,
                 user_id,
-                tab_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                tab_id,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
             ON CONFLICT(id) DO UPDATE SET
                 from_age = excluded.from_age,
                 to_age = excluded.to_age,
@@ -152,6 +154,7 @@ export default function Tab9() {
           item.most_cooking,
           id,
           tabId,
+          new Date().toLocaleString('sv-SE').replace('T', ' '),
         ];
         console.log(query, values);
         await db?.run(query, values);
@@ -182,6 +185,7 @@ export default function Tab9() {
         title={0 ? "Edit Indoor Air Pollution" : "Indoor Air Pollution"}
       />
       <IonContent class="" fullscreen>
+        <ShowRegisteredTab id={id || ''} />
         <main className="p-2 space-y-2">
           {indoorAirData.map((data) => (
             <AddIndoorAirPollution

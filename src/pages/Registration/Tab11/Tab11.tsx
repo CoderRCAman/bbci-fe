@@ -17,6 +17,7 @@ import {
 } from "./data";
 import { useSQLite } from "../../../utils/Sqlite";
 import shortUUID from "short-uuid";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 
 export default function Tab11() {
   const [alert, setAlert] = useState({
@@ -176,9 +177,9 @@ export default function Tab11() {
       d.map((item) =>
         item.product_type === type
           ? {
-              ...item,
-              products: item.products.filter((x) => x.id !== id),
-            }
+            ...item,
+            products: item.products.filter((x) => x.id !== id),
+          }
           : item
       )
     );
@@ -229,6 +230,7 @@ export default function Tab11() {
         }
       />
       <IonContent class="" fullscreen>
+        <ShowRegisteredTab id={id || ''} />
         <main className="p-2 space-y-10">
           <Accordion className="space-y-2 outline-none" activeIndex={0}>
             <AccordionTab

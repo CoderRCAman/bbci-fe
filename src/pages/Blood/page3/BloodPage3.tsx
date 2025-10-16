@@ -15,6 +15,7 @@ import { validateRFTArray } from "../bHelper";
 import { InputNumber } from "primereact/inputnumber";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 export interface RFTType {
   test_name: string;
   result: number;
@@ -27,6 +28,7 @@ export default function BloodPage3() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
+  const [editFlag, setEditFlag] = useState(false);
   const [sampleId, setSampleId] = useState("");
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
@@ -38,6 +40,8 @@ export default function BloodPage3() {
   });
   useEffect(() => {
     const curId = searchParams.get("id") || "";
+    const edit = searchParams.get("edit") || "";
+    setEditFlag(edit === "yes");
     const sampleId = searchParams.get("sampleId") || "";
     setRfts([
       {
@@ -76,23 +80,23 @@ export default function BloodPage3() {
           res2?.values?.length
             ? (res2?.values as RFTType[])
             : [
-                {
-                  test_name: "Serum Urea",
-                  result: 0,
-                  unit: "mg/dL",
-                  id: shortUUID().generate(),
-                  sampleId: sampleId,
-                  test_type: "RFT",
-                },
-                {
-                  test_name: "Serum Creatinine",
-                  result: 0,
-                  unit: "mg/dL",
-                  id: shortUUID().generate(),
-                  sampleId: sampleId,
-                  test_type: "RFT",
-                },
-              ]
+              {
+                test_name: "Serum Urea",
+                result: 0,
+                unit: "mg/dL",
+                id: shortUUID().generate(),
+                sampleId: sampleId,
+                test_type: "RFT",
+              },
+              {
+                test_name: "Serum Creatinine",
+                result: 0,
+                unit: "mg/dL",
+                id: shortUUID().generate(),
+                sampleId: sampleId,
+                test_type: "RFT",
+              },
+            ]
         );
         console.log(res, curId);
       } catch (error) {
@@ -103,7 +107,7 @@ export default function BloodPage3() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (db && editFlag && !(await checkElibleToSave(db, sampleId || "", tabId, 'blood_sample'))) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -118,10 +122,9 @@ export default function BloodPage3() {
           message: error,
         });
       }
-
       const query = `
-        INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type , user_id)
-        VALUES (?, ?, ?, ?, ?,  ? , ?)   
+        INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type , user_id, tab_id , created_at)
+        VALUES (?, ?, ?, ?, ?,  ? , ?, ?, ?)   
         ON CONFLICT(id) DO UPDATE SET
           sampleId=excluded.sampleId,
           test_name=excluded.test_name,   
@@ -137,6 +140,8 @@ export default function BloodPage3() {
         rft.unit,
         rft.test_type || "RFT",
         id,
+        tabId,
+        new Date().toLocaleString('sv-SE').replace('T', ' '),
       ]);
       for (let i = 0; i < values.length; i++) {
         const params = values[i];
@@ -159,6 +164,7 @@ export default function BloodPage3() {
       <IonPage>
         <Header title={"Renal Function Test (RFT)"} />
         <IonContent fullscreen>
+          <ShowRegisteredTab id={sampleId || ''} table_name="blood_sample" />
           <main className="p-2">
             <div className="p-2 shadow border rounded text-slate-600">
               <p className="text-lg  font-semibold">Participant's details</p>
@@ -204,9 +210,9 @@ export default function BloodPage3() {
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                  ...item,
-                                  result: parseInt(e.target.value) || 0,
-                                }
+                                ...item,
+                                result: parseInt(e.target.value) || 0,
+                              }
                               : item
                           )
                         )
@@ -235,10 +241,10 @@ export default function BloodPage3() {
             </div>
 
             <div className="flex gap-2 mt-5 justify-end ">
-              <Link to={`/blood2?id=${id}&sampleId=${sampleId}`}>
+              <Link to={`/blood2?id=${id}&sampleId=${sampleId}&edit=${editFlag ? 'yes' : 'no'}`}>
                 <Button label="PREV" className="px-5 py-2 rounded" />
               </Link>
-              <Link to={`/blood4?id=${id}&sampleId=${sampleId}`}>
+              <Link to={`/blood4?id=${id}&sampleId=${sampleId}&edit=${editFlag ? 'yes' : 'no'}`}>
                 <Button label="NEXT" className="px-5 py-2 rounded" />
               </Link>
             </div>

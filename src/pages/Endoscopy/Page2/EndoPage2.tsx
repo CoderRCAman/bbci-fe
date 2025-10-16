@@ -8,8 +8,10 @@ import ShortUUID from "short-uuid";
 import { format } from "date-fns";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 export default function EndoPage2() {
   const [barcodeData, setBarCodeData] = useState("");
+  const [editFlag, setEditFlag] = useState(false);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
@@ -26,8 +28,10 @@ export default function EndoPage2() {
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     setId(curId);
+    const edit = searchParams.get("edit") || "";
     const endoIdd = searchParams.get("endoId") || "";
     setEndoId(searchParams.get("endoId") || "");
+    setEditFlag(edit === "yes");
     async function fetchCurrentUser() {
       try {
         const query = `
@@ -63,7 +67,7 @@ export default function EndoPage2() {
   }, [location.pathname]);
   const handleSaveEndocode = async () => {
     try {
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (db && editFlag && !(await checkElibleToSave(db, endoId || "", tabId, 'ENDOSCOPY'))) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -82,16 +86,13 @@ export default function EndoPage2() {
       const translator = ShortUUID();
       const uid = translator.generate();
       const query = `
-                    INSERT INTO ENDOSCOPY (id , vial_code , user_id , date) 
-                    values ('${uid}' , '${barcodeData}' , '${id}' , '${format(
-        new Date(),
-        "yyyy-dd-MM"
-      )}') 
+                    INSERT INTO ENDOSCOPY (id , vial_code , user_id , date , tab_id , created_at) 
+                    values ('${uid}' , '${barcodeData}' , '${id}' , '${new Date().toLocaleString('sv-SE').replace('T', ' ')}' , '${tabId}' , '${new Date().toLocaleString('sv-SE').replace('T', ' ')}') 
                 `;
       await db?.execute(query);
       await saveToStore(sqlite);
       setEndoId(uid);
-      setAlert({
+    setAlert({
         header: "Success",
         message: "Vial linked successfully!",
         show: true,
@@ -105,6 +106,7 @@ export default function EndoPage2() {
       <IonPage>
         <Header title={"Collect Endoscopy Vial "} />
         <IonContent class="" fullscreen>
+          <ShowRegisteredTab id={endoId || ''} table_name="ENDOSCOPY" />
           <main className="p-2 space-y-10">
             <div className="p-2 border rounded text-slate-600">
               <p className="text-lg  font-semibold">Participant's details</p>
@@ -142,7 +144,7 @@ export default function EndoPage2() {
                 <Button label="PREV" className="px-5 py-2 rounded" />
               </Link>
               {endoId && (
-                <Link to={`/endo3?id=${id}&endoId=${endoId}`}>
+                <Link to={`/endo3?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
                   <Button label="NEXT" className="px-5 py-2 rounded" />
                 </Link>
               )}

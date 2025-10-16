@@ -12,6 +12,7 @@ import { hasMasterData, hasRelativeData, relatives } from "./data";
 import { useSQLite } from "../../../utils/Sqlite";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 export type FAMILY_HISTORY_OF_CANCER_MASTER = {
   id: string;
   user_id: string;
@@ -148,8 +149,9 @@ export default function Tab7() {
                       sisters,
                       sons,
                       daughters,
-                      history_of_cancer
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                      history_of_cancer,
+                      created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                       user_id = excluded.user_id,
                       brothers = excluded.brothers,
@@ -233,6 +235,7 @@ export default function Tab7() {
         title={0 ? "Edit Family History of Cancer" : "Family History of Cancer"}
       />
       <IonContent class="" fullscreen>
+        <ShowRegisteredTab id={id || ''} />
         <main className="p-2 text-slate-600">
           <DataTable
             key={familyHistoryMaster?.[0]?.history_of_cancer}

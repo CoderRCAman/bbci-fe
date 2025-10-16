@@ -49,6 +49,8 @@ const Tab2: React.FC = () => {
           value={globalFilterValue}
           onInput={(e) => setGlobalFilterValue(e.currentTarget.value)}
           placeholder="Search..."
+          className='border p-2'
+
         />
       </span>
     </div>
@@ -59,7 +61,8 @@ const Tab2: React.FC = () => {
       <Header
         title='Participants list'
       />
-      <IonContent fullscreen>
+      <IonContent fullscreen> 
+        
         <main className='p-2'>
           <DataTable value={patients}
             tableStyle={{ minWidth: '50rem' }}
@@ -70,7 +73,7 @@ const Tab2: React.FC = () => {
             rows={10}
             showGridlines
             size='normal'
-
+            stripedRows
           >
             <Column field="id" sortable header="Id"
               body={(rowData) => <Link to={`/tab1?id=${rowData.id}`}>{rowData.id}</Link>}

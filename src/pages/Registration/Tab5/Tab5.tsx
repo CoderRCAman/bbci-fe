@@ -10,6 +10,7 @@ import { useSQLite } from "../../../utils/Sqlite";
 import { saveToStore } from "../../../utils/helper";
 import { set } from "date-fns";
 import { checkElibleToSave } from "../Tab11/data";
+import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 export interface RESIDENTIAL_TYPE {
   from_age: number;
   to_age: number;
@@ -70,7 +71,6 @@ export default function Tab5() {
     if (!db) return;
     const curId = searchParams?.get("id");
     setId(curId);
-    console.log(curId);
     setEditFlag(searchParams?.get("edit"));
     const loadExisting = async () => {
       try {
@@ -78,10 +78,8 @@ export default function Tab5() {
                     select * from residential_history where user_id = '${curId}' ;    
                     `;
         const res = await db?.query(query);
-        console.log(query);
         const values = res?.values;
-        console.log(values);
-        if (values?.length === 0) {
+        if (values?.length === 0 && residentialData.length === 0) {
           handleAddNewUi();
         } else {
           setAllowNext(true);
@@ -120,6 +118,7 @@ export default function Tab5() {
         "id",
         "user_id",
         "tab_id",
+        "created_at"
       ];
       const updateColumns = columns.filter((col) => col !== "id");
 
@@ -134,6 +133,7 @@ export default function Tab5() {
           `'${item.id}'`,
           `'${id}'`,
           `'${tabId}'`,
+          `'${new Date().toLocaleString('sv-SE').replace('T', ' ')}'`
         ];
         return `(${values.join(", ")})`;
       });
@@ -150,7 +150,6 @@ export default function Tab5() {
     ${updateSet}; 
   `;
 
-      console.log("Executing query:\n", query);
       await db?.run(query);
 
       const qRemovedIds = removedIds.map((id) => `'${id}'`).join(", ");
@@ -177,12 +176,14 @@ export default function Tab5() {
   const handleSaveUpdated = () => {
     //for updated records
   };
+  console.log(residentialData.length)
 
   return (
     <>
       <IonPage>
         <Header title={"Residential History"} />
         <IonContent class="" fullscreen>
+          <ShowRegisteredTab id={id || ''} />
           <main className="mt-6 p-2  space-y-8">
             {residentialData.map((item) => (
               <AddResidential
@@ -193,7 +194,7 @@ export default function Tab5() {
               />
             ))}
           </main>
-          <div className="mt-4 flex justify-end gap-4 pr-2 pb-5">
+          <div className="mt-4 flex justify-between flex-row-reverse gap-4 px-2 pb-5">
             <Button
               label="+ Add new"
               text
@@ -215,7 +216,7 @@ export default function Tab5() {
                 severity="success"
                 text
                 raised
-                className="px-3 py-2 px-10  rounded-md font-bold"
+                className=" px-10  rounded-md font-bold"
                 onClick={() => handleSaveFresh()}
               />
             )}
@@ -227,7 +228,7 @@ export default function Tab5() {
             message={alert.message}
             buttons={["OK"]}
           />
-          <div className="flex gap-2 mt-20   pb-5 pl-2">
+          <div className="flex gap-2 mt-20 justify-end  pb-5 pl-2">
             <Link to={`/tab1?id=${id}&edit=no`}>
               <Button label="PREV" className="px-10 py-2  rounded-md" />
             </Link>
