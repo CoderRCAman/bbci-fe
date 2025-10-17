@@ -24,7 +24,7 @@ export interface PERSONAL_MEDICAL_HISTORY {
 }
 export interface PERSONAL_MEDICAL_HISTORY_DB {
   id: string;
-  diagnosis: string;
+  diagnoss: string;
   diagnosed: number;
   age_first_diagnosis?: number;
   year_of_first_diagnosis?: string;
@@ -38,7 +38,7 @@ export interface PERSONAL_MEDICAL_HISTORY_DB {
 function generateDefaultData(user_id: string): PERSONAL_MEDICAL_HISTORY_DB[] {
   return data.map((item) => ({
     id: translator.new(),
-    diagnosis: item.condition,
+    diagnoss: item.condition,
     diagnosed: 2,
     age_first_diagnosis: 0,
     year_of_first_diagnosis: "",
@@ -96,7 +96,16 @@ export default function Tab6() {
         return;
       }
       setAllowNext(true);
-      setDataState(res?.values as PERSONAL_MEDICAL_HISTORY_DB[]);
+      const newState = generateDefaultData(id || "");
+      if (res?.values) {
+        res?.values.forEach((item: PERSONAL_MEDICAL_HISTORY_DB) => {
+          const existingIndex = newState.findIndex(x => x.diagnoss === item.diagnoss)
+          if (existingIndex !== -1) {
+            newState[existingIndex] = item
+          }
+        })
+      }
+      setDataState(newState);
     } catch (error) {
       console.log(error);
     }
@@ -142,7 +151,7 @@ export default function Tab6() {
 
         const values = [
           item.id,
-          item.diagnosis,
+          item.diagnoss,
           item.diagnosed,
           item.age_first_diagnosis,
           item.year_of_first_diagnosis,
