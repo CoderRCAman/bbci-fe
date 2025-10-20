@@ -46,7 +46,6 @@ import Tab11 from "./pages/Registration/Tab11/Tab11";
 import Tab12 from "./pages/Registration/Tab12/Tab12";
 import EndoPage1 from "./pages/Endoscopy/Page1/EndoPage1";
 import EndoPage2 from "./pages/Endoscopy/Page2/EndoPage2";
-import EndoPage3 from "./pages/Endoscopy/Page3/EndoPage3";
 import BloodPage1 from "./pages/Blood/page1/BloodPage1";
 import BloodPage2 from "./pages/Blood/page2/BloodPage2";
 import FoodRecallPage1 from "./pages/FoodRecall/Page1/FoodRecallPage1";
@@ -57,6 +56,8 @@ import BloodPage5 from "./pages/Blood/page5/BloodPage5";
 import BloodPage6 from "./pages/Blood/page6/BloodPage6";
 import BloodPage7 from "./pages/Blood/page7/BloodPage7";
 import PromptTabId from "./components/PromptTabId";
+import EndoPage4 from "./pages/Endoscopy/Page4/EndoPage3";
+import EndoPage3 from "./pages/Endoscopy/Page3/EndoPage3";
 
 setupIonicReact();
 
@@ -127,6 +128,9 @@ const App: React.FC = () => {
               <Route path="/endo3">
                 <EndoPage3 />
               </Route>
+              <Route path="/endo4">
+                <EndoPage4 />
+              </Route>
               {/* {--------------------------------------} */}
 
               {/* BLOOD PAGES STARTS FROM HERE  */}
@@ -161,8 +165,8 @@ const App: React.FC = () => {
             <Route path="/food2">
               <FoodRecallPage2 />
             </Route>
-          </IonTabs> 
-          <PromptTabId  />
+          </IonTabs>
+          <PromptTabId />
         </IonReactRouter>
       </IonApp>
     </SQLiteProvider>

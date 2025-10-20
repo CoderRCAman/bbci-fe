@@ -37,7 +37,7 @@ import RenderError from "../../../components/RenderError";
 import { Link } from "react-router-dom";
 import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
-
+import SignaturePad, { roundPoint } from "./SignaturePad";
 interface Patient {
   id?: string;
   name: string;
@@ -98,15 +98,16 @@ const Tab1: React.FC = () => {
       dob: patient.dob,
     },
   });
-
-  console.log(patient);
+  const [strokes, setStrokes] = useState<number[][][]>([]);
   //below checks if this is for edit purpose
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const id = searchParams.get("id");
     const flag = searchParams.get("edit");
+    const canvas = document.querySelector("canvas");
     setId(id);
     setEditFlag(flag);
+
     if (!db) return;
     console.log(id);
     if (!id) {
@@ -131,10 +132,15 @@ const Tab1: React.FC = () => {
         ]);
         if ((res as any)?.values?.length > 0) {
           setPatient((res as any)?.values[0]);
+          if (res?.values && res?.values[0]?.signature) {
+            setStrokes(JSON.parse(res?.values[0]?.signature));
+          }
         }
-      } catch (error) { }
+      } catch (error) {}
     }
     fetchPatient();
+
+    //signature stuff
   }, [location.search, db]);
 
   const savePatient = async (data: any) => {
@@ -158,7 +164,7 @@ const Tab1: React.FC = () => {
         });
       }
 
-      console.log(patient);
+      console.log(data);
       if (patient.tab_id !== tabId) {
         return setAlert({
           show: true,
@@ -169,7 +175,7 @@ const Tab1: React.FC = () => {
       await db?.run(
         `UPDATE patients SET name = ?, age = ?, gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
-         DOB = ? , updated_at = ? 
+         DOB = ? , updated_at = ? , signature = ?
          WHERE id = ?`,
         [
           data.name,
@@ -181,6 +187,7 @@ const Tab1: React.FC = () => {
           patient.long,
           format(data.dob, "yyyy-MM-dd"),
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
+          JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))),
           id,
         ]
       );
@@ -196,8 +203,8 @@ const Tab1: React.FC = () => {
       const uniqueId = generateUniqueId(data.name);
       await db?.run(
         `INSERT INTO patients (id, i_name, i_emp_code, name, age, gender,
-         lat, long, time, dob, date , created_at , updated_at , tab_id )
-         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ?)`,
+         lat, long, time, dob, date , created_at , updated_at , tab_id,signature )
+         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ? , ?)`,
         [
           uniqueId,
           data.i_name,
@@ -213,6 +220,7 @@ const Tab1: React.FC = () => {
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
           tabId,
+          JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))),
         ]
       );
       await saveToStore(sqlite);
@@ -249,13 +257,9 @@ const Tab1: React.FC = () => {
   console.log(errors);
   return (
     <IonPage>
-      <Header
-        title={
-          id ? "Edit participants" : "Register Participant"
-        }
-      />
+      <Header title={id ? "Edit participants" : "Register Participant"} />
       <IonContent fullscreen>
-        <ShowRegisteredTab id={id || ''} />
+        <ShowRegisteredTab id={id || ""} />
         <form
           className=" shadow-1 border rounded-md m-2 p-2 pt-5 flex flex-col gap-10"
           onSubmit={handleSubmit(onSubmit)}
@@ -450,6 +454,18 @@ const Tab1: React.FC = () => {
           {errors?.dob && (
             <RenderError text={errors?.dob.message?.toString()} />
           )}
+          <div className="space-y-2">
+            <p>Participant's signature</p>
+            <SignaturePad strokes={strokes} setStrokes={setStrokes} />
+            <div className="flex gap-2">
+              <Button
+                label="Clear"
+                severity="warning"
+                type="button"
+                onClick={() => setStrokes([])}
+              />
+            </div>
+          </div>
 
           <div className="flex justify-center">
             <Button

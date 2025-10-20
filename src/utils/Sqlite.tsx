@@ -48,10 +48,10 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => { },
-  setConflictedList: () => { },
+  setBaseUrl: () => {},
+  setConflictedList: () => {},
   tabId: "",
-  setTabId: () => { },
+  setTabId: () => {},
 });
 
 // Create a custom hook to use the context
@@ -137,7 +137,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         created_at TEXT ,
                         updated_at TEXT ,
                         updated_by TEXT DEFAULT 'UNKNOWN',
-                        tab_id TEXT
+                        tab_id TEXT ,
+                        signature TEXT 
                     );
                 `;
         const query2 = `
