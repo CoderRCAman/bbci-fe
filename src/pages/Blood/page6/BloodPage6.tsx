@@ -231,6 +231,8 @@ export default function BloodPage6() {
             buttons={["OK"]}
           />
         </IonContent>
+        <div className="pb-[250px]"></div>
+
       </IonPage>
     </div>
   );

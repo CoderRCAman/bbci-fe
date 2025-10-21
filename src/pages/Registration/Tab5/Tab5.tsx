@@ -238,6 +238,7 @@ export default function Tab5() {
             </Link>
           </div>
         </IonContent>
+        <div className="pb-[250px]"></div>
       </IonPage>
     </>
   );

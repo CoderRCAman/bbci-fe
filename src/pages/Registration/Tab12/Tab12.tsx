@@ -262,6 +262,8 @@ export default function Tab12() {
           </Link>
         </div>
       </IonContent>
+      <div className="pb-[250px]"></div>
+
     </IonPage>
   );
 }

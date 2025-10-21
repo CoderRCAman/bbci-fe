@@ -2,8 +2,18 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'io.ionic.starter',
-  appName: 'testZiro',
-  webDir: 'dist'
+  appName: 'Ziro',
+  webDir: 'dist',
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffff", // Match your splash.png background
+      "androidScaleType": "CENTER_CROP",
+      "splashFullScreen": true,
+      "splashImmersive": false
+    }
+  }
 };
 
 export default config;

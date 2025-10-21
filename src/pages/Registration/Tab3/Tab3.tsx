@@ -276,8 +276,8 @@ export default function Tab3() {
   return (
     <IonPage>
       <Header title={"Sync Data"} />
-      <IonContent class="" fullscreen> 
-        
+      <IonContent class="" fullscreen>
+
         <main className="p-2 text-slate-600">
           <h1 className="text-xl font-semibold">Records to be synched!</h1>
           {insertOrUpdatedRecords.length == 0 && deletedRecords.length == 0 ? (
@@ -394,6 +394,8 @@ export default function Tab3() {
           buttons={["OK"]}
         />
       </IonContent>
+      <div className="pb-[250px]"></div>
+
     </IonPage>
   );
 }

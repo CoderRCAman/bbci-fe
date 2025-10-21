@@ -601,6 +601,8 @@ export default function Tab7() {
             </Link>
           </div>
         </main>
+        <div className="pb-[250px]"></div>
+
         <IonAlert
           isOpen={alert.show}
           onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}

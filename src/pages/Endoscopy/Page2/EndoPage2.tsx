@@ -316,7 +316,7 @@ export default function EndoPage2() {
                     id="s_fundus_normal"
                     name="stomachFundus"
                     value="Normal"
-                    onChange={(e:any) => setStomachFundus(e.target.value)}
+                    onChange={(e: any) => setStomachFundus(e.target.value)}
                     checked={stomachFundus === "Normal"}
                     label="Normal"
                   />
@@ -324,7 +324,7 @@ export default function EndoPage2() {
                     id="s_fundus_desc_radio"
                     name="stomachFundus"
                     value="Description"
-                    onChange={(e:any) => setStomachFundus(e.target.value)}
+                    onChange={(e: any) => setStomachFundus(e.target.value)}
                     checked={stomachFundus === "Description"}
                     label="Description"
                   />
@@ -361,7 +361,7 @@ export default function EndoPage2() {
                     id="s_body_normal"
                     name="stomachBody"
                     value="Normal"
-                    onChange={(e:any) => setStomachBody(e.target.value)}
+                    onChange={(e: any) => setStomachBody(e.target.value)}
                     checked={stomachBody === "Normal"}
                     label="Normal"
                   />
@@ -369,7 +369,7 @@ export default function EndoPage2() {
                     id="s_body_desc_radio"
                     name="stomachBody"
                     value="Description"
-                    onChange={(e:any) => setStomachBody(e.target.value)}
+                    onChange={(e: any) => setStomachBody(e.target.value)}
                     checked={stomachBody === "Description"}
                     label="Description"
                   />
@@ -406,7 +406,7 @@ export default function EndoPage2() {
                     id="s_antrum_normal"
                     name="stomachAntrum"
                     value="Normal"
-                    onChange={(e:any) => setStomachAntrum(e.target.value)}
+                    onChange={(e: any) => setStomachAntrum(e.target.value)}
                     checked={stomachAntrum === "Normal"}
                     label="Normal"
                   />
@@ -414,7 +414,7 @@ export default function EndoPage2() {
                     id="s_antrum_desc_radio"
                     name="stomachAntrum"
                     value="Description"
-                    onChange={(e:any) => setStomachAntrum(e.target.value)}
+                    onChange={(e: any) => setStomachAntrum(e.target.value)}
                     checked={stomachAntrum === "Description"}
                     label="Description"
                   />
@@ -447,7 +447,7 @@ export default function EndoPage2() {
                   <h3 className="text-lg font-semibold text-gray-700">
                     Lesions
                   </h3>
-                  <Button label="+ Add Lesions" severity="info" className="py-2" onClick={handleAddLesion}  />
+                  <Button label="+ Add Lesions" severity="info" className="py-2" onClick={handleAddLesion} />
                 </div>
 
                 {stomachLesions.length === 0 && (
@@ -577,9 +577,8 @@ export default function EndoPage2() {
               </Link>
               {endoId && (
                 <Link
-                  to={`/endo3?id=${id}&endoId=${endoId}&edit=${
-                    editFlag ? "yes" : "no"
-                  }`}
+                  to={`/endo3?id=${id}&endoId=${endoId}&edit=${editFlag ? "yes" : "no"
+                    }`}
                 >
                   <Button label="NEXT" className="px-5 py-2 rounded" />
                 </Link>
@@ -587,6 +586,8 @@ export default function EndoPage2() {
             </div>
           </main>
         </IonContent>
+        <div className="pb-[250px]"></div>
+
         <IonAlert
           isOpen={alert.show}
           onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}

@@ -4,6 +4,19 @@ ion-app {
   color-scheme: light !important;
 }
 
+/* In src/global.css */
+
+html,
+body,
+#root {
+  height: 100%; 
+  
+  /* This tells the absolute-positioned <IonPage>
+     to use #root for its sizing. */
+}
+
+
+
 body.dark {
   --ion-background-color: #ffffff !important;
   --ion-text-color: #000000;
@@ -14,6 +27,7 @@ body.dark {
   background: #ffffff !important;
   color: #000000 !important;
 }
+
 @font-face {
   font-family: "poppins";
   /* Choose a descriptive name for your font */
@@ -52,9 +66,11 @@ ion-modal {
 .border-bottom {
   border-bottom: 1px solid #e5e5e5;
 }
+
 .border-left {
   border-left: 1px solid #e5e5e5;
 }
+
 .border-right {
   border-right: 1px solid #e5e5e5;
 }
@@ -80,6 +96,7 @@ a {
   box-shadow: none !important;
   border: 2px solid #22d3ee !important;
 }
+
 #result_blood .p-inputtext {
   border: 2px solid #e5e5e5 !important;
   padding: 6px;

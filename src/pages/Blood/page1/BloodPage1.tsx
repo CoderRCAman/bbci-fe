@@ -124,6 +124,8 @@ export default function BloodPage1() {
 
           </main>
         </IonContent>
+        <div className="pb-[250px]"></div>
+
       </IonPage>
     </>
   )

@@ -6,7 +6,7 @@ import { Tag } from 'primereact/tag';
 export default function Header({ title }: { title: string }) {
     const { tabId } = useSQLite();
     return (
-        <IonHeader>
+        <IonHeader >
             <IonToolbar >
                 <IonButtons slot="start">
                     <IonMenuButton></IonMenuButton>

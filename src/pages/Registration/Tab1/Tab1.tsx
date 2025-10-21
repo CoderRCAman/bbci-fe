@@ -17,6 +17,7 @@ import {
   IonSelectOption,
   IonMenuButton,
   IonButtons,
+  IonFooter,
 } from "@ionic/react";
 import { format, isValid, parse } from "date-fns";
 
@@ -136,7 +137,7 @@ const Tab1: React.FC = () => {
             setStrokes(JSON.parse(res?.values[0]?.signature));
           }
         }
-      } catch (error) {}
+      } catch (error) { }
     }
     fetchPatient();
 
@@ -261,7 +262,7 @@ const Tab1: React.FC = () => {
       <IonContent fullscreen>
         <ShowRegisteredTab id={id || ""} />
         <form
-          className=" shadow-1 border rounded-md m-2 p-2 pt-5 flex flex-col gap-10"
+          className=" shadow-1 border  rounded-md m-2 p-2 pt-5 flex flex-col gap-10"
           onSubmit={handleSubmit(onSubmit)}
         >
           <Controller
@@ -490,7 +491,8 @@ const Tab1: React.FC = () => {
           buttons={["OK"]}
         />
       </IonContent>
-    </IonPage>
+      <div className="pb-[250px]"></div>
+    </IonPage >
   );
 };
 

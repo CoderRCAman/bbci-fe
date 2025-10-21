@@ -61,8 +61,8 @@ const Tab2: React.FC = () => {
       <Header
         title='Participants list'
       />
-      <IonContent fullscreen> 
-        
+      <IonContent fullscreen>
+
         <main className='p-2'>
           <DataTable value={patients}
             tableStyle={{ minWidth: '50rem' }}
@@ -128,6 +128,8 @@ const Tab2: React.FC = () => {
           </table>
         </main> */}
       </IonContent>
+      <div className="pb-[250px]"></div>
+
     </IonPage>
   );
 };

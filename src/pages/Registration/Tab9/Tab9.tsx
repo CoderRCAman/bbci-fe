@@ -230,6 +230,8 @@ export default function Tab9() {
           </div>
         </main>
       </IonContent>
+      <div className="pb-[250px]"></div>
+
     </IonPage>
   );
 }

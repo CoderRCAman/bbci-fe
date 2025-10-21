@@ -122,6 +122,8 @@ export default function EndoPage1() {
 
           </main>
         </IonContent>
+        <div className="pb-[250px]"></div>
+
       </IonPage>
     </>
   )

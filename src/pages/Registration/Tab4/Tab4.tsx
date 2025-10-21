@@ -106,6 +106,8 @@ export default function Tab4() {
           />
         </main>
       </IonContent>
+      <div className="pb-[250px]"></div>
+
     </IonPage>
   );
 }
