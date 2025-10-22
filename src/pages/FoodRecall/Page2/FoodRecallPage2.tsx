@@ -9,23 +9,23 @@ import { Button } from "primereact/button";
 
 // Replicating your CustomRadio for simplicity and consistency
 const CustomRadio = ({ id, name, value, checked, onChange, label, }: { id: string; name: string; value: any; checked: boolean; onChange: any; label: string; label: string; }) => (
-  <div className="flex items-center">
-    <input
-      id={id}
-      type="radio"
-      name={name}
-      value={value}
-      checked={checked}
-      onChange={onChange}
-      className="w-4 h-4"
-    />
-    <label
-      htmlFor={id}
-      className="ml-2 text-sm font-medium text-gray-700 cursor-pointer"
-    >
-      {label}
-    </label>
-  </div>
+    <div className="flex items-center">
+        <input
+            id={id}
+            type="radio"
+            name={name}
+            value={value}
+            checked={checked}
+            onChange={onChange}
+            className="w-4 h-4"
+        />
+        <label
+            htmlFor={id}
+            className="ml-2 text-sm font-medium text-gray-700 cursor-pointer"
+        >
+            {label}
+        </label>
+    </div>
 );
 
 // --- TYPE DEFINITIONS for 7.3 (Food Log) ---
@@ -44,8 +44,11 @@ interface FoodEntry {
     quantity: string;
     dateTime: string; // Date and Time of consumption
     ingredients: Ingredient[];
-}
 
+    // --- NEW FIELDS ---
+    dietContext: 'regular' | 'fasting' | 'festival'; // Added context field
+    festivalName: string; // Added conditional text field
+}
 // --- NEW TYPE DEFINITION for 7.5 (Fat/Oil Log) ---
 interface FatEntry {
     id: number;
@@ -54,6 +57,17 @@ interface FatEntry {
     familyConsumption: string; // lt/kg
     yearsUsed: string;
 }
+// ---------------------------------
+
+// --- CONSTANTS for 7.6 Preparation Methods ---
+const PREP_METHODS = ["Shallow Frying", "Deep Frying", "Boiling", "Steaming", "Sauting", "Grill/Barbeque"] as const;
+type PrepMethodKey = typeof PREP_METHODS[number];
+type PrepFrequencyValue = '0' | '1' | '2'; // 0: Never, 1: Rarely, 2: Most of the time
+type PrepFrequencyState = Record<PrepMethodKey, PrepFrequencyValue>;
+
+const initialPrepMethods: PrepFrequencyState = Object.fromEntries(
+    PREP_METHODS.map(method => [method, '0' as PrepFrequencyValue])
+) as PrepFrequencyState;
 // ---------------------------------
 
 export default function FoodRecallSurveyPage() {
@@ -66,9 +80,11 @@ export default function FoodRecallSurveyPage() {
     // const editFlag = searchParams.get("edit") === "yes"; // unused
 
     // --- State for 7.1 & 7.2 (Dietary Profile) ---
-    const [dietType, setDietType] = useState("O"); 
-    const [dietDuration, setDietDuration] = useState(""); 
-
+    const [dietType, setDietType] = useState("O");
+    const [dietDuration, setDietDuration] = useState("");
+    // --- Add this block to the 'State for 7.1 & 7.2 (Dietary Profile)' section ---
+    const [dietTypeContext, setDietTypeContext] = useState("regular"); // 'regular', 'fasting', 'festival'
+    const [festivalName, setFestivalName] = useState("");
     // --- State for 7.3 (24 Hour Recall) ---
     const [foodLog, setFoodLog] = useState<FoodEntry[]>([]);
 
@@ -77,23 +93,35 @@ export default function FoodRecallSurveyPage() {
     const [fatLog, setFatLog] = useState<FatEntry[]>([]); // New state for 7.5
 
     // --- State for 7.6, 7.7, 7.8, 7.9 (Habits) ---
-    const [prepMethod, setPrepMethod] = useState(""); 
+    // UPDATED: Replaced single `prepMethod` string with mapping object for 7.6 frequency
+    const [prepFrequency, setPrepFrequency] = useState<PrepFrequencyState>(initialPrepMethods); 
     const [familySharing, setFamilySharing] = useState(""); 
     const [mealsPerDay, setMealsPerDay] = useState(""); 
     const [waterSupply, setWaterSupply] = useState<string[]>([]); 
-
     // useEffect for initialization/loading data...
     useEffect(() => { /* ... */ }, [participantId]);
 
 
     // --- 7.3 Dynamic Log Functions (FoodEntry/Dish and Ingredients) ---
     // (Existing functions for 7.3 omitted for brevity but remain the same)
+    // Updated handleAddFoodEntry function
     const handleAddFoodEntry = () => {
-        const newEntry: FoodEntry = { ID: Date.now(), diet: dietType, timing: "Breakfast", nameOfDish: "", quantity: "", dateTime: new Date().toISOString().substring(0, 16), ingredients: [] };
+        const newEntry: FoodEntry = {
+            ID: Date.now(),
+            diet: dietType, // Inherit overall diet type
+            timing: "Breakfast",
+            nameOfDish: "",
+            quantity: "",
+            dateTime: new Date().toISOString().substring(0, 16),
+            ingredients: [],
+            // --- NEW DEFAULTS ---
+            dietContext: 'regular', // Default to regular
+            festivalName: '',
+        };
         setFoodLog([...foodLog, newEntry]);
     };
     const handleRemoveFoodEntry = (id: number) => { setFoodLog(foodLog.filter((entry) => entry.ID !== id)); };
-    const handleFoodEntryChange = (id: number, field: keyof FoodEntry, value: any) => { setFoodLog(foodLog.map((entry) => entry.ID === id ? { ...entry, [field]: value } : entry )); };
+    const handleFoodEntryChange = (id: number, field: keyof FoodEntry, value: any) => { setFoodLog(foodLog.map((entry) => entry.ID === id ? { ...entry, [field]: value } : entry)); };
     const handleAddIngredient = (foodId: number) => { setFoodLog(foodLog.map((food) => { if (food.ID === foodId) { const newIng: Ingredient = { ingrdient_id: Date.now() + Math.random(), name: "", quantity: "", prepMethod: "" }; return { ...food, ingredients: [...food.ingredients, newIng] }; } return food; })); };
     const handleIngredientChange = (foodId: number, ingId: number, field: keyof Ingredient, value: any) => { setFoodLog(foodLog.map((food) => { if (food.ID === foodId) { return { ...food, ingredients: food.ingredients.map((ing) => ing.ingrdient_id === ingId ? { ...ing, [field]: value } : ing), }; } return food; })); };
     const handleRemoveIngredient = (foodId: number, ingId: number) => { setFoodLog(foodLog.map((food) => { if (food.ID === foodId) { return { ...food, ingredients: food.ingredients.filter((ing) => ing.ingrdient_id !== ingId), }; } return food; })); };
@@ -123,6 +151,14 @@ export default function FoodRecallSurveyPage() {
         );
     };
 
+    // --- NEW 7.6 Frequency Handler ---
+    const handlePrepFrequencyChange = (method: PrepMethodKey, frequency: PrepFrequencyValue) => {
+        setPrepFrequency(prev => ({
+            ...prev,
+            [method]: frequency,
+        }));
+    };
+
     const handleSave = () => {
         console.log("Saving 24 Hour Food Recall Data...");
         // Logic to structure and save all state variables (foodLog, fatLog, habits, etc.)
@@ -134,15 +170,15 @@ export default function FoodRecallSurveyPage() {
             <Header title={"24-Hour Food Recall Survey"} />
             <IonContent className="ion-padding" fullscreen>
                 <ShowRegisteredTab id={recallRecordId} table_name="FOOD_RECALL_SURVEY" />
-                
+
                 <main className="space-y-10 p-2">
-                    
+
                     {/* --- Section 1: Dietary Profile (7.1 & 7.2) --- */}
                     <div className="bg-white p-6 rounded-lg shadow border">
                         <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
                             1. Dietary Profile
                         </h2>
-                        
+
                         {/* 7.1 Veg/Non-Veg */}
                         <fieldset className="border border-gray-200 p-4 rounded-md mb-4">
                             <legend className="text-sm font-semibold text-gray-600 px-2">
@@ -169,9 +205,11 @@ export default function FoodRecallSurveyPage() {
                                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-cyan-500 transition"
                             />
                         </div>
+
                     </div>
 
                     {/* --- Section 2: 24-Hour Recall Log (7.3) --- */}
+                    {/* --- Section 2: 24-Hour Food Log (7.3) --- */}
                     <div className="bg-white p-6 rounded-lg shadow border">
                         <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
                             2. 24-Hour Food Log (7.3)
@@ -199,7 +237,7 @@ export default function FoodRecallSurveyPage() {
                                         &times;
                                     </button>
 
-                                    {/* Food Master Table Fields */}
+                                    {/* Row 1: Timing and Date/Time (Food Master Table Fields) */}
                                     <div className="grid grid-cols-2 gap-4 mb-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700">Timing</label>
@@ -216,6 +254,47 @@ export default function FoodRecallSurveyPage() {
                                             <input type="datetime-local" value={entry.dateTime} onChange={(e) => handleFoodEntryChange(entry.ID, 'dateTime', e.target.value)} className="w-full p-2 border rounded-md" />
                                         </div>
                                     </div>
+
+                                    {/* Row 2: NEW Diet Context and Festival Name */}
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Type of Diet for this Dish</label>
+                                            <IonSelect
+                                                value={entry.dietContext}
+                                                onIonChange={(e) => {
+                                                    handleFoodEntryChange(entry.ID, 'dietContext', e.detail.value);
+                                                    // Clear festival name if switching away from 'festival'
+                                                    if (e.detail.value !== 'festival') {
+                                                        handleFoodEntryChange(entry.ID, 'festivalName', '');
+                                                    }
+                                                }}
+                                                interface="popover"
+                                            >
+                                                <IonSelectOption value="regular">Regular</IonSelectOption>
+                                                <IonSelectOption value="fasting">Fasting</IonSelectOption>
+                                                <IonSelectOption value="festival">Festival</IonSelectOption>
+                                            </IonSelect>
+                                        </div>
+
+                                        {/* Conditional Festival Name Input */}
+                                        {entry.dietContext === 'festival' ? (
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Festival Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={entry.festivalName}
+                                                    onChange={(e) => handleFoodEntryChange(entry.ID, 'festivalName', e.target.value)}
+                                                    placeholder="Name of Festival"
+                                                    className="w-full p-2 border rounded-md"
+                                                />
+                                            </div>
+                                        ) : (
+                                            // Placeholder to maintain grid layout consistency
+                                            <div className="h-full"></div>
+                                        )}
+                                    </div>
+
+                                    {/* Row 3: Name of Dish and Quantity Consumed */}
                                     <div className="grid grid-cols-2 gap-4 mb-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700">Name of Dish</label>
@@ -233,7 +312,7 @@ export default function FoodRecallSurveyPage() {
                                             <h4 className="text-md font-semibold text-gray-700">Ingredients Detail (7.3)</h4>
                                             <Button label="+ Ingredient" severity="secondary" className="p-button-sm" onClick={() => handleAddIngredient(entry.ID)} />
                                         </div>
-                                        
+
                                         {entry.ingredients.length === 0 && (
                                             <p className="text-xs text-gray-500 text-center italic">
                                                 Add ingredients used in this dish.
@@ -286,7 +365,7 @@ export default function FoodRecallSurveyPage() {
                                 ))}
                             </div>
                         </fieldset>
-                        
+
                         {/* 7.5 Fats Used - DYNAMIC INLINE LOG */}
                         <div className="mt-6 border border-gray-200 p-4 rounded-md">
                             <div className="flex justify-between items-center mb-4">
@@ -315,13 +394,13 @@ export default function FoodRecallSurveyPage() {
                                                 &times;
                                             </button>
                                         </div>
-                                        
-                                        <input 
-                                            type="text" 
-                                            value={fat.name} 
-                                            onChange={(e) => handleFatEntryChange(fat.id, 'name', e.target.value)} 
-                                            placeholder="Type of Fat/Oil (e.g., Mustard Oil, Ghee)" 
-                                            className="w-full p-2 border rounded-md mb-3" 
+
+                                        <input
+                                            type="text"
+                                            value={fat.name}
+                                            onChange={(e) => handleFatEntryChange(fat.id, 'name', e.target.value)}
+                                            placeholder="Type of Fat/Oil (e.g., Mustard Oil, Ghee)"
+                                            className="w-full p-2 border rounded-md mb-3"
                                         />
 
                                         <div className="grid grid-cols-3 gap-3 items-center">
@@ -335,28 +414,28 @@ export default function FoodRecallSurveyPage() {
                                                     <IonSelectOption value="refused">Refused</IonSelectOption>
                                                 </IonSelect>
                                             </div>
-                                            
+
                                             {/* Consumption */}
                                             <div>
                                                 <label className="block text-xs font-medium text-gray-700 mb-1">Consumption (Lt/Kg/M)</label>
-                                                <input 
-                                                    type="text" 
-                                                    value={fat.familyConsumption} 
-                                                    onChange={(e) => handleFatEntryChange(fat.id, 'familyConsumption', e.target.value)} 
-                                                    placeholder="e.g., 2 Liters/Month" 
-                                                    className="w-full p-2 border rounded-md" 
+                                                <input
+                                                    type="text"
+                                                    value={fat.familyConsumption}
+                                                    onChange={(e) => handleFatEntryChange(fat.id, 'familyConsumption', e.target.value)}
+                                                    placeholder="e.g., 2 Liters/Month"
+                                                    className="w-full p-2 border rounded-md"
                                                 />
                                             </div>
 
                                             {/* Years Used */}
                                             <div>
                                                 <label className="block text-xs font-medium text-gray-700 mb-1">Years Used</label>
-                                                <input 
-                                                    type="text" 
-                                                    value={fat.yearsUsed} 
-                                                    onChange={(e) => handleFatEntryChange(fat.id, 'yearsUsed', e.target.value)} 
-                                                    placeholder="e.g., 10 years" 
-                                                    className="w-full p-2 border rounded-md" 
+                                                <input
+                                                    type="text"
+                                                    value={fat.yearsUsed}
+                                                    onChange={(e) => handleFatEntryChange(fat.id, 'yearsUsed', e.target.value)}
+                                                    placeholder="e.g., 10 years"
+                                                    className="w-full p-2 border rounded-md"
                                                 />
                                             </div>
                                         </div>
@@ -366,25 +445,42 @@ export default function FoodRecallSurveyPage() {
                         </div>
 
 
-                        {/* 7.6 Preparation Method */}
-                        <fieldset className="border border-gray-200 p-4 rounded-md mt-6">
-                            <legend className="text-sm font-semibold text-gray-600 px-2">
-                                7.6 How do you prepare the food most of the times?
-                            </legend>
-                            <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
-                                {["Shallow Frying", "Deep Frying", "Boiling", "Steaming", "Sauting", "Grill/Barbeque"].map(method => (
-                                    <CustomRadio 
-                                        key={method}
-                                        id={`prep-${method.replace(/[^a-zA-Z0-9]/g, '')}`} 
-                                        name="prepMethod" 
-                                        value={method} 
-                                        onChange={(e: any) => setPrepMethod(e.target.value)} 
-                                        checked={prepMethod === method} 
-                                        label={method} 
-                                    />
-                                ))}
+{/* 7.6 Preparation Method Frequency (UPDATED TO MATRIX) */}
+                        <div className="mt-6 border border-gray-200 p-4 rounded-md">
+                            <h3 className="text-sm font-semibold text-gray-600 mb-4">
+                                7.6 How often do you prepare food using these methods?
+                            </h3>
+                            
+                            {/* Header Row */}
+                            <div className="grid grid-cols-4 text-xs font-bold text-gray-600 border-b pb-2 mb-2">
+                                <div className="col-span-1">Method</div>
+                                <div className="text-center">Never (0)</div>
+                                <div className="text-center">Rarely (1)</div>
+                                <div className="text-center">Most Time (2)</div>
                             </div>
-                        </fieldset>
+
+                            {/* Data Rows */}
+                            {PREP_METHODS.map((method) => (
+                                <div key={method} className="grid grid-cols-4 items-center py-2 border-b border-gray-100 last:border-b-0">
+                                    <div className="col-span-1 text-sm font-medium text-gray-800">{method}</div>
+                                    
+                                    {/* Radio Buttons for Frequency */}
+                                    {['0', '1', '2'].map((frequency) => (
+                                        <div key={`${method}-${frequency}`} className="flex justify-center">
+                                            <input
+                                                type="radio"
+                                                id={`prep-${method}-${frequency}`}
+                                                name={`prepMethod-${method}`}
+                                                value={frequency as PrepFrequencyValue}
+                                                checked={prepFrequency[method] === frequency}
+                                                onChange={(e) => handlePrepFrequencyChange(method, e.target.value as PrepFrequencyValue)}
+                                                className="w-4 h-4 text-cyan-600 border-gray-300 focus:ring-cyan-500"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
 
                     </div>
 
@@ -393,7 +489,7 @@ export default function FoodRecallSurveyPage() {
                         <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
                             4. Household Habits
                         </h2>
-                        
+
                         {/* 7.7 Family Sharing */}
                         <div className="mb-4">
                             <label htmlFor="family_sharing" className="block text-gray-600 font-semibold mb-2 text-sm">
@@ -429,9 +525,9 @@ export default function FoodRecallSurveyPage() {
                             <label htmlFor="water_supply" className="block text-gray-600 font-semibold mb-2 text-sm">
                                 7.9 Water supply (Multiple Select)
                             </label>
-                            <IonSelect 
-                                value={waterSupply} 
-                                multiple={true} 
+                            <IonSelect
+                                value={waterSupply}
+                                multiple={true}
                                 onIonChange={(e) => setWaterSupply(e.detail.value)}
                                 placeholder="Select all that apply"
                                 className="p-2 border rounded-md"
@@ -465,13 +561,13 @@ export default function FoodRecallSurveyPage() {
             />
         </IonPage>
     );
-        <>
-            <IonPage>
-                <Header title={"Collect Food Recalls"} />
-                <IonContent class='' fullscreen>
-                    
-                </IonContent>
-            </IonPage>
-        </>
-    )
+    <>
+        <IonPage>
+            <Header title={"Collect Food Recalls"} />
+            <IonContent class='' fullscreen>
+
+            </IonContent>
+        </IonPage>
+    </>
+
 }
