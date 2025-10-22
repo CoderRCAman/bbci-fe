@@ -6,9 +6,9 @@ export default function FoodRecallPage2() {
     return (
         <>
             <IonPage>
-                <Header title={"Collect Recalls"} />
+                <Header title={"Collect Food Recalls"} />
                 <IonContent class='' fullscreen>
-                    <h1 className="text-slate-600 font-semibold">Food Record Form</h1>
+                    
                 </IonContent>
             </IonPage>
         </>

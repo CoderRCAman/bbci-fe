@@ -56,7 +56,7 @@ import BloodPage5 from "./pages/Blood/page5/BloodPage5";
 import BloodPage6 from "./pages/Blood/page6/BloodPage6";
 import BloodPage7 from "./pages/Blood/page7/BloodPage7";
 import PromptTabId from "./components/PromptTabId";
-import EndoPage4 from "./pages/Endoscopy/Page4/EndoPage3";
+import EndoPage4 from "./pages/Endoscopy/Page4/EndoPage4";
 import EndoPage3 from "./pages/Endoscopy/Page3/EndoPage3";
 
 setupIonicReact();
@@ -78,6 +78,9 @@ const App: React.FC = () => {
           <Sidebar />
           <IonTabs>
             <IonRouterOutlet>
+              <Route exact path="/">
+                <Redirect to="/tab2" />
+              </Route>
               <Route exact path="/tab1">
                 <Tab1 />
               </Route>
@@ -86,9 +89,6 @@ const App: React.FC = () => {
               </Route>
               <Route path="/tab3">
                 <Tab3 />
-              </Route>
-              <Route exact path="/">
-                <Redirect to="/tab1" />
               </Route>
               <Route path="/tab4">
                 <Tab4 />

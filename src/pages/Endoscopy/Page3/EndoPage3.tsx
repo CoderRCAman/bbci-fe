@@ -91,7 +91,7 @@ export default function EndoPage3() {
       await db?.execute(query);
       await saveToStore(sqlite);
       setEndoId(uid);
-    setAlert({
+      setAlert({
         header: "Success",
         message: "Vial linked successfully!",
         show: true,
@@ -123,15 +123,16 @@ export default function EndoPage3() {
                 Collect Vial Data
               </h1>
               <div className="">
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                   <input type="text" autoFocus className="hidden" />
                   <p className="text-sm w-[300px] text-slate-500 p-2 border rounded">
                     {barcodeData || "YOUR BARCODE WILL SHOW UP HERE"}
                   </p>
-                  <Button
+                  <Button 
+                    disabled = {!barcodeData}
                     label="Save"
-                    className="rounded px-2"
-                    severity="help"
+                    className="rounded h-10 "
+                    severity="success"
                     onClick={() => handleSaveEndocode()}
                   />
                 </div>
@@ -139,14 +140,12 @@ export default function EndoPage3() {
             </div>
 
             <div className="mt-10 flex justify-end gap-2 ">
-              <Link to="/endo1">
+              <Link to={`/endo2?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
                 <Button label="PREV" className="px-5 py-2 rounded" />
               </Link>
-              {endoId && (
-                <Link to={`/endo3?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
-                  <Button label="NEXT" className="px-5 py-2 rounded" />
-                </Link>
-              )}
+              <Link to={`/endo4?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
+                <Button label="NEXT" className="px-5 py-2 rounded" />
+              </Link>
             </div>
           </main>
           <IonAlert

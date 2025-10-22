@@ -1,5 +1,6 @@
 // src/pages/Tab1.tsx
 import React, { useEffect, useState } from "react";
+import { App } from '@capacitor/app';
 import { InputText } from "primereact/inputtext";
 import {
   IonContent,
@@ -18,6 +19,7 @@ import {
   IonMenuButton,
   IonButtons,
   IonFooter,
+  useIonRouter,
 } from "@ionic/react";
 import { format, isValid, parse } from "date-fns";
 
@@ -100,6 +102,20 @@ const Tab1: React.FC = () => {
     },
   });
   const [strokes, setStrokes] = useState<number[][][]>([]);
+  const router = useIonRouter();
+
+  useEffect(() => {
+    const handle = App.addListener('appStateChange', (state) => {
+      if (!state.isActive) {
+        router.push('/tab2');
+      }
+    });
+
+    return () => {
+      // synchronous handle with remove()
+      App.removeAllListeners();
+    };
+  }, [router]);
   //below checks if this is for edit purpose
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);

@@ -132,7 +132,7 @@ export default function EndoPage4() {
               />
             </div>
             <div className="flex justify-end mt-2">
-              <Link to={`/endo2?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
+              <Link to={`/endo3?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
                 <Button label="PREV" className="px-10 py-2 rounded" />
               </Link>
             </div>

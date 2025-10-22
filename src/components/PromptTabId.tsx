@@ -6,6 +6,7 @@ import { InputText } from "primereact/inputtext";
 import { useEffect, useState } from "react";
 import { useSQLite } from "../utils/Sqlite";
 import { saveToStore } from "../utils/helper";
+import { Dropdown } from "primereact/dropdown";
 
 export default function PromptTabId() {
   const { db, sqlite, tabId, setTabId } = useSQLite();
@@ -59,9 +60,10 @@ export default function PromptTabId() {
           if (!visible) return;
           //   setVisible(false);
         }}
+
       >
         <main className="py-5">
-          <FloatLabel>
+          {/* <FloatLabel>
             <InputText
               className="border-1 p-2"
               value={tabInput}
@@ -70,7 +72,21 @@ export default function PromptTabId() {
               }}
             />
             <label>Enter Tablet Id</label>
-          </FloatLabel>
+          </FloatLabel> */}
+          <div>
+            <p>Select tablet Id</p>
+            <Dropdown
+              onChange={(e) => setTabInput(e.value)}
+              optionLabel="name"
+              value={tabInput}
+              className="border-1"
+              placeholder="Select empoloyee code"
+              options={[
+                { name: "TAB1 GREEN", value: "TAB1_GREEN" },
+                { name: "TAB2 BLUE ", value: "TAB2_BLUE" },
+              ]}
+            />
+          </div>
           <Button
             label="Save"
             className="mt-4"

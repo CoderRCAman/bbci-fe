@@ -575,14 +575,13 @@ export default function EndoPage2() {
               <Link to="/endo1">
                 <Button label="PREV" className="px-5 py-2 rounded" />
               </Link>
-              {endoId && (
+             
                 <Link
                   to={`/endo3?id=${id}&endoId=${endoId}&edit=${editFlag ? "yes" : "no"
                     }`}
                 >
                   <Button label="NEXT" className="px-5 py-2 rounded" />
                 </Link>
-              )}
             </div>
           </main>
         </IonContent>
