@@ -7,7 +7,7 @@ import { Button } from "primereact/button";
 import ShortUUID from "short-uuid";
 import { Link } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
-import { saveToStore } from "../../../utils/helper";
+import { fetchCurrentUserDetails, saveToStore } from "../../../utils/helper";
 import { set } from "date-fns";
 import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
@@ -21,16 +21,44 @@ export interface RESIDENTIAL_TYPE {
   id: string;
   user_id?: string;
 }
-function isResidentialDataValid(data: RESIDENTIAL_TYPE[]): boolean {
-  return data.every(
-    (item) =>
+
+function isResidentialDataValid(
+  data: RESIDENTIAL_TYPE[],
+  userData: any,
+): boolean {
+  const allItemsValid = data.every((item) => {
+    const hasRequiredFields =
       item.id?.trim() &&
-      item.from_age > 0 &&
-      item.to_age > 0 &&
       item.state?.trim() &&
       item.code > 0 &&
-      (item.city?.trim() || item.village?.trim())
-  );
+      (item.city?.trim() || item.village?.trim());
+    const hasValidNumbers = item.from_age >= 0 && item.to_age > 0;
+    const isRangeCorrect = item.from_age <= item.to_age;
+    const isWithinUserAge =
+      item.to_age <= (userData.age ) && item.from_age <= userData.age;
+    return hasRequiredFields && hasValidNumbers && isRangeCorrect && isWithinUserAge;
+  });
+  if (!allItemsValid) {
+    return false;
+  }
+  const zeroRecords = data.filter((item) => item.from_age === 0).length;
+  if (zeroRecords > 1) {
+    return false;
+  }
+  if (data.length > 1) {
+    const sortedData = [...data].sort((a, b) => a.from_age - b.from_age);
+    for (let i = 0; i < sortedData.length - 1; i++) {
+      const currentItem = sortedData[i];
+      const nextItem = sortedData[i + 1];
+      if (
+        currentItem.from_age === nextItem.from_age ||
+        currentItem.to_age > nextItem.from_age
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 export default function Tab5() {
   const location = useLocation();
@@ -58,6 +86,7 @@ export default function Tab5() {
       city: "",
       state: "",
       code: 0,
+      village: ''
     };
 
     setResidentialData((d) => [...d, newResidential]);
@@ -67,6 +96,7 @@ export default function Tab5() {
     setRemovedIds((prev) => [...prev, id]);
     setResidentialData((d) => d.filter((x) => x.id !== id));
   };
+  console.log(residentialData);
   useEffect(() => {
     if (!db) return;
     const curId = searchParams?.get("id");
@@ -99,12 +129,14 @@ export default function Tab5() {
         show: true,
       });
     }
+    const userData = await fetchCurrentUserDetails(db, id || "");
+    console.log(userData)
     //for fresh records
-    if (!isResidentialDataValid(residentialData)) {
+    if (!isResidentialDataValid(residentialData, userData)) {
       return setAlert({
         show: true,
         header: "FAILED",
-        message: "SOME FIELDS WERE MISSING!",
+        message: "Issue with age gap fields Or Missing fields!",
       });
     }
     try {
@@ -126,8 +158,8 @@ export default function Tab5() {
         const values = [
           item.from_age,
           item.to_age,
-          item.city ? `'${item.city}'` : "NULL",
-          item.village ? `'${item.village}'` : "NULL",
+          item.city ? `'${item.city}'` : "''",
+          item.village ? `'${item.village}'` : "''",
           `'${item.state}'`,
           item.code,
           `'${item.id}'`,
@@ -216,7 +248,7 @@ export default function Tab5() {
                 severity="success"
                 text
                 raised
-                className=" px-10  rounded-md font-bold"
+                className=" px-10   rounded-md font-bold"
                 onClick={() => handleSaveFresh()}
               />
             )}
@@ -228,7 +260,7 @@ export default function Tab5() {
             message={alert.message}
             buttons={["OK"]}
           />
-          <div className="flex gap-2 mt-20 justify-end  pb-5 pl-2">
+          <div className="flex gap-2 mt-20 justify-end  pb-5 pr-2">
             <Link to={`/tab1?id=${id}&edit=no`}>
               <Button label="PREV" className="px-10 py-2  rounded-md" />
             </Link>

@@ -1,4 +1,4 @@
-import { SQLiteConnection } from "@capacitor-community/sqlite";
+import { SQLiteConnection, SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { isPlatform, getPlatforms } from '@ionic/react';
 export const generateUniqueId = (name = "") => {
   const timestamp = Date.now();
@@ -31,5 +31,17 @@ export const saveToStore = async (sqlite: SQLiteConnection | null) => {
       await sqlite?.saveToStore('patientdb');
   } catch (error) {
     console.log(error)
+  }
+}
+
+export const fetchCurrentUserDetails = async (db: SQLiteDBConnection|null, id: string) => {
+  try { 
+    if(!db) return null ;
+    const result = await db?.query(`SELECT * FROM patients WHERE id = ? `, [id]);
+    if (result.values)
+      return result?.values[0];
+    return null;
+  } catch (error) {
+    console.log(error);
   }
 }

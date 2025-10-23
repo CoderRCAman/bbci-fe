@@ -1,5 +1,5 @@
 // src/pages/Tab1.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { App } from '@capacitor/app';
 import { InputText } from "primereact/inputtext";
 import {
@@ -20,6 +20,8 @@ import {
   IonButtons,
   IonFooter,
   useIonRouter,
+  useIonViewWillEnter,
+  useIonViewWillLeave,
 } from "@ionic/react";
 import { format, isValid, parse } from "date-fns";
 
@@ -29,7 +31,7 @@ import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { Geolocation } from "@capacitor/geolocation";
 import Header from "../../../components/Header";
 import { useSQLite } from "../../../utils/Sqlite";
-import { generateUniqueId, saveToStore } from "../../../utils/helper";
+import { fetchCurrentUserDetails, generateUniqueId, saveToStore } from "../../../utils/helper";
 import { useHistory, useLocation } from "react-router";
 import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from "primereact/dropdown";
@@ -41,6 +43,7 @@ import { Link } from "react-router-dom";
 import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import SignaturePad, { roundPoint } from "./SignaturePad";
+import { PluginListenerHandle } from "@capacitor/core";
 interface Patient {
   id?: string;
   name: string;
@@ -54,6 +57,8 @@ interface Patient {
   dob: string;
   tab_id?: string;
 }
+
+
 
 const forcedStyle = {
   label: { marginBottom: "10px" },
@@ -78,6 +83,7 @@ const Tab1: React.FC = () => {
   const [editFlag, setEditFlag] = useState<string | null>(null);
   const location = useLocation();
   const { db, sqlite, tabId } = useSQLite();
+  const listenerHandle = useRef<PluginListenerHandle | null>(null);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -104,24 +110,33 @@ const Tab1: React.FC = () => {
   const [strokes, setStrokes] = useState<number[][][]>([]);
   const router = useIonRouter();
 
-  useEffect(() => {
-    const handle = App.addListener('appStateChange', (state) => {
-      if (!state.isActive) {
-        router.push('/tab2');
-      }
-    });
-
-    return () => {
-      // synchronous handle with remove()
-      App.removeAllListeners();
+  useIonViewWillEnter(() => {
+    const registerListener = async () => {
+      // AWAIT the promise to get the actual handle
+      listenerHandle.current = await App.addListener('appStateChange', (state) => {
+        if (!state.isActive) {
+          router.push('/tab2');
+        }
+      });
     };
-  }, [router]);
+
+    // Call the async function to register the listener
+    registerListener();
+  });
+
+  // This hook fires EVERY time the user navigates AWAY from this tab
+  useIonViewWillLeave(() => {
+    // Remove the specific listener when the user leaves this tab
+    if (listenerHandle.current) {
+      listenerHandle.current.remove();
+      listenerHandle.current = null;
+    }
+  });
   //below checks if this is for edit purpose
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const id = searchParams.get("id");
     const flag = searchParams.get("edit");
-    const canvas = document.querySelector("canvas");
     setId(id);
     setEditFlag(flag);
 
@@ -188,7 +203,8 @@ const Tab1: React.FC = () => {
           header: "Error",
           message: "Tab Id mismatch. Please contact admin.",
         });
-      }
+      } 
+      
       await db?.run(
         `UPDATE patients SET name = ?, age = ?, gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
