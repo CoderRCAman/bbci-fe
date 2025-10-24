@@ -76,25 +76,23 @@ export default function AddIndoorAirPollution({
         <p className="text-sm text-slate-500">
           How long you stay in place where cooking is being done
         </p>
-        <div className="flex gap-2 font-semibold text-sm text-slate-500">
+        <div className="flex gap-2 font-semibold items-center text-sm text-slate-500">
           <div>HOUR</div>
-          <div>
-            <InputText
-              className="border  w-[30px] text-center"
-              keyfilter={"int"}
-              value={data["hours"] == -1 ? "" : data["hours"].toString()}
-              onChange={(e) => handleUpdate("hours", e.target.value)}
-            />
-          </div>
+
+          <InputText
+            className="border  w-[60px] text-sm text-center"
+            keyfilter={"int"}
+            value={data["hours"] == -1 ? "" : data["hours"].toString()}
+            onChange={(e) => handleUpdate("hours", e.target.value)}
+          />
           <div>:</div>
-          <div>
-            <InputText
-              className="border  w-[30px] text-center"
-              keyfilter={"int"}
-              value={data["minutes"] == -1 ? "" : data["minutes"].toString()}
-              onChange={(e) => handleUpdate("minutes", e.target.value)}
-            />
-          </div>
+
+          <InputText
+            className="border  w-[60px] text-center"
+            keyfilter={"int"}
+            value={data["minutes"] == -1 ? "" : data["minutes"].toString()}
+            onChange={(e) => handleUpdate("minutes", e.target.value)}
+          />
           <div>MINUTES</div>
         </div>
       </div>

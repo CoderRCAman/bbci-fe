@@ -1,4 +1,4 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
 import { useEffect, useState } from "react";
@@ -23,19 +23,55 @@ export interface INDOOR_AIR_POLLUTION {
   user_id?: string;
   tab_id?: string;
 }
-function isIndoorAirPollutionDataValid(data: INDOOR_AIR_POLLUTION[]): boolean {
-  return data.every(
-    (item) =>
+function isIndoorAirPollutionDataValid(
+  data: INDOOR_AIR_POLLUTION[],
+  userData: any, // Must contain userData.age
+): boolean {
+  const allItemsValid = data.every((item) => {
+    // 1. Replaced with fields from INDOOR_AIR_POLLUTION
+    const hasRequiredFields =
       item.id?.trim() &&
-      item.from_age > 0 &&
-      item.to_age > 0 &&
       item.hours > -1 &&
       item.minutes > -1 &&
       item.ventilation > -1 &&
       item.most_common_cooking_fuel > -1 &&
       item.smokiness > -1 &&
-      item.most_cooking > -1
-  );
+      item.most_cooking > -1;
+
+    // 2. Copied validation logic from isResidentialDataValid
+    const hasValidNumbers = item.from_age >= 0 && item.to_age > 0;
+    const isRangeCorrect = item.from_age <= item.to_age;
+    const isWithinUserAge =
+      item.to_age <= userData.age && item.from_age <= userData.age;
+
+    return hasRequiredFields && hasValidNumbers && isRangeCorrect && isWithinUserAge;
+  });
+
+  if (!allItemsValid) {
+    return false;
+  }
+
+  // 3. Copied list-wide validation from isResidentialDataValid
+  const zeroRecords = data.filter((item) => item.from_age === 0).length;
+  if (zeroRecords > 1) {
+    return false;
+  }
+
+  if (data.length > 1) {
+    const sortedData = [...data].sort((a, b) => a.from_age - b.from_age);
+    for (let i = 0; i < sortedData.length - 1; i++) {
+      const currentItem = sortedData[i];
+      const nextItem = sortedData[i + 1];
+      if (
+        currentItem.from_age === nextItem.from_age ||
+        currentItem.to_age > nextItem.from_age
+      ) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 export default function Tab9() {
   const location = useLocation();
@@ -54,31 +90,32 @@ export default function Tab9() {
     message: "",
   });
 
+  async function fetchExisting(curId: string) {
+    try {
+      const query = `
+              select * from indoor_air_pollution where user_id = '${curId}' ;
+          `;
+      const res = await db?.query(query);
+      if (res?.values?.length) {
+        setAllowNext(true);
+        setIndoorAirData(res?.values as INDOOR_AIR_POLLUTION[]);
+      } else {
+        handleAddNewUi(true);
+      }
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  }
   useEffect(() => {
     const curId = searchParams?.get("id");
     setId(curId);
     setEditFlag(searchParams?.get("edit") === "YES");
-    async function fetchExisting() {
-      try {
-        const query = `
-                select * from indoor_air_pollution where user_id = '${curId}' ;
-            `;
-        const res = await db?.query(query);
-        if (res?.values?.length) {
-          setAllowNext(true);
-          setIndoorAirData(res?.values as INDOOR_AIR_POLLUTION[]);
-        } else {
-          handleAddNewUi();
-        }
-        console.log(res);
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    fetchExisting();
+    fetchExisting(curId || "");
   }, [location.pathname, db]);
 
-  const handleAddNewUi = () => {
+  const handleAddNewUi = (flag: boolean = false) => {
+
     const translator = shortUUID();
     const newResidential: INDOOR_AIR_POLLUTION = {
       id: translator.new(),
@@ -91,7 +128,8 @@ export default function Tab9() {
       smokiness: -1,
       most_cooking: -1,
     };
-    setIndoorAirData((d) => [...d, newResidential]);
+
+    setIndoorAirData((d) => flag ? [newResidential] : [...d, newResidential]);
   };
   const handleRemoveUi = (id: string) => {
     if (indoorAirData.length === 1) return;
@@ -108,11 +146,13 @@ export default function Tab9() {
         show: true,
       });
     }
-    if (!isIndoorAirPollutionDataValid(indoorAirData)) {
+    const res = await db?.query("select * from patients where id = ?", [id]);
+    const userData = res?.values?.[0];
+    if (!isIndoorAirPollutionDataValid(indoorAirData, userData)) {
       return setAlert({
         show: true,
         header: "FAILED",
-        message: "SOME FIELDS WERE MISSING!",
+        message: "AGE CONFLICT OR SOME FIELDS WERE MISSING!",
       });
     }
     try {
@@ -178,7 +218,11 @@ export default function Tab9() {
       });
     }
   };
-
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const currentId = searchParams?.get("id") || "";
+    await fetchExisting(currentId);
+    event.detail.complete();
+  }
   return (
     <IonPage>
       <Header
@@ -187,6 +231,13 @@ export default function Tab9() {
       <IonContent class="" fullscreen>
         <ShowRegisteredTab id={id || ''} />
         <main className="p-2 space-y-2">
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only" // <-- Add this class
+              refreshingSpinner="circles"
+            // You can remove the other text props
+            ></IonRefresherContent>
+          </IonRefresher>
           {indoorAirData.map((data) => (
             <AddIndoorAirPollution
               data={data}
@@ -200,7 +251,7 @@ export default function Tab9() {
               text
               raised
               className="px-3 py-2 px-10 py-3 rounded-md font-bold"
-              onClick={handleAddNewUi}
+              onClick={() => handleAddNewUi(false)}
             />
 
             <Button

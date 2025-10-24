@@ -1,5 +1,5 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
-import React, { useEffect, useState } from "react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
+import React, { useEffect, useRef, useState } from "react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
 import AddResidential from "./AddResidential";
@@ -35,7 +35,7 @@ function isResidentialDataValid(
     const hasValidNumbers = item.from_age >= 0 && item.to_age > 0;
     const isRangeCorrect = item.from_age <= item.to_age;
     const isWithinUserAge =
-      item.to_age <= (userData.age ) && item.from_age <= userData.age;
+      item.to_age <= (userData.age) && item.from_age <= userData.age;
     return hasRequiredFields && hasValidNumbers && isRangeCorrect && isWithinUserAge;
   });
   if (!allItemsValid) {
@@ -76,6 +76,7 @@ export default function Tab5() {
   const [allowNext, setAllowNext] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
   const [removedIds, setRemovedIds] = useState<string[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const handleAddNewUi = () => {
     console.log("hello");
     const translator = ShortUUID();
@@ -97,29 +98,29 @@ export default function Tab5() {
     setResidentialData((d) => d.filter((x) => x.id !== id));
   };
   console.log(residentialData);
-  useEffect(() => {
-    if (!db) return;
-    const curId = searchParams?.get("id");
-    setId(curId);
-    setEditFlag(searchParams?.get("edit"));
-    const loadExisting = async () => {
-      try {
-        const query = `
+  const loadExisting = async (curId: string) => {
+    try {
+      const query = `
                     select * from residential_history where user_id = '${curId}' ;    
                     `;
-        const res = await db?.query(query);
-        const values = res?.values;
-        if (values?.length === 0 && residentialData.length === 0) {
-          handleAddNewUi();
-        } else {
-          setAllowNext(true);
-          setResidentialData(values || []);
-        }
-      } catch (error) {
-        console.log(error);
+      const res = await db?.query(query);
+      const values = res?.values;
+      if (values?.length === 0 && residentialData.length === 0) {
+        handleAddNewUi();
+      } else {
+        setAllowNext(true);
+        setResidentialData(values || []);
       }
-    };
-    loadExisting();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
+    if (!db) return;
+    const curId = searchParams?.get("id") || "";
+    setId(curId);
+    setEditFlag(searchParams?.get("edit"));
+    loadExisting(curId);
   }, [db, location.pathname]);
   const handleSaveFresh = async () => {
     if (db && !(await checkElibleToSave(db, id || "", tabId))) {
@@ -209,12 +210,23 @@ export default function Tab5() {
     //for updated records
   };
   console.log(residentialData.length)
-
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const currentId = searchParams?.get("id") || "";
+    await loadExisting(currentId);
+    event.detail.complete();
+  }
   return (
     <>
       <IonPage>
         <Header title={"Residential History"} />
         <IonContent class="" fullscreen>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only" // <-- Add this class
+              refreshingSpinner="circles"
+            // You can remove the other text props
+            ></IonRefresherContent>
+          </IonRefresher>
           <ShowRegisteredTab id={id || ''} />
           <main className="mt-6 p-2  space-y-8">
             {residentialData.map((item) => (

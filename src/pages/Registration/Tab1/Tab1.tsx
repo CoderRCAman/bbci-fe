@@ -22,6 +22,9 @@ import {
   useIonRouter,
   useIonViewWillEnter,
   useIonViewWillLeave,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
 } from "@ionic/react";
 import { format, isValid, parse } from "date-fns";
 
@@ -97,6 +100,7 @@ const Tab1: React.FC = () => {
     formState: { errors },
     formState,
     watch,
+    reset
   } = useForm({
     values: {
       i_name: patient.i_name,
@@ -109,7 +113,7 @@ const Tab1: React.FC = () => {
   });
   const [strokes, setStrokes] = useState<number[][][]>([]);
   const router = useIonRouter();
-
+  const searchParams = new URLSearchParams(location.search);
   useIonViewWillEnter(() => {
     const registerListener = async () => {
       // AWAIT the promise to get the actual handle
@@ -133,8 +137,22 @@ const Tab1: React.FC = () => {
     }
   });
   //below checks if this is for edit purpose
+  async function fetchPatient(id: string) {
+    try {
+      const res = await db?.query("select * from patients where id = ?", [
+        id,
+      ]);
+      if ((res as any)?.values?.length > 0) {
+        setPatient((res as any)?.values[0]);
+        if (res?.values && res?.values[0]?.signature) {
+          setStrokes(JSON.parse(res?.values[0]?.signature));
+        }
+      }
+      reset((res as any)?.values[0]);
+    } catch (error) { }
+  }
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
+
     const id = searchParams.get("id");
     const flag = searchParams.get("edit");
     setId(id);
@@ -157,20 +175,8 @@ const Tab1: React.FC = () => {
       });
       return;
     }
-    async function fetchPatient() {
-      try {
-        const res = await db?.query("select * from patients where id = ?", [
-          id,
-        ]);
-        if ((res as any)?.values?.length > 0) {
-          setPatient((res as any)?.values[0]);
-          if (res?.values && res?.values[0]?.signature) {
-            setStrokes(JSON.parse(res?.values[0]?.signature));
-          }
-        }
-      } catch (error) { }
-    }
-    fetchPatient();
+    reset(patient);
+    fetchPatient(id);
 
     //signature stuff
   }, [location.search, db]);
@@ -203,8 +209,8 @@ const Tab1: React.FC = () => {
           header: "Error",
           message: "Tab Id mismatch. Please contact admin.",
         });
-      } 
-      
+      }
+
       await db?.run(
         `UPDATE patients SET name = ?, age = ?, gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
@@ -282,7 +288,11 @@ const Tab1: React.FC = () => {
       console.error("Error getting location:", error);
     }
   };
-
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const currentId = searchParams?.get("id") || "";
+    await fetchPatient(currentId);
+    event.detail.complete();
+  }
   const onSubmit = (data: any) => {
     console.log(data);
     savePatient(data);
@@ -292,6 +302,13 @@ const Tab1: React.FC = () => {
     <IonPage>
       <Header title={id ? "Edit participants" : "Register Participant"} />
       <IonContent fullscreen>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent
+            className="spinner-only" // <-- Add this class
+            refreshingSpinner="circles"
+          // You can remove the other text props
+          ></IonRefresherContent>
+        </IonRefresher>
         <ShowRegisteredTab id={id || ""} />
         <form
           className=" shadow-1 border  rounded-md m-2 p-2 pt-5 flex flex-col gap-10"
@@ -522,6 +539,7 @@ const Tab1: React.FC = () => {
           message={alert.message}
           buttons={["OK"]}
         />
+
       </IonContent>
       <div className="pb-[250px]"></div>
     </IonPage >

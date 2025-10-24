@@ -1,4 +1,4 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, IonToast, RefresherEventDetail } from "@ionic/react";
 import Header from "../../../components/Header";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -8,11 +8,12 @@ import { Column } from "primereact/column";
 import { InputText } from "primereact/inputtext";
 import shortUUID from "short-uuid";
 import { Dropdown } from "primereact/dropdown";
-import { hasMasterData, hasRelativeData, relatives } from "./data";
+import { getFamilyMembers, hasMasterData, hasRelativeData, relatives } from "./data";
 import { useSQLite } from "../../../utils/Sqlite";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { chevronDownCircleOutline } from "ionicons/icons";
 export type FAMILY_HISTORY_OF_CANCER_MASTER = {
   id: string;
   user_id: string;
@@ -71,36 +72,42 @@ export default function Tab7() {
     header: "",
     message: "",
   });
-  useEffect(() => {
-    const currentId = searchParams?.get("id");
-    setId(currentId);
-    async function fetchInitialState() {
-      try {
-        const res1 = await db?.query(`
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    success: false,
+  });
+  async function fetchInitialState(currentId: string) {
+    try {
+      const res1 = await db?.query(`
            select * from FAMILY_HISTORY_OF_CANCER_MASTER where user_id = '${currentId}'
           `);
-        if (res1?.values && res1?.values?.length > 0) {
-          setfamilyHistoryMaster(
-            res1?.values as FAMILY_HISTORY_OF_CANCER_MASTER[]
-          );
-        } else {
-          setfamilyHistoryMaster(initialState);
-        }
-        const res2 = await db?.query(`
+      if (res1?.values && res1?.values?.length > 0) {
+        setfamilyHistoryMaster(
+          res1?.values as FAMILY_HISTORY_OF_CANCER_MASTER[]
+        );
+      } else {
+        setfamilyHistoryMaster(initialState);
+      }
+      const res2 = await db?.query(`
            select * from FAMILY_HISTORY_OF_CANCER_RELATIVES where user_id = '${currentId}'
           `);
-        if (res2?.values && res2?.values?.length > 0) {
-          setfamilyHistoryRelatives(
-            res2?.values as FAMILY_HISTORY_OF_CANCER_RELATIVES[]
-          );
-        } else {
-          setfamilyHistoryRelatives(initialStateRelatives);
-        }
-      } catch (error) {
-        console.log(error);
+      if (res2?.values && res2?.values?.length > 0) {
+        setfamilyHistoryRelatives(
+          res2?.values as FAMILY_HISTORY_OF_CANCER_RELATIVES[]
+        );
+      } else {
+        setfamilyHistoryRelatives(initialStateRelatives);
       }
+    } catch (error) {
+      console.log(error);
     }
-    fetchInitialState();
+  }
+  useEffect(() => {
+    const currentId = searchParams?.get("id") || "";
+    setId(currentId);
+
+    fetchInitialState(currentId);
   }, [location.pathname, db]);
   const handleAddNewUi = () => {
     const translator = shortUUID();
@@ -126,6 +133,11 @@ export default function Tab7() {
     );
   };
   const handleChangeMaster = (id: string, field: string, value: any) => {
+    if (+value > 9 || +value < 0) return setToast({
+      show: true,
+      message: "Value must be between 0 and 9",
+      success: false
+    })
     setfamilyHistoryMaster((d) =>
       d.map((item) => (item.id == id ? { ...item, [field]: value } : item))
     );
@@ -228,6 +240,11 @@ export default function Tab7() {
       });
     }
   };
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const currentId = searchParams?.get("id") || "";
+    await fetchInitialState(currentId)
+    event.detail.complete();
+  }
   console.log(familyHistoryMaster)
   return (
     <IonPage>
@@ -235,6 +252,13 @@ export default function Tab7() {
         title={0 ? "Edit Family History of Cancer" : "Family History of Cancer"}
       />
       <IonContent class="" fullscreen>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent
+            className="spinner-only" // <-- Add this class
+            refreshingSpinner="circles"
+          // You can remove the other text props
+          ></IonRefresherContent>
+        </IonRefresher>
         <ShowRegisteredTab id={id || ''} />
         <main className="p-2 text-slate-600">
           <DataTable
@@ -246,15 +270,18 @@ export default function Tab7() {
             size="normal"
             className="border !border-b-0"
             header={() => (
-              <h1 className="text-slate-500 font-semibold">
-                How many first degree relatives?
-              </h1>
+              <div className="flex items-center ">
+                <h4 className="text-slate-500 font-semibold">
+                  How many first degree relatives?
+                  <span className="text-xs font-small italic">{'('}Excluding those who died within the first year of age{')'}</span>
+                </h4>
+              </div>
+
             )}
           >
             <Column
               field="brothers"
               header="Brothers"
-              bodyClassName="border-y border-gray-300 "
               body={(rowData) => (
                 <InputText
                   keyfilter={"int"}
@@ -276,7 +303,6 @@ export default function Tab7() {
             <Column
               field="sisters"
               header="Sisters"
-              bodyClassName="border-y border-gray-300 "
               body={(rowData) => (
                 <InputText
                   keyfilter={"int"}
@@ -298,7 +324,6 @@ export default function Tab7() {
             <Column
               field="sons"
               header="Sons"
-              bodyClassName="border-y border-gray-300 "
               body={(rowData) => (
                 <InputText
                   keyfilter={"int"}
@@ -320,7 +345,6 @@ export default function Tab7() {
             <Column
               field="daughters"
               header="Daughters"
-              bodyClassName="border-y border-gray-300 "
               body={(rowData) => (
                 <InputText
                   keyfilter={"int"}
@@ -341,7 +365,7 @@ export default function Tab7() {
             ></Column>
           </DataTable>
           <div className="mt-5 border rounded p-2">
-            <p className="text-slate-500 ">
+            <p className="text-slate-500 text-sm font-semibold ">
               Has there been any history of cancer in any of your first degree
               relatives?
             </p>
@@ -414,30 +438,28 @@ export default function Tab7() {
           </div>
 
           <div className="mt-10">
-            <h1 className="font-semibold text-slate-400 mb-2">
+            <h4 className="font-semibold text-sm text-slate-500 mb-2">
               List all your first degree (blood) relatives, who ever had a
               diagnosis of cancer
-            </h1>
-            <DataTable
+            </h4>
+            {/* <DataTable
+
               stripedRows
               tableStyle={{ minWidth: "60rem" }}
               // tableClassName="p-datatable-gridlines"
               value={familyHistoryRelatives}
               showGridlines
               size="normal"
-              className="border !border-b-0 text-slate-600"
               key={familyHistoryMaster?.[0].history_of_cancer}
             >
               <Column
                 style={{ fontSize: "0.8rem" }}
-                bodyClassName="border-y border-gray-300 "
                 field="sr_no"
                 header="Sr. No."
                 body={(rowData, { rowIndex }) => <span>{rowIndex + 1}</span>}
               ></Column>
               <Column
                 style={{ fontSize: "0.8rem" }}
-                bodyClassName="border-y border-gray-300 "
                 field="relation"
                 header="Relation with subject"
                 body={(rowData) => (
@@ -458,19 +480,18 @@ export default function Tab7() {
               ></Column>
               <Column
                 style={{ fontSize: "0.8rem" }}
-                bodyClassName="border-y border-gray-300"
                 field="code"
                 header="Relative code"
                 body={(rowData) => (
                   <Dropdown
-                    // onChange={(e) => onChange(e.value)} 
+                    key={`family-key-${familyHistoryMaster[0].brothers}-${familyHistoryMaster[0].sisters}-${familyHistoryMaster[0].sons}-${familyHistoryMaster[0].daughters}`}
                     disabled={familyHistoryMaster?.[0]?.history_of_cancer !== 1}
                     optionLabel="name"
                     value={rowData.code}
                     optionValue="value"
                     className="border-1"
-                    placeholder="Select empoloyee name"
-                    options={relatives}
+                    placeholder="Select relative code"
+                    options={getFamilyMembers(familyHistoryMaster[0].brothers, familyHistoryMaster[0].sisters, familyHistoryMaster[0].sons, familyHistoryMaster[0].daughters)}
                     appendTo={document.body}
                     onChange={(e) =>
                       handleChangeRelative(rowData.id, "code", e.value)
@@ -480,7 +501,6 @@ export default function Tab7() {
               ></Column>
               <Column
                 style={{ fontSize: "0.8rem" }}
-                bodyClassName="border-y border-gray-300"
                 field="age_at_diagnosis"
                 header="Age at diagnosis"
                 body={(rowData) => (
@@ -501,7 +521,6 @@ export default function Tab7() {
               ></Column>
               <Column
                 style={{ fontSize: "0.8rem" }}
-                bodyClassName="border-y border-gray-300"
                 field="cancer_site"
                 header="Cancer Site"
                 body={(rowData) => (
@@ -521,7 +540,6 @@ export default function Tab7() {
               ></Column>
               <Column
                 style={{ fontSize: "0.8rem" }}
-                bodyClassName="border-y border-gray-300"
                 field="treatment_received"
                 header="Received treatment*"
                 body={(rowData) => (
@@ -563,7 +581,6 @@ export default function Tab7() {
               ></Column>
               <Column
                 style={{ fontSize: "0.8rem" }}
-                bodyClassName="border-y border-gray-300 w-20"
                 field="action"
                 header="Action"
                 body={(rowData) => (
@@ -575,7 +592,141 @@ export default function Tab7() {
                   />
                 )}
               ></Column>
-            </DataTable>
+            </DataTable> */}
+            <div className="flex flex-col gap-4 p-2">
+              {familyHistoryRelatives.map((rowData, rowIndex) => {
+                // This is the unique key that was causing you trouble.
+                // It's still needed on the Dropdown.
+                const dropdownKey =
+                  `${rowData.id}-relatives-${familyHistoryMaster[0].brothers}-${familyHistoryMaster[0].sisters}-${familyHistoryMaster[0].sons}-${familyHistoryMaster[0].daughters}`;
+
+                // Check if the form should be disabled
+                const isDisabled = familyHistoryMaster?.[0]?.history_of_cancer !== 1;
+
+                // --- 3. This is the "card" for each relative ---
+                return (
+                  <div
+                    key={rowData.id}
+                    className="border rounded-lg shadow-md p-4 bg-white"
+                  >
+                    {/* --- Card Header: Sr. No. and Remove Button --- */}
+                    <div className="flex justify-between items-center mb-4 border-b pb-2">
+                      <h3 className="font-bold text-lg text-slate-700">
+                        Relative #{rowIndex + 1}
+                      </h3>
+                      <Button
+                        onClick={() => handleRemoveUi(rowData.id)}
+                        icon="pi pi-trash"
+                        className="p-button-danger p-button-text"
+                      />
+                    </div>
+
+                    {/* --- Form fields in a responsive grid --- */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                      {/* --- Relation --- */}
+
+
+                      {/* --- Relative code --- */}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-sm font-semibold text-slate-600">
+                          Relative code
+                        </label>
+                        <Dropdown
+                          key={dropdownKey} // <-- Dynamic key is still here!
+                          disabled={isDisabled}
+                          optionLabel="name"
+                          value={rowData.code}
+                          optionValue="value"
+                          className="border-1 w-full"
+                          placeholder="Select relative code"
+                          options={getFamilyMembers(familyHistoryMaster[0]?.brothers, familyHistoryMaster[0]?.sisters, familyHistoryMaster[0]?.sons, familyHistoryMaster[0]?.daughters)}
+                          appendTo={document.body}
+                          onChange={(e) =>
+                            handleChangeRelative(rowData.id, "code", e.value)
+                          }
+                        />
+                      </div>
+
+                      {/* --- Age at diagnosis --- */}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-sm font-semibold text-slate-600">
+                          Age at diagnosis
+                        </label>
+                        <InputText
+                          disabled={isDisabled}
+                          keyfilter={"int"}
+                          className="border-1 p-2 w-full"
+                          value={rowData.age_at_diagnosis.toString()}
+                          placeholder="e.g., 55"
+                          onChange={(e) =>
+                            handleChangeRelative(rowData.id, "age_at_diagnosis", e.target.value)
+                          }
+                        />
+                      </div>
+
+                      {/* --- Cancer Site --- */}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-sm font-semibold text-slate-600">
+                          Cancer Site
+                        </label>
+                        <InputText
+                          disabled={isDisabled}
+                          className="border-1 p-2 w-full"
+                          value={rowData.cancer_site}
+                          placeholder="e.g., Lung"
+                          onChange={(e) =>
+                            handleChangeRelative(rowData.id, "cancer_site", e.target.value)
+                          }
+                        />
+                      </div>
+
+                      {/* --- Treatment received --- */}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-sm font-semibold text-slate-600">
+                          Received treatment*
+                        </label>
+                        <div className="flex gap-4 items-center h-full">
+                          <div className="space-x-2">
+                            <input
+                              disabled={isDisabled}
+                              type="radio"
+                              value={1}
+                              checked={rowData.treatment_received === 1}
+                              onChange={(e) =>
+                                handleChangeRelative(
+                                  rowData.id,
+                                  "treatment_received",
+                                  parseInt(e.target.value)
+                                )
+                              }
+                            />
+                            <span>YES </span>
+                          </div>
+                          <div className="space-x-2">
+                            <input
+                              type="radio"
+                              disabled={isDisabled}
+                              value={2}
+                              checked={rowData.treatment_received === 2}
+                              onChange={(e) =>
+                                handleChangeRelative(
+                                  rowData.id,
+                                  "treatment_received",
+                                  parseInt(e.target.value)
+                                )
+                              }
+                            />
+                            <span>NO </span>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex justify-between gap-2 mt-10 ">
@@ -601,7 +752,7 @@ export default function Tab7() {
             </Link>
           </div>
         </main>
-        <div className="pb-[250px]"></div>
+
 
         <IonAlert
           isOpen={alert.show}
@@ -609,6 +760,17 @@ export default function Tab7() {
           header={alert.header}
           message={alert.message}
           buttons={["OK"]}
+        />
+        <IonToast
+          isOpen={toast.show}
+          onDidDismiss={() => setToast(d => ({ ...d, show: false }))}
+          message={toast.message}
+          duration={2000}
+          position="bottom"
+          style={{
+            '--background': !toast.success ? '#dc2626' : '#16a34a',
+            '--color': '#ffffff'
+          }}
         />
       </IonContent>
     </IonPage>

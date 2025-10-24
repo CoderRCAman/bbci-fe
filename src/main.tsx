@@ -4,12 +4,15 @@ import "primereact/resources/themes/lara-light-cyan/theme.css"; // import "/node
 import App from "./App";
 import "virtual:windi.css";
 import "./main.css";
+import 'primeicons/primeicons.css';
 import { PrimeReactProvider } from "primereact/api";
 const container = document.getElementById("root");
 const root = createRoot(container!);
 
 root.render(
-  <PrimeReactProvider value={{ ripple: true, appendTo: "self" }}>
+  <PrimeReactProvider value={{
+    ripple: true, appendTo: "self",
+  }}>
     <App />
   </PrimeReactProvider>
 );

@@ -1,4 +1,4 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import Header from "../../../components/Header";
 import { Button } from "primereact/button";
 import { Link, useLocation } from "react-router-dom";
@@ -41,41 +41,54 @@ export default function Tab8() {
     const searchParams = new URLSearchParams(location.search);
     setId(searchParams?.get("id"));
   }, []);
+  async function fetchExisting() {
+    try {
+      const searchParams = new URLSearchParams(location.search);
+      const id = searchParams?.get("id");
+      const res = await db?.query(
+        `select * from anthropometry where user_id = '${id}' order by date(date) asc`
+      );
+      console.log(res);
+      if (res?.values?.length) {
+        setAllowNext(true);
+        setReading1({
+          height: res?.values?.[0]?.height || 0,
+          weight: res?.values?.[0]?.weight || 0,
+          id: res?.values?.[0]?.id || shortUUID().generate(),
+          date: res?.values?.[0]?.date || new Date().toLocaleString('sv-SE').replace('T', ' '),
+        });
+        setIsDisabledReading2(
+          differenceInMonths(new Date(), new Date(reading1.date)) <= 3
+        );
+        if (res?.values?.length > 1) {
+          setReading2({
+            height: res?.values?.[1]?.height || 0,
+            weight: res?.values?.[1]?.weight || 0,
+            id: res?.values?.[1]?.id || shortUUID().generate(),
+            date: res?.values?.[1]?.date || new Date().toLocaleString('sv-SE').replace('T', ' '),
+          });
+        }
+      }
+      else {
+        setReading1({
+          height: 0,
+          weight: 0,
+          id: shortUUID().generate(),
+          date: new Date().toLocaleString('sv-SE').replace('T', ' '),
+        })
+        setReading2({
+          height: 0,
+          weight: 0,
+          id: shortUUID().generate(),
+          date: new Date().toLocaleString('sv-SE').replace('T', ' '),
+        })
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
   useEffect(() => {
     if (db === null) return;
-
-    async function fetchExisting() {
-      try {
-        const searchParams = new URLSearchParams(location.search);
-        const id = searchParams?.get("id");
-        const res = await db?.query(
-          `select * from anthropometry where user_id = '${id}' order by date(date) asc`
-        );
-        console.log(res);
-        if (res?.values?.length) {
-          setAllowNext(true);
-          setReading1({
-            height: res?.values?.[0]?.height || 0,
-            weight: res?.values?.[0]?.weight || 0,
-            id: res?.values?.[0]?.id || shortUUID().generate(),
-            date: res?.values?.[0]?.date || new Date().toLocaleString('sv-SE').replace('T', ' '),
-          });
-          setIsDisabledReading2(
-            differenceInMonths(new Date(), new Date(reading1.date)) <= 3
-          );
-          if (res?.values?.length > 1) {
-            setReading2({
-              height: res?.values?.[1]?.height || 0,
-              weight: res?.values?.[1]?.weight || 0,
-              id: res?.values?.[1]?.id || shortUUID().generate(),
-              date: res?.values?.[1]?.date || new Date().toLocaleString('sv-SE').replace('T', ' '),
-            });
-          }
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    }
     fetchExisting();
   }, [db, location.pathname]);
 
@@ -155,12 +168,22 @@ export default function Tab8() {
       });
     }
   };
-
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await fetchExisting();
+    event.detail.complete();
+  }
   return (
     <div>
       <IonPage>
         <Header title={0 ? "Edit Anthropometry" : "Anthropometry"} />
         <IonContent class="" fullscreen>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only" // <-- Add this class
+              refreshingSpinner="circles"
+            // You can remove the other text props
+            ></IonRefresherContent>
+          </IonRefresher>
           <ShowRegisteredTab id={id || ''} />
           <main className="p-2 space-y-5">
             <div className="p-2 border rounded-md">

@@ -1,7 +1,7 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import data from "./data.json";
 import PMHInput from "./PMHInput";
 import { Button } from "primereact/button";
@@ -57,6 +57,7 @@ export default function Tab6() {
   const searchParams = new URLSearchParams(location.search);
   const [allowNext, setAllowNext] = useState(false);
   const [dirtyIds, setDirtyIds] = useState<string[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -181,18 +182,28 @@ export default function Tab6() {
       });
     }
   };
-  console.log(dataState);
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await fetchExistingData();
+    event.detail.complete();
+  }
   return (
-    <div>
-      <IonPage>
+    <div >
+      <IonPage >
         <Header
           title={
             0 ? "Edit Personal Medical History" : "Personal Medical History"
           }
         />
         <IonContent class="" fullscreen>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only" // <-- Add this class
+              refreshingSpinner="circles"
+            // You can remove the other text props
+            ></IonRefresherContent>
+          </IonRefresher>
           <ShowRegisteredTab id={id || ''} />
-          <main className="p-2 space-y-2">
+          <main ref={scrollRef} className="p-2 space-y-2">
             {data.map((d, index) => (
               <PMHInput
                 data={dataState?.[index]}
@@ -228,6 +239,25 @@ export default function Tab6() {
             message={alert.message}
             buttons={["OK"]}
           />
+          {
+            <Button
+              icon="pi pi-arrow-up"
+              // WindiCSS classes for styling and position
+              className={`
+                        fixed bottom-6 right-6 
+                        rounded-full shadow-lg
+                        transition-opacity duration-300
+                         pointer-events-none'}
+                      `}
+              style={{ zIndex: 2000 }}
+              onClick={() => {
+                console.log("HELLo")
+                if (scrollRef.current)
+                  scrollRef.current.scrollIntoView({ behavior: "smooth" });
+              }}
+
+            />
+          }
         </IonContent>
         <div className="pb-[250px]"></div>
 

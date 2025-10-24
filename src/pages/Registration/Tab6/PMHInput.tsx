@@ -19,9 +19,11 @@ export default function PMHInput({
   console.log(data);
 
   return (
-    <div className="border rounded-md p-2 shadow">
-      <div className="space-y-7">
-        <h1 className="font-semibold text-slate-500 text-lg">{condition}</h1>
+    <div className="border relative   rounded-md p-2 shadow">
+      <div className="sticky -top-4 border !border-t-0 !border-l-0 !border-r-0  py-2 rounded  bg-[#fff] " style={{ zIndex: 1000 }}>
+        <h1 className="font-semibold text-slate-500 text-center  text-xl ">{condition}</h1>
+      </div>
+      <div className="space-y-7 mt-7 ">
         <div className="flex gap-4 items-center  text-md">
           <div className="space-x-2">
             <input
@@ -68,7 +70,7 @@ export default function PMHInput({
             <span>REFUSED TO ANSWER</span>
           </div>
         </div>
-        <div>
+        <div className="relative z-0">
           <FloatLabel>
             <InputText
               disabled={data?.diagnosed !== 1}
@@ -90,7 +92,7 @@ export default function PMHInput({
           <FloatLabel>
             <InputText
               value={data?.year_of_first_diagnosis}
-              className="border-1 p-2"
+              className="border-1 p-2 z-[]"
               disabled={data?.diagnosed !== 1}
               onChange={(e) =>
                 updateStateData(
@@ -104,7 +106,7 @@ export default function PMHInput({
           </FloatLabel>
         </div>
         <div>
-          <h1 className=" text-slate-500">Treatment received</h1>
+          <p className=" text-slate-500 font-semibold">Treatment received</p>
           <Dropdown
             disabled={data?.diagnosed !== 1}
             value={data?.treatment_received}
@@ -124,7 +126,7 @@ export default function PMHInput({
           />
         </div>
         <div>
-          <h1 className="font-semibold text-slate-500">Mode of treatment</h1>
+          <p className=" text-slate-500 font-semibold">Mode of treatment</p>
 
           <div className="p-2 space-y-2">
             {mode_of_treatment.map((d) => (
@@ -168,7 +170,7 @@ export default function PMHInput({
           </div>
         </div>
         <div>
-          <h1 className="font-semibold text-slate-500">Mode of diagnosis</h1>
+          <p className=" text-slate-500 font-semibold">Mode of diagnosis</p>
           <div className="p-2 space-y-2">
             {mode_of_diagnosis.map((d) => (
               <div className="flex gap-2">
@@ -206,14 +208,14 @@ export default function PMHInput({
                 <p>{d}</p>
               </div>
             ))}
-            <div className="flex gap-5">
+            <div className="flex gap-5 items-center">
               <p>Other specify</p>
               <input
                 disabled={
                   data?.diagnosed !== 1 || data?.treatment_received !== 1
                 }
                 type="text"
-                className="border-b-2 focus:outline-none focus:border-slate-500 w-[60%]"
+                className="border-0 rounded-none border-b-2 border-gray-300 h-10 focus:outline-none focus:border-b-slate-500 w-[60%]"
                 onChange={(e) => {
                   updateStateData(data.id, "mod_other", e.target.value);
                 }}
