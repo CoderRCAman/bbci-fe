@@ -2,13 +2,15 @@ import { Button } from "primereact/button";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { TOBACCO_ALCOHOL_CONSUMPION } from "./data";
+import { Checkbox } from "primereact/checkbox";
+import { Fieldset } from "primereact/fieldset";
 
 export default function OtherProdWithTobacco({
   data,
   handleRemoveUi,
   addNewOtherUi,
   handleChangeProds,
-  isDisabled
+  isDisabled,
 }: {
   data: TOBACCO_ALCOHOL_CONSUMPION;
   handleChangeProds: (
@@ -32,287 +34,190 @@ export default function OtherProdWithTobacco({
       | "chewing_without_tobacco"
       | "alcohol"
   ) => void;
-  isDisabled: boolean
+  isDisabled: boolean;
 }) {
-  return (
-    <div className="mt-5">
-      <div className="border p-2 rounded space-y-1">
-        <h1>Other</h1>
+  // Helper array for Site of Placement checkboxes
+  const siteOptions = [
+    { label: "L", key: "site_of_placement_L" },
+    { label: "R", key: "site_of_placement_R" },
+    { label: "F", key: "site_of_placement_F" },
+    { label: "n/a", key: "site_of_placement_NA" },
+  ];
 
-        <div className="flex gap-2">
-          <p> Specify</p>
-          <input
-            type="text"
-            className="border-b-2 focus:outline-none focus:border-slate-500 w-[60%]"
-            value={data.product}
+  return (
+    // Use a Fieldset for a professional container
+    <Fieldset legend="Other" toggleable className="mt-5">
+      {/* p-fluid makes child inputs full-width */}
+      <div className="p-fluid space-y-7">
+        {/* Replaced plain input with PrimeReact FloatLabel/InputText */}
+        <FloatLabel>
+          <InputText
+            value={data?.product || ""} // Use optional chaining
             onChange={(e) =>
-              handleChangeProds(data.id, data.type, "product", e.target.value)
+              handleChangeProds(data?.id, data?.type, "product", e.target.value)
             }
             disabled={isDisabled}
           />
-        </div>
-        <div className="space-y-5 pt-4">
-          <div>
-            <FloatLabel>
-              <InputText
-                keyfilter="int"
-                className="border-1 p-2"
-                value={data["from_age"]?.toString()}
-                onChange={(e) =>
-                  handleChangeProds(
-                    data.id,
-                    data.type,
-                    "from_age",
-                    isNaN(parseInt(e.target.value))
-                      ? 0
-                      : parseInt(e.target.value)
-                  )
-                }
-                disabled={isDisabled}
-              />
-              <label>From age</label>
-            </FloatLabel>
-          </div>
-          <div>
-            <FloatLabel>
-              <InputText
-                keyfilter="int"
-                className="border-1 p-2"
-                value={data["to_age"]?.toString()}
-                onChange={(e) =>
-                  handleChangeProds(
-                    data.id,
-                    data.type,
-                    "to_age",
-                    isNaN(parseInt(e.target.value))
-                      ? 0
-                      : parseInt(e.target.value)
-                  )
-                }
-                disabled={isDisabled}
-              />
-              <label>To age</label>
-            </FloatLabel>
-          </div>
-          <div>
-            <FloatLabel>
-              <InputText
-                keyfilter="int"
-                className="border-1 p-2"
-                value={data["number_per_day"]?.toString()}
-                onChange={(e) =>
-                  handleChangeProds(
-                    data.id,
-                    data.type,
-                    "number_per_day",
-                    isNaN(parseInt(e.target.value))
-                      ? 0
-                      : parseInt(e.target.value)
-                  )
-                }
-                disabled={isDisabled}
-              />
-              <label>Number per day</label>
-            </FloatLabel>
-          </div>
-          <div>
-            <FloatLabel>
-              <InputText
-                keyfilter="int"
-                className="border-1 p-2"
-                value={data["days_in_week"]?.toString()}
-                onChange={(e) =>
-                  handleChangeProds(
-                    data.id,
-                    data.type,
-                    "days_in_week",
-                    isNaN(parseInt(e.target.value))
-                      ? 0
-                      : parseInt(e.target.value)
-                  )
-                }
-                disabled={isDisabled}
-              />
-              <label>Days in a week</label>
-            </FloatLabel>
-          </div>
-          <div>
-            <p>Total duration of placement per day.</p>
-            <div className="flex gap-2 font-semibold text-sm text-slate-500">
-              <div>HOUR</div>
-              <div>
-                <InputText
-                  className="border  w-[30px] text-center"
-                  keyfilter={"int"}
-                  value={data["duration_placement_hr"]?.toString()}
-                  onChange={(e) =>
-                    handleChangeProds(
-                      data.id,
-                      data.type,
-                      "duration_placement_hr",
-                      isNaN(parseInt(e.target.value))
-                        ? 0
-                        : parseInt(e.target.value)
-                    )
-                  }
-                  disabled={isDisabled}
-                />
-              </div>
-              <div>:</div>
-              <div>
-                <InputText
-                  className="border  w-[30px] text-center"
-                  keyfilter={"int"}
-                  value={data["duration_placement_min"]?.toString()}
-                  onChange={(e) =>
-                    handleChangeProds(
-                      data.id,
-                      data.type,
-                      "duration_placement_min",
-                      isNaN(parseInt(e.target.value))
-                        ? 0
-                        : parseInt(e.target.value)
-                    )
-                  }
-                  disabled={isDisabled}
-                />
-              </div>
-              <div>MINUTES</div>
-            </div>
-          </div>
-          <div>
-            <p>Site of placement</p>
-            <div className="flex gap-8">
-              <div>
-                <input
-                  type="checkbox"
-                  name=""
-                  id=""
-                  checked={data.site_of_placement_L === 1}
-                  value={1}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      handleChangeProds(
-                        data.id,
-                        data.type || "",
-                        "site_of_placement_L",
-                        1
-                      );
-                    } else {
-                      handleChangeProds(
-                        data.id,
-                        data.type || "",
-                        "site_of_placement_L",
-                        0
-                      );
-                    }
-                  }}
-                  disabled={isDisabled}
-                />{" "}
-                L
-              </div>
+          <label>Specify Other</label>
+        </FloatLabel>
 
-              <div>
-                <input
-                  type="checkbox"
-                  name=""
-                  id=""
-                  checked={data.site_of_placement_R === 1}
-                  value={1}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      handleChangeProds(
-                        data.id,
-                        data.type || "",
-                        "site_of_placement_R",
-                        1
-                      );
-                    } else {
-                      handleChangeProds(
-                        data.id,
-                        data.type || "",
-                        "site_of_placement_R",
-                        0
-                      );
-                    }
-                  }}
-                  disabled={isDisabled}
-                />{" "}
-                R
-              </div>
-              <div>
-                <input
-                  type="checkbox"
-                  name=""
-                  id=""
-                  checked={data.site_of_placement_F === 1}
-                  value={1}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      handleChangeProds(
-                        data.id,
-                        data.type || "",
-                        "site_of_placement_F",
-                        1
-                      );
-                    } else {
-                      handleChangeProds(
-                        data.id,
-                        data.type || "",
-                        "site_of_placement_F",
-                        0
-                      );
-                    }
-                  }}
-                  disabled={isDisabled}
-                />{" "}
-                F
-              </div>
-              <div>
-                <input
-                  type="checkbox"
-                  name=""
-                  id=""
-                  checked={data.site_of_placement_NA === 1}
-                  value={1}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      handleChangeProds(
-                        data.id,
-                        data.type || "",
-                        "site_of_placement_NA",
-                        1
-                      );
-                    } else {
-                      handleChangeProds(
-                        data.id,
-                        data.type || "",
-                        "site_of_placement_NA",
-                        0
-                      );
-                    }
-                  }}
-                  disabled={isDisabled}
-                />{" "}
-                n/a
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-3 flex gap-2 justify-end">
-          <Button
-            label="Add Product below"
-            className="rounded px-10 py-2"
-            onClick={() => addNewOtherUi("chewing_tobacco")}
+        <FloatLabel>
+          <InputText
+            keyfilter="int"
+            // Removed 'border-1 p-2'
+            value={data?.from_age?.toString() || ""}
+            onChange={(e) =>
+              handleChangeProds(
+                data?.id,
+                data?.type,
+                "from_age",
+                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+              )
+            }
+            disabled={isDisabled}
           />
-          <Button
-            onClick={() => handleRemoveUi(data.id, "chewing_tobacco")}
-            label="REMOVE"
-            className="rounded px-10 py-2"
-            severity="danger"
+          <label>From age</label>
+        </FloatLabel>
+
+        <FloatLabel>
+          <InputText
+            keyfilter="int"
+            // Removed 'border-1 p-2'
+            value={data?.to_age?.toString() || ""}
+            onChange={(e) =>
+              handleChangeProds(
+                data?.id,
+                data?.type,
+                "to_age",
+                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+              )
+            }
+            disabled={isDisabled}
           />
+          <label>To age</label>
+        </FloatLabel>
+
+        <FloatLabel>
+          <InputText
+            keyfilter="int"
+            // Removed 'border-1 p-2'
+            value={data?.number_per_day?.toString() || ""}
+            onChange={(e) =>
+              handleChangeProds(
+                data?.id,
+                data?.type,
+                "number_per_day",
+                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+              )
+            }
+            disabled={isDisabled}
+          />
+          <label>Number per day</label>
+        </FloatLabel>
+
+        <FloatLabel>
+          <InputText
+            keyfilter="int"
+            // Removed 'border-1 p-2'
+            value={data?.days_in_week?.toString() || ""}
+            onChange={(e) =>
+              handleChangeProds(
+                data?.id,
+                data?.type,
+                "days_in_week",
+                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+              )
+            }
+            disabled={isDisabled}
+          />
+          <label>Days in a week</label>
+        </FloatLabel>
+      </div>
+
+      {/* Custom layout for HR/MIN - outside p-fluid */}
+      <div className="mt-6">
+        <p className="text-slate-600 dark:text-gray-300 mb-2">
+          Total duration of placement per day.
+        </p>
+        <div className="flex gap-2 items-center font-semibold text-sm text-slate-500">
+          <InputText
+            className="w-20 text-center" // Wider, cleaner input
+            keyfilter={"int"}
+            value={data?.duration_placement_hr?.toString() || ""}
+            onChange={(e) =>
+              handleChangeProds(
+                data?.id,
+                data?.type,
+                "duration_placement_hr",
+                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+              )
+            }
+            disabled={isDisabled}
+          />
+          <label>HOUR</label>
+          <span className="font-bold mx-1">:</span>
+          <InputText
+            className="w-20 text-center" // Wider, cleaner input
+            keyfilter={"int"}
+            value={data?.duration_placement_min?.toString() || ""}
+            onChange={(e) =>
+              handleChangeProds(
+                data?.id,
+                data?.type,
+                "duration_placement_min",
+                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+              )
+            }
+            disabled={isDisabled}
+          />
+          <label>MINUTES</label>
         </div>
       </div>
-    </div>
+
+      {/* Custom layout for Checkboxes - outside p-fluid */}
+      <div className="mt-6">
+        <p className="text-slate-600 dark:text-gray-300 mb-2">
+          Site of placement
+        </p>
+        <div className="flex flex-wrap gap-5">
+          {siteOptions.map((site) => (
+            <div key={site.key} className="flex align-items-center gap-2">
+              <Checkbox
+                inputId={`${data?.id}_${site.key}`}
+                // Use optional chaining
+                checked={data?.[site.key as keyof typeof data] === 1}
+                onChange={(e) => {
+                  // This logic is preserved from your original code
+                  handleChangeProds(
+                    data?.id,
+                    data?.type || "",
+                    site.key,
+                    e.checked ? 1 : 0 // Pass 1 or 0
+                  );
+                }}
+                disabled={isDisabled}
+              />
+              <label htmlFor={`${data?.id}_${site.key}`}>{site.label}</label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Styled Buttons */}
+      <div className="mt-6 flex gap-2 justify-end">
+        <Button
+          label="Add Product" // Changed label
+          icon="pi pi-plus" // Added icon
+          outlined
+          onClick={() => addNewOtherUi(data?.type)}
+        />
+        <Button
+          label="Remove" // Changed label
+          icon="pi pi-trash" // Added icon
+          onClick={() => handleRemoveUi(data?.id, data?.type )}
+          severity="danger"
+        />
+      </div>
+    </Fieldset>
   );
 }

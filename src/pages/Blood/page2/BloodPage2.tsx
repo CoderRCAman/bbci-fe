@@ -13,6 +13,9 @@ import { Link } from "react-router-dom";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
 import { saveToStore } from "../../../utils/helper";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { Card } from "primereact/card";
+import { RadioButton } from "primereact/radiobutton";
+import { Fieldset } from "primereact/fieldset";
 export interface BLOOD_SAMPLE_COLLECTION {
   blood_collection_tube: string;
   blood_collection_tube_other: string;
@@ -63,16 +66,16 @@ export default function BloodPage2() {
   const [bloodSample, setBloodSample] = useState<BLOOD_SAMPLE>({
     id: shortUUID().generate(),
     user_id: id,
-    date_collected: new Date().toLocaleString('sv-SE').replace('T', ' '),
-    time_collected: new Date().toLocaleString('sv-SE').replace('T', ' '),
-    last_meal_date: new Date().toLocaleString('sv-SE').replace('T', ' '),
-    last_meal_time: new Date().toLocaleString('sv-SE').replace('T', ' '),
+    date_collected: new Date().toLocaleString("sv-SE").replace("T", " "),
+    time_collected: new Date().toLocaleString("sv-SE").replace("T", " "),
+    last_meal_date: new Date().toLocaleString("sv-SE").replace("T", " "),
+    last_meal_time: new Date().toLocaleString("sv-SE").replace("T", " "),
     received_blood_last_6_months: 2,
     sample_classification: "",
     is_sample_collected: 0,
     collection_tubes: [],
   });
-  const [removedIds, setRemovedIds] = useState<string[]>([])
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -107,10 +110,18 @@ export default function BloodPage2() {
           setBloodSample({
             id: shortUUID().generate(),
             user_id: curId,
-            date_collected: new Date().toLocaleString('sv-SE').replace('T', ' '),
-            time_collected: new Date().toLocaleString('sv-SE').replace('T', ' '),
-            last_meal_date: new Date().toLocaleString('sv-SE').replace('T', ' '),
-            last_meal_time: new Date().toLocaleString('sv-SE').replace('T', ' '),
+            date_collected: new Date()
+              .toLocaleString("sv-SE")
+              .replace("T", " "),
+            time_collected: new Date()
+              .toLocaleString("sv-SE")
+              .replace("T", " "),
+            last_meal_date: new Date()
+              .toLocaleString("sv-SE")
+              .replace("T", " "),
+            last_meal_time: new Date()
+              .toLocaleString("sv-SE")
+              .replace("T", " "),
             received_blood_last_6_months: 2,
             sample_classification: "",
             is_sample_collected: 0,
@@ -137,16 +148,16 @@ export default function BloodPage2() {
           collection_tubes:
             res2?.values?.length == 0
               ? [
-                new BloodSample({
-                  blood_collection_tube: "",
-                  blood_collection_tube_other: "",
-                  identification_code_tube: "",
-                  volume: 0,
-                  characteristic: "",
-                  id: shortUUID().generate(),
-                  user_id: curId,
-                }),
-              ]
+                  new BloodSample({
+                    blood_collection_tube: "",
+                    blood_collection_tube_other: "",
+                    identification_code_tube: "",
+                    volume: 0,
+                    characteristic: "",
+                    id: shortUUID().generate(),
+                    user_id: curId,
+                  }),
+                ]
               : res2?.values,
         }));
       } catch (error) {
@@ -157,8 +168,12 @@ export default function BloodPage2() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
-
-      if (db && sampleId && editFlag && !(await checkElibleToSave(db, sampleId || "", tabId, 'blood_sample'))) {
+      if (
+        db &&
+        sampleId &&
+        editFlag &&
+        !(await checkElibleToSave(db, sampleId || "", tabId, "blood_sample"))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -174,9 +189,11 @@ export default function BloodPage2() {
         });
       }
       await saveBloodSampleRecord(bloodSample, db, sqlite, tabId);
-      console.log(removedIds)
+      console.log(removedIds);
       for (const removedId of removedIds) {
-        await db?.run(`delete from blood_tube_collection where id = '${removedId}'`)
+        await db?.run(
+          `delete from blood_tube_collection where id = '${removedId}'`
+        );
       }
       await saveToStore(sqlite);
       setSampleId(bloodSample.id);
@@ -213,7 +230,7 @@ export default function BloodPage2() {
   };
   const removeCollectionTube = (id: string) => {
     if (bloodSample.collection_tubes.length === 1) return;
-    setRemovedIds(prev => [...prev, id])
+    setRemovedIds((prev) => [...prev, id]);
     const updatedTubes = bloodSample.collection_tubes.filter(
       (tube) => tube.id !== id
     );
@@ -227,327 +244,332 @@ export default function BloodPage2() {
     if (bloodSample.collection_tubes.length > 0) return;
     addNewCollectionTube();
   }, [location.pathname]);
-  console.log(bloodSample)
+  console.log(bloodSample);
   return (
     <>
       <IonPage>
         <Header title={"Blood sample report"} />
         <IonContent fullscreen>
-          <ShowRegisteredTab id={sampleId || ''} table_name="blood_sample" />
-          <main className="p-2">
-            <div className="p-2 shadow border rounded text-slate-600">
-              <p className="text-lg  font-semibold">Participant's details</p>
-              <div>
-                <span className="font-semibold">ID: </span>{" "}
-                <span>{participant?.id}</span>
-              </div>
-              <div>
-                <span className="font-semibold">Name: </span>{" "}
-                <span>{participant?.name}</span>
-              </div>
-            </div>
-            <div className="mt-10 p-2 py-5 shadow border rounded text-slate-600">
-              <div className="flex items-center gap-5">
-                <p className="font-semibold">Blood sample collected</p>
-                <div className="flex gap-1">
-                  <input
-                    name="collected"
-                    type="radio"
-                    checked={bloodSample?.is_sample_collected ? true : false}
-                    onChange={(e) => {
-                      setBloodSample({
-                        ...bloodSample,
-                        is_sample_collected: e.target.checked ? 1 : 0,
-                      });
-                    }}
-                  />
-                  <p>YES</p>
-                </div>
-                <div className="flex gap-1">
-                  <input
-                    type="radio"
-                    name="collected"
-                    checked={!bloodSample?.is_sample_collected ? true : false}
-                    onChange={(e) => {
-                      setBloodSample({
-                        ...bloodSample,
-                        is_sample_collected: e.target.checked ? 0 : 1,
-                      });
-                    }}
-                  />
-                  <p>NO</p>
-                </div>
-              </div>
-              {bloodSample.collection_tubes.map((item, index) => (
-                <SampleCollectionType
-                  addNewCollectionTube={addNewCollectionTube}
-                  key={item.id}
-                  data={item}
-                  removeCollectionTube={removeCollectionTube}
-                  setBloodSample={setBloodSample}
-                  isSampleCollected={bloodSample.is_sample_collected === 1}
-                />
-              ))}
+          <ShowRegisteredTab id={sampleId || ""} table_name="blood_sample" />
 
-              <div>
-                <p className="font-semibold">
-                  Sample Classification (Please tick in the appropriate option)
-                </p>
-                <div className="space-y-3">
-                  <div className="flex gap-4">
-                    <p>a. Category B(UN3373)[Non-Biohazard]</p>
-                    <input
-                      disabled={bloodSample.is_sample_collected === 0}
-                      type="radio"
-                      name="sample_classification"
-                      value={"Category B(UN3373)[Non-Biohazard]"}
-                      onChange={(e) => {
-                        setBloodSample({
-                          ...bloodSample,
-                          sample_classification: e.target.checked
-                            ? e.target.value
-                            : "",
-                        });
-                      }}
-                      checked={
-                        bloodSample.sample_classification ===
-                        "Category B(UN3373)[Non-Biohazard]"
-                      }
-                    />
-                  </div>
-                  <div className="flex gap-4">
-                    <p>b. Category A(UN2814)[Biohazard]</p>
-                    <input
-                      disabled={bloodSample.is_sample_collected === 0}
-                      type="radio"
-                      name="sample_classification"
-                      value={"Category A(UN2814)[Biohazard]"}
-                      onChange={(e) => {
-                        setBloodSample({
-                          ...bloodSample,
-                          sample_classification: e.target.checked
-                            ? e.target.value
-                            : "",
-                        });
-                      }}
-                      checked={
-                        bloodSample.sample_classification ===
-                        "Category A(UN2814)[Biohazard]"
-                      }
-                    />
-                  </div>
-                  <div className="flex gap-4">
-                    <p>c. Don't Know</p>
-                    <input
-                      disabled={bloodSample.is_sample_collected === 0}
-                      type="radio"
-                      name="sample_classification"
-                      value={"Don't Know"}
-                      onChange={(e) => {
-                        setBloodSample({
-                          ...bloodSample,
-                          sample_classification: e.target.checked
-                            ? e.target.value
-                            : "",
-                        });
-                      }}
-                      checked={
-                        bloodSample.sample_classification === "Don't Know"
-                      }
-                    />
-                  </div>
+          {/* Use p-3 or p-4 for better spacing on mobile and desktop */}
+          <main className="p-3 md:p-4">
+            {/* --- 1. Replaced simple div with a Card --- */}
+            <Card title="Participant's Details" className="shadow border">
+              <div className="text-slate-600 dark:text-gray-300 space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-semibold">ID: </span>
+                  <span>{participant?.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Name: </span>
+                  <span>{participant?.name}</span>
                 </div>
               </div>
+            </Card>
 
-              <div className="flex mt-10 gap-5 items-center">
-                <p className="font-semibold">Date of blood sample collection</p>
-                <Calendar
-                  appendTo="self"
-                  disabled={bloodSample.is_sample_collected === 0}
-                  className="border-1 p-2 focus:outline-none p-2"
-                  value={new Date(bloodSample?.date_collected)}
-                  onChange={(e) =>
-                    setBloodSample({
-                      ...bloodSample,
-                      date_collected: e.value?.toLocaleString('sv-SE').replace('T', ' ') || "",
-                    })
-                  }
-                  showIcon
-                />
-              </div>
-              <div className="flex mt-10 gap-5 items-center">
-                <p className="font-semibold">Time of blood sample collection</p>
-                <div>
-                  <Calendar
-                    appendTo="self"
-                    disabled={bloodSample.is_sample_collected === 0}
-                    value={new Date(bloodSample?.time_collected)}
-                    onChange={(e) => {
-                      setBloodSample({
-                        ...bloodSample,
-                        time_collected: e.value?.toLocaleString('sv-SE').replace('T', ' ') || "",
-                      });
-                    }}
-                    timeOnly
-                    hourFormat="12"
-                  />
-                </div>
-              </div>
-              <div className="mt-10 space-y-2">
-                <p className="font-semibold">
-                  Date and Time of last meal subject had before blood sample
-                  collection
-                </p>
-                <div className="flex gap-5 items-center">
-                  <p>Date</p>
-                  <Calendar
-                    appendTo="self"
-                    disabled={bloodSample.is_sample_collected === 0}
-                    className="border-1 p-2 focus:outline-none p-2"
-                    showIcon
-                    value={new Date(bloodSample?.last_meal_date)}
-                    onChange={(e) =>
-                      setBloodSample({
-                        ...bloodSample,
-                        last_meal_date: e.value?.toLocaleString('sv-SE').replace('T', ' ') || "",
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex gap-5 items-center">
-                  <p>Time</p>
-                  <div className="flex gap-1">
-                    <Calendar
-                      appendTo="self"
-                      disabled={bloodSample.is_sample_collected === 0}
-                      value={new Date(bloodSample?.last_meal_time)}
-                      onChange={(e) => {
-                        setBloodSample({
-                          ...bloodSample,
-                          last_meal_time: e.value?.toLocaleString('sv-SE').replace('T', ' ') || "",
-                        });
-                      }}
-                      timeOnly
-                      hourFormat="12"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-10">
-                <p className="font-semibold">
-                  If you have received blood from donor in the last six month?
-                </p>
-                <div className="flex gap-4">
-                  <div className="flex gap-2">
-                    <input
-                      disabled={bloodSample.is_sample_collected === 0}
-                      type="radio"
-                      name="last"
+            {/* --- 2. Replaced main form div with a Card --- */}
+            <Card className="mt-4 shadow border">
+              {/* Use space-y-8 for better separation of sections */}
+              <div className="p-fluid space-y-8">
+                {/* --- 3. Blood Sample Collected Radios --- */}
+                <div className="flex items-center gap-5 flex-wrap">
+                  <p className="font-semibold text-slate-600 dark:text-gray-300">
+                    Blood sample collected
+                  </p>
+                  <div className="flex align-items-center gap-2">
+                    <RadioButton
+                      inputId="collected_yes"
+                      name="collected"
                       value={1}
-                      checked={bloodSample.received_blood_last_6_months === 1}
+                      checked={bloodSample?.is_sample_collected === 1}
                       onChange={(e) => {
-                        if (e.target.checked) {
-                          setBloodSample({
-                            ...bloodSample,
-                            received_blood_last_6_months: parseInt(
-                              e.target.value
-                            ),
-                          });
-                        }
+                        // Logic is unchanged, just using e.value
+                        setBloodSample({
+                          ...bloodSample,
+                          is_sample_collected: e.checked ? 1 : 0,
+                        });
                       }}
                     />
-                    <p>YES</p>
+                    <label htmlFor="collected_yes">YES</label>
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      disabled={bloodSample.is_sample_collected === 0}
-                      type="radio"
-                      value={2}
-                      checked={bloodSample.received_blood_last_6_months === 2}
+                  <div className="flex align-items-center gap-2">
+                    <RadioButton
+                      inputId="collected_no"
+                      name="collected"
+                      value={0}
+                      checked={bloodSample?.is_sample_collected === 0}
                       onChange={(e) => {
-                        if (e.target.checked) {
-                          setBloodSample({
-                            ...bloodSample,
-                            received_blood_last_6_months: parseInt(
-                              e.target.value
-                            ),
-                          });
-                        }
+                        setBloodSample({
+                          ...bloodSample,
+                          is_sample_collected: e.checked ? 0 : 1,
+                        });
                       }}
                     />
-                    <p>NO</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      disabled={bloodSample.is_sample_collected === 0}
-                      type="radio"
-                      value={8}
-                      checked={bloodSample.received_blood_last_6_months === 8}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setBloodSample({
-                            ...bloodSample,
-                            received_blood_last_6_months: parseInt(
-                              e.target.value
-                            ),
-                          });
-                        }
-                      }}
-                    />
-                    <p>Don't Know</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      disabled={bloodSample.is_sample_collected === 0}
-                      type="radio"
-                      value={9}
-                      checked={bloodSample.received_blood_last_6_months === 9}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setBloodSample({
-                            ...bloodSample,
-                            received_blood_last_6_months: parseInt(
-                              e.target.value
-                            ),
-                          });
-                        }
-                      }}
-                    />
-                    <p>Refused to answer</p>
+                    <label htmlFor="collected_no">NO</label>
                   </div>
                 </div>
-              </div>
-              <div className="mt-5">
-                <Button
-                  disabled={bloodSample.is_sample_collected === 0}
-                  label="SAVE"
-                  severity="success"
-                  className="px-10 py-2 rounded-md"
-                  onClick={handleSave}
-                />
-              </div>
 
-              <div className="flex justify-end gap-2 mt-10">
-                <Link to="/blood1">
-                  <Button label="PREV" className="px-10 py-2 rounded" />
-                </Link>
-                <Link to={`/blood3?id=${id}&sampleId=${bloodSample?.id}&edit=${editFlag ? 'yes' : 'no'}`}>
-                  <Button label="NEXT" className="px-10 py-2 rounded" />
-                </Link>
+                {/* This section is unchanged as it's a custom component */}
+                {bloodSample?.collection_tubes.map((item, index) => (
+                  <SampleCollectionType
+                    addNewCollectionTube={addNewCollectionTube}
+                    key={item.id}
+                    data={item}
+                    removeCollectionTube={removeCollectionTube}
+                    setBloodSample={setBloodSample}
+                    isSampleCollected={bloodSample?.is_sample_collected === 1}
+                  />
+                ))}
+
+                {/* --- 4. Used Fieldset for Sample Classification --- */}
+                <Fieldset legend="Sample Classification (Please tick in the appropriate option)">
+                  <div className="space-y-4 mt-2">
+                    {[
+                      {
+                        label: "a. Category B(UN3373)[Non-Biohazard]",
+                        value: "Category B(UN3373)[Non-Biohazard]",
+                      },
+                      {
+                        label: "b. Category A(UN2814)[Biohazard]",
+                        value: "Category A(UN2814)[Biohazard]",
+                      },
+                      { label: "c. Don't Know", value: "Don't Know" },
+                    ].map((option) => (
+                      <div
+                        key={option.value}
+                        className="flex align-items-center gap-3"
+                      >
+                        <RadioButton
+                          inputId={option.value}
+                          disabled={bloodSample?.is_sample_collected === 0}
+                          type="radio"
+                          name="sample_classification"
+                          value={option.value}
+                          onChange={(e) => {
+                            setBloodSample({
+                              ...bloodSample,
+                              sample_classification: e.checked ? e.value : "",
+                            });
+                          }}
+                          checked={
+                            bloodSample?.sample_classification === option.value
+                          }
+                        />
+                        <label
+                          htmlFor={option.value}
+                          className="text-slate-600 dark:text-gray-300"
+                        >
+                          {option.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </Fieldset>
+
+                {/* --- 5. Used Fieldset for Collection Date & Time --- */}
+                <Fieldset legend="Collection Date & Time">
+                  <div className="p-fluid grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-slate-600 dark:text-gray-300">
+                        Date of blood sample collection
+                      </label>
+                      <Calendar
+                        appendTo="self"
+                        disabled={bloodSample?.is_sample_collected === 0}
+                        // Removed custom border/padding classes
+                        value={
+                          bloodSample?.date_collected
+                            ? new Date(bloodSample.date_collected)
+                            : null
+                        }
+                        onChange={(e) =>
+                          setBloodSample({
+                            ...bloodSample,
+                            date_collected:
+                              e.value
+                                ?.toLocaleString("sv-SE")
+                                .replace("T", " ") || "",
+                          })
+                        }
+                        showIcon
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-slate-600 dark:text-gray-300">
+                        Time of blood sample collection
+                      </label>
+                      <Calendar
+                        appendTo="self"
+                        disabled={bloodSample?.is_sample_collected === 0}
+                        value={
+                          bloodSample?.time_collected
+                            ? new Date(bloodSample.time_collected)
+                            : null
+                        }
+                        onChange={(e) => {
+                          setBloodSample({
+                            ...bloodSample,
+                            time_collected:
+                              e.value
+                                ?.toLocaleString("sv-SE")
+                                .replace("T", " ") || "",
+                          });
+                        }}
+                        timeOnly
+                        hourFormat="12"
+                        showIcon
+                      />
+                    </div>
+                  </div>
+                </Fieldset>
+
+                {/* --- 6. Used Fieldset for Last Meal Details --- */}
+                <Fieldset legend="Date and Time of last meal subject had before blood sample collection">
+                  <div className="p-fluid grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-slate-600 dark:text-gray-300">
+                        Date
+                      </label>
+                      <Calendar
+                        appendTo="self"
+                        disabled={bloodSample?.is_sample_collected === 0}
+                        // Removed custom border/padding classes
+                        showIcon
+                        value={
+                          bloodSample?.last_meal_date
+                            ? new Date(bloodSample.last_meal_date)
+                            : null
+                        }
+                        onChange={(e) =>
+                          setBloodSample({
+                            ...bloodSample,
+                            last_meal_date:
+                              e.value
+                                ?.toLocaleString("sv-SE")
+                                .replace("T", " ") || "",
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-slate-600 dark:text-gray-300">
+                        Time
+                      </label>
+                      <Calendar
+                        appendTo="self"
+                        disabled={bloodSample?.is_sample_collected === 0}
+                        value={
+                          bloodSample?.last_meal_time
+                            ? new Date(bloodSample.last_meal_time)
+                            : null
+                        }
+                        onChange={(e) => {
+                          setBloodSample({
+                            ...bloodSample,
+                            last_meal_time:
+                              e.value
+                                ?.toLocaleString("sv-SE")
+                                .replace("T", " ") || "",
+                          });
+                        }}
+                        timeOnly
+                        hourFormat="12"
+                        showIcon
+                      />
+                    </div>
+                  </div>
+                </Fieldset>
+
+                {/* --- 7. Used Fieldset for Blood Donation History --- */}
+                <Fieldset legend="If you have received blood from donor in the last six month?">
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    {[
+                      { label: "YES", value: 1 },
+                      { label: "NO", value: 2 },
+                      { label: "Don't Know", value: 8 },
+                      { label: "Refused to answer", value: 9 },
+                    ].map((option) => (
+                      <div
+                        key={option.value}
+                        className="flex align-items-center gap-2"
+                      >
+                        <RadioButton
+                          inputId={`received_blood_${option.value}`}
+                          disabled={bloodSample?.is_sample_collected === 0}
+                          type="radio"
+                          name="last"
+                          value={option.value}
+                          checked={
+                            bloodSample?.received_blood_last_6_months ===
+                            option.value
+                          }
+                          onChange={(e) => {
+                            if (e.checked) {
+                              setBloodSample({
+                                ...bloodSample,
+                                received_blood_last_6_months: parseInt(e.value),
+                              });
+                            }
+                          }}
+                        />
+                        <label htmlFor={`received_blood_${option.value}`}>
+                          {option.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </Fieldset>
+
+                {/* --- 8. Cleaned up Button Styles --- */}
+                <div className="mt-5">
+                  <Button
+                    disabled={bloodSample?.is_sample_collected === 0}
+                    label="SAVE"
+                    icon="pi pi-check" // Added icon
+                    severity="success"
+                    raised // Added emphasis
+                    onClick={handleSave}
+                  />
+                </div>
+
+                <div className="flex justify-between gap-2 mt-10">
+                  <Link to="/blood1">
+                    <Button
+                      label="PREV"
+                      icon="pi pi-arrow-left" // Added icon
+                      severity="secondary" // De-emphasized
+                      outlined
+                    />
+                  </Link>
+                  <Link
+                    to={`/blood3?id=${id}&sampleId=${bloodSample?.id}&edit=${
+                      editFlag ? "yes" : "no"
+                    }`}
+                  >
+                    <Button
+                      label="NEXT"
+                      icon="pi pi-arrow-right" // Added icon
+                      iconPos="right"
+                    />
+                  </Link>
+                </div>
               </div>
-            </div>
+            </Card>
           </main>
           <IonAlert
-            isOpen={alert.show}
+            isOpen={alert?.show}
             onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
-            header={alert.header}
-            message={alert.message}
+            header={alert?.header}
+            message={alert?.message}
             buttons={["OK"]}
           />
-        </IonContent>
-        <div className="pb-[250px]"></div>
 
+          {/* --- 9. Moved Spacer Div INSIDE IonContent --- */}
+          <div className="pb-[250px]"></div>
+        </IonContent>
+
+        {/* The spacer div was incorrectly here */}
       </IonPage>
     </>
   );

@@ -54,7 +54,7 @@ export class TobaccoAlcoholConsumption {
     | "chewing_without_tobacco"
     | "alcohol" = "smoking_tobacco";
   product: string = "";
-  consumes: number = 0;
+  consumes: number = 2;
   from_age: number = 0;
   to_age: number = 0;
   number_per_day: number = 0;
@@ -151,7 +151,7 @@ export const generateDefaultState = (
     "Rum",
     "Wine",
     "Breezer",
-    "North-east",
+    "Local",
   ];
   const alcoholProds = alcoholArr.map((item) => {
     return new TobaccoAlcoholConsumption({
@@ -175,25 +175,25 @@ export const generateDefaultState = (
   const initialState: initialState[] = [
     findExisting("smoking_tobacco") || {
       product_type: "smoking_tobacco",
-      consumed: 0,
+      consumed: 2,
       products: smokingProds,
       id: translator.generate(),
     },
     findExisting("chewing_tobacco") || {
       product_type: "chewing_tobacco",
-      consumed: 0,
+      consumed: 2,
       products: chewingTobaccoProds,
       id: translator.generate(),
     },
     findExisting("chewing_without_tobacco") || {
       product_type: "chewing_without_tobacco",
-      consumed: 0,
+      consumed: 2,
       products: chewing_without_tobaccoProds,
       id: translator.generate(),
     },
     findExisting("alcohol") || {
       product_type: "alcohol",
-      consumed: 0,
+      consumed: 2,
       products: alcoholProds,
       id: translator.generate(),
     },
@@ -284,7 +284,7 @@ export const populateWithBackend = (
 
       return {
         product_type: type,
-        consumed: 0, // ✅ Mark as NOT consumed
+        consumed: 2, // ✅ Mark as NOT consumed
         products,
         id: defaultGroup.id,
       };

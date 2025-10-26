@@ -1,4 +1,11 @@
-import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
 import { use, useEffect, useRef, useState } from "react";
@@ -71,11 +78,50 @@ export default function Tab6() {
   }, [db, location.pathname]);
 
   const updateStateData = (id: string, field: string, value: any) => {
-    console.log(id, field, value);
     setDirtyIds((prev) => (prev.some((x) => x === id) ? prev : [...prev, id]));
+
     setDataState((prevState) => {
       return prevState.map((item) => {
         if (item.id === id) {
+          // --- Start of New Logic ---
+          if (
+            field === "mode_of_diagnosis" ||
+            field === "mode_of_diagnosis_other"
+          ) {
+            // Case 1: The "Don't know" checkbox was clicked.
+            if (value === "Don't know") {
+              if (item.mode_of_diagnosis === "Don't know") {
+                // If it was already "Don't know", uncheck it.
+                return {
+                  ...item,
+                  mode_of_diagnosis: "",
+                  mode_of_diagnosis_other: "",
+                };
+              } else {
+                // Otherwise, overwrite the current value with "Don't know".
+                console.log("hello");
+                return {
+                  ...item,
+                  mode_of_diagnosis: "Don't know",
+                  mode_of_diagnosis_other: "",
+                };
+              }
+            }
+            // Case 2: A different checkbox was clicked while "Don't know" was active.
+            if (
+              item.mode_of_diagnosis === "Don't know" &&
+              value !== "Don't know"
+            ) {
+              // Overwrite "Don't know" with the new value
+              return {
+                ...item,
+                mode_of_diagnosis: value
+                  .split("|")
+                  .filter((item: string) => item.trim() !== "Don't know")
+                  .join("|"),
+              };
+            }
+          }
           return { ...item, [field]: value };
         }
         return item;
@@ -100,11 +146,13 @@ export default function Tab6() {
       const newState = generateDefaultData(id || "");
       if (res?.values) {
         res?.values.forEach((item: PERSONAL_MEDICAL_HISTORY_DB) => {
-          const existingIndex = newState.findIndex(x => x.diagnoss === item.diagnoss)
+          const existingIndex = newState.findIndex(
+            (x) => x.diagnoss === item.diagnoss
+          );
           if (existingIndex !== -1) {
-            newState[existingIndex] = item
+            newState[existingIndex] = item;
           }
-        })
+        });
       }
       setDataState(newState);
     } catch (error) {
@@ -162,7 +210,7 @@ export default function Tab6() {
           item.mode_of_diagnosis_other,
           item.user_id,
           tabId,
-          new Date().toLocaleString('sv-SE').replace('T', ' '),
+          new Date().toLocaleString("sv-SE").replace("T", " "),
         ];
         await db?.run(query, values);
       }
@@ -185,25 +233,28 @@ export default function Tab6() {
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await fetchExistingData();
     event.detail.complete();
-  }
+  };
   return (
-    <div >
-      <IonPage >
+    <div>
+      <IonPage>
         <Header
           title={
-            0 ? "Edit Personal Medical History" : "Personal Medical History"
+            // Assuming you meant to use the 'id' variable here
+            id ? "Edit Personal Medical History" : "Personal Medical History"
           }
         />
         <IonContent class="" fullscreen>
           <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
             <IonRefresherContent
-              className="spinner-only" // <-- Add this class
+              className="spinner-only"
               refreshingSpinner="circles"
-            // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
-          <ShowRegisteredTab id={id || ''} />
-          <main ref={scrollRef} className="p-2 space-y-2">
+
+          <ShowRegisteredTab id={id || ""} />
+
+          {/* Added more padding and vertical space */}
+          <main ref={scrollRef} className="p-3 space-y-6">
             {data.map((d, index) => (
               <PMHInput
                 data={dataState?.[index]}
@@ -214,24 +265,40 @@ export default function Tab6() {
                 updateStateData={updateStateData}
               />
             ))}
-            <div className="flex justify-end gap-2 ">
+
+            {/* Grouped all action buttons at the bottom */}
+            <div className="flex justify-end gap-2 pt-4">
               <Button
                 onClick={handleSave}
-                className="px-10 py-2"
                 label="SAVE"
+                icon="pi pi-check" // Added icon
                 severity="success"
+                raised // Added for emphasis
               />
             </div>
-            <div className="pt-20 flex justify-end gap-2">
-              <Link to={`/tab5?id=${id}`}>
-                <Button className="px-10 py-2 rounded" label="PREV" />
-              </Link>
 
+            {/* Used justify-between for a standard PREV/NEXT layout */}
+            <div className="pt-8 flex justify-between gap-2">
+              <Link to={`/tab5?id=${id}`}>
+                <Button
+                  label="PREV"
+                  icon="pi pi-arrow-left" // Added icon
+                  severity="secondary"
+                  outlined
+                />
+              </Link>
               <Link to={"/tab7?id=" + id}>
-                <Button className="px-10 py-2 rounded" label="NEXT" />
+                <Button
+                  label="NEXT"
+                  icon="pi pi-arrow-right" // Added icon
+                  iconPos="right"
+                  severity="secondary"
+                  outlined
+                />
               </Link>
             </div>
           </main>
+
           <IonAlert
             isOpen={alert.show}
             onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
@@ -239,28 +306,29 @@ export default function Tab6() {
             message={alert.message}
             buttons={["OK"]}
           />
-          {
-            <Button
-              icon="pi pi-arrow-up"
-              // WindiCSS classes for styling and position
-              className={`
-                        fixed bottom-6 right-6 
-                        rounded-full shadow-lg
-                        transition-opacity duration-300
-                         pointer-events-none'}
-                      `}
-              style={{ zIndex: 2000 }}
-              onClick={() => {
-                console.log("HELLo")
-                if (scrollRef.current)
-                  scrollRef.current.scrollIntoView({ behavior: "smooth" });
-              }}
 
-            />
-          }
+          {/* Fixed broken className and used p-button-rounded */}
+          <Button
+            icon="pi pi-arrow-up"
+            // WindiCSS classes for styling and position
+            className={`
+                fixed bottom-6 right-6 
+                p-button-rounded p-button-secondary shadow-lg
+                transition-opacity duration-300
+                
+              `} // <-- Fixed broken string
+            style={{ zIndex: 2000 }}
+            onClick={() => {
+              console.log("HELLo");
+              if (scrollRef.current)
+                scrollRef.current.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
+
+          {/* Moved this spacer DIV *inside* the IonContent to provide scrollable padding */}
+          <div className="pb-[250px]"></div>
         </IonContent>
-        <div className="pb-[250px]"></div>
-
+        {/* The spacer div was incorrectly here */}
       </IonPage>
     </div>
   );

@@ -18,6 +18,7 @@ import { validateRFTArray } from "../bHelper";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { Card } from "primereact/card";
 
 export default function BloodPage7() {
   const location = useLocation();
@@ -69,7 +70,11 @@ export default function BloodPage7() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
-      if (db && editFlag && !(await checkElibleToSave(db, sampleId || "", tabId, 'blood_sample'))) {
+      if (
+        db &&
+        editFlag &&
+        !(await checkElibleToSave(db, sampleId || "", tabId, "blood_sample"))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -103,7 +108,7 @@ export default function BloodPage7() {
         rft.unit,
         rft.test_type || "ttis",
         id,
-        new Date().toLocaleString('sv-SE').replace('T', ' '),
+        new Date().toLocaleString("sv-SE").replace("T", " "),
       ]);
       for (let i = 0; i < values.length; i++) {
         const params = values[i];
@@ -125,19 +130,20 @@ export default function BloodPage7() {
       <IonPage>
         <Header title={"Transfusion-Transmissible Infections (TTIs) & Sugar"} />
         <IonContent fullscreen>
-          <ShowRegisteredTab id={sampleId || ''} table_name="blood_sample" />
+          <ShowRegisteredTab id={sampleId || ""} table_name="blood_sample" />
           <main className="p-2">
-            <div className="p-2 shadow border rounded text-slate-600">
-              <p className="text-lg  font-semibold">Participant's details</p>
-              <div>
-                <span className="font-semibold">ID: </span>{" "}
-                <span>{participant?.id}</span>
+            <Card title="Participant's Details" className="shadow border">
+              <div className="text-slate-600 dark:text-gray-300 space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-semibold">ID: </span>
+                  <span>{participant?.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Name: </span>
+                  <span>{participant?.name}</span>
+                </div>
               </div>
-              <div>
-                <span className="font-semibold">Name: </span>{" "}
-                <span>{participant?.name}</span>
-              </div>
-            </div>
+            </Card>
             <div ref={tableContainerRef} className="mt-10">
               <DataTable
                 value={ttis}
@@ -169,9 +175,9 @@ export default function BloodPage7() {
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                ...item,
-                                result: parseInt(e.target.value) || 0,
-                              }
+                                  ...item,
+                                  result: parseInt(e.target.value) || 0,
+                                }
                               : item
                           )
                         )
@@ -191,15 +197,20 @@ export default function BloodPage7() {
             </div>
             <div className="mt-5">
               <Button
+                onClick={handleSave}
                 label="Save"
                 className="px-10 py-2 rounded"
-                severity="success"
-                onClick={handleSave}
+                severity="success" 
+                icon = "pi pi-check"
               />
             </div>
 
             <div className="flex gap-2 mt-5 justify-end ">
-              <Link to={`/blood6?id=${id}&sampleId=${sampleId}&edit=${editFlag ? 'yes' : 'no'}`}>
+              <Link
+                to={`/blood6?id=${id}&sampleId=${sampleId}&edit=${
+                  editFlag ? "yes" : "no"
+                }`}
+              >
                 <Button label="PREV" className="px-5 py-2 rounded" />
               </Link>
             </div>
@@ -213,7 +224,6 @@ export default function BloodPage7() {
           />
         </IonContent>
         <div className="pb-[250px]"></div>
-
       </IonPage>
     </div>
   );

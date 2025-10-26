@@ -1,6 +1,9 @@
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { initialState, TOBACCO_ALCOHOL_CONSUMPION } from "./data";
+import { RadioButton } from "primereact/radiobutton";
+import { Card } from "primereact/card";
+import { Fieldset } from "primereact/fieldset";
 const test = [
   {
     product: "Manufactured Cigarette",
@@ -23,302 +26,283 @@ export default function SmokingTobacco({
     value: any
   ) => void;
 }) {
+  // Helper array for the master radio buttons
+  const masterOptions = [
+    { name: "YES", value: 1 },
+    { name: "NO", value: 2 },
+    { name: "DON'T KNOW", value: 8 },
+    { name: "Refused to answer", value: 9 },
+  ];
+
   return (
-    <div className="space-y-2 border p-3 shadow rounded">
-      <h1 className="text-slate-600 font-semibold">Smoking Tobacco</h1>
-      <div className="text-slate-600 ">
-        <p className="">Have you ever smoked regularly? </p>
-        <div className="flex gap-5">
-          <div className="space-x-2">
-            <input
-              type="radio"
-              value={1}
-              checked={data?.consumed === 1 ? true : false}
-              onChange={(e) =>
-                handleChangeMaster(
-                  data.id,
-                  "consumed",
-                  parseInt(e.target.value)
-                )
-              }
-            />
-            <span>YES</span>
-          </div>
-          <div className="space-x-2">
-            <input
-              type="radio"
-              value={2}
-              checked={data?.consumed === 2 ? true : false}
-              onChange={(e) =>
-                handleChangeMaster(
-                  data.id,
-                  "consumed",
-                  parseInt(e.target.value)
-                )
-              }
-            />
-            <span>NO</span>
-          </div>
-          <div className="space-x-2">
-            <input
-              type="radio"
-              value={8}
-              checked={data?.consumed === 8 ? true : false}
-              onChange={(e) =>
-                handleChangeMaster(
-                  data.id,
-                  "consumed",
-                  parseInt(e.target.value)
-                )
-              }
-            />
-            <span>DON'T KNOW</span>
-          </div>
-          <div className="space-x-2">
-            <input
-              type="radio"
-              value={9}
-              checked={data?.consumed === 9 ? true : false}
-              onChange={(e) =>
-                handleChangeMaster(
-                  data.id,
-                  "consumed",
-                  parseInt(e.target.value)
-                )
-              }
-            />
-            <span>Refused to answer</span>
+    // Use a <Card> for a premium container
+    <Card  className="shadow-lg ">
+      <div
+        className="sticky -mt-10 top-0 text-center py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+        style={{ zIndex: 10 }}
+      >
+        <h1 className="font-semibold text-primary-600 dark:text-primary-300 text-lg m-0">
+          Smoking Tobacco
+        </h1>
+      </div>
+      <div className="space-y-6 mt-6">
+        {" "}
+        {/* Increased vertical spacing */}
+        <div className="text-slate-600 dark:text-gray-300">
+          <p className="font-semibold mb-3">Have you ever smoked regularly?</p>
+          {/* Use a grid for a cleaner radio layout */}
+          <div className="grid grid-cols-2 gap-4">
+            {masterOptions.map((option) => (
+              <div key={option.value} className="flex align-items-center gap-2">
+                <RadioButton
+                  inputId={`master_consumed_${option.value}`}
+                  name="master_consumed"
+                  value={option.value}
+                  // Use optional chaining and simplified check
+                  checked={data?.consumed === option.value}
+                  onChange={(e) =>
+                    handleChangeMaster(
+                      data?.id, // Use optional chain
+                      "consumed",
+                      parseInt(e.value)
+                    )
+                  }
+                />
+                <label htmlFor={`master_consumed_${option.value}`}>
+                  {option.name}
+                </label>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="mt-2 space-y-2">
+        {/* This div will contain all the product fieldsets */}
+        <div className="mt-4 space-y-4">
           {data?.products
-            .filter((x) => x.is_other_product !== 1)
+            ?.filter((x) => x?.is_other_product !== 1)
             .map((item, index) => (
-              <div key={index} className="border p-2 rounded space-y-1">
-                <h1>{item.product}</h1>
-                <div className="flex gap-2">
-                  <div className="space-x-2">
-                    <input
-                      value={1}
-                      type="radio"
-                      checked={item.consumes === 1}
+              // Use a <Fieldset> for each product
+              <Fieldset
+                key={item?.id || index}
+                legend={item?.product}
+                toggleable
+              >
+                {/* Add p-fluid to make inputs full-width */}
+                <div className="p-fluid space-y-7">
+                  <div className="flex gap-5">
+                    <div className="flex align-items-center gap-2">
+                      <RadioButton
+                        inputId={`${item?.id}_consumes_1`}
+                        name={`consumes_${item?.id}`}
+                        value={1}
+                        checked={item?.consumes === 1}
+                        onChange={(e) =>
+                          handleChangeProds(
+                            item?.id,
+                            item?.type || "",
+                            "consumes",
+                            parseInt(e.value)
+                          )
+                        }
+                        disabled={data?.consumed !== 1}
+                      />
+                      <label htmlFor={`${item?.id}_consumes_1`}>YES</label>
+                    </div>
+                    <div className="flex align-items-center gap-2">
+                      <RadioButton
+                        inputId={`${item?.id}_consumes_2`}
+                        name={`consumes_${item?.id}`}
+                        value={2}
+                        checked={item?.consumes === 2}
+                        onChange={(e) =>
+                          handleChangeProds(
+                            item?.id,
+                            item?.type || "",
+                            "consumes",
+                            parseInt(e.value)
+                          )
+                        }
+                        disabled={data?.consumed !== 1}
+                      />
+                      <label htmlFor={`${item?.id}_consumes_2`}>NO</label>
+                    </div>
+                  </div>
+
+                  {/* Inputs grouped together */}
+                  <FloatLabel>
+                    <InputText
+                      keyfilter="int"
+                      // Removed 'border-1 p-2'
+                      value={item?.from_age?.toString() || ""} // Handle null/undefined
                       onChange={(e) =>
                         handleChangeProds(
-                          item.id,
-                          item.type || "",
-                          "consumes",
-                          parseInt(e.target.value)
+                          item?.id,
+                          item?.type || "",
+                          "from_age",
+                          e.target.value ? parseInt(e.target.value) : ""
                         )
                       }
-                      disabled={data.consumed !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
                     />
-                    <span>YES</span>
-                  </div>
-                  <div className="space-x-2">
-                    <input
-                      value={2}
-                      type="radio"
-                      checked={item.consumes === 2}
+                    <label>From age</label>
+                  </FloatLabel>
+
+                  <FloatLabel>
+                    <InputText
+                      keyfilter="int"
+                      // Removed 'border-1 p-2'
+                      value={item?.to_age?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
-                          item.id,
-                          item.type || "",
-                          "consumes",
-                          parseInt(e.target.value)
+                          item?.id,
+                          item?.type || "",
+                          "to_age",
+                          e.target.value ? parseInt(e.target.value) : ""
                         )
                       }
-                      disabled={data.consumed !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
                     />
-                    <span>NO</span>
-                  </div>
+                    <label>To age</label>
+                  </FloatLabel>
+
+                  <FloatLabel>
+                    <InputText
+                      keyfilter="int"
+                      // Removed 'border-1 p-2'
+                      value={item?.number_per_day?.toString() || ""}
+                      onChange={(e) =>
+                        handleChangeProds(
+                          item?.id,
+                          item?.type || "",
+                          "number_per_day",
+                          e.target.value ? parseInt(e.target.value) : ""
+                        )
+                      }
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                    />
+                    <label>Number per day</label>
+                  </FloatLabel>
+
+                  <FloatLabel>
+                    <InputText
+                      keyfilter="int"
+                      // Removed 'border-1 p-2'
+                      value={item?.days_in_week?.toString() || ""}
+                      onChange={(e) =>
+                        handleChangeProds(
+                          item?.id,
+                          item?.type || "",
+                          "days_in_week",
+                          e.target.value ? parseInt(e.target.value) : ""
+                        )
+                      }
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                    />
+                    <label>Days in a week</label>
+                  </FloatLabel>
                 </div>
-                <div className="space-y-7 pt-10">
-                  <div>
-                    <FloatLabel>
-                      <InputText
-                        keyfilter="int"
-                        className="border-1 p-2"
-                        value={item.from_age?.toString()}
-                        onChange={(e) =>
-                          handleChangeProds(
-                            item.id,
-                            item.type || "",
-                            "from_age",
-                            e.target.value ? parseInt(e.target.value) : ""
-                          )
-                        }
-                        disabled={data.consumed !== 1 || item.consumes !== 1}
-                      />
-                      <label>From age</label>
-                    </FloatLabel>
-                  </div>
-                  <div>
-                    <FloatLabel>
-                      <InputText
-                        keyfilter="int"
-                        className="border-1 p-2"
-                        value={item.to_age?.toString()}
-                        onChange={(e) =>
-                          handleChangeProds(
-                            item.id,
-                            item.type || "",
-                            "to_age",
-                            e.target.value ? parseInt(e.target.value) : ""
-                          )
-                        }
-                        disabled={data.consumed !== 1 || item.consumes !== 1}
-                      />
-                      <label>To age</label>
-                    </FloatLabel>
-                  </div>
-                  <div>
-                    <FloatLabel>
-                      <InputText
-                        keyfilter="int"
-                        className="border-1 p-2"
-                        value={item.number_per_day?.toString()}
-                        onChange={(e) =>
-                          handleChangeProds(
-                            item.id,
-                            item.type || "",
-                            "number_per_day",
-                            e.target.value ? parseInt(e.target.value) : ""
-                          )
-                        }
-                        disabled={data.consumed !== 1 || item.consumes !== 1}
-                      />
-                      <label>Number per day</label>
-                    </FloatLabel>
-                  </div>
-                  <div>
-                    <FloatLabel>
-                      <InputText
-                        keyfilter="int"
-                        className="border-1 p-2"
-                        value={item.days_in_week?.toString()}
-                        onChange={(e) =>
-                          handleChangeProds(
-                            item.id,
-                            item.type || "",
-                            "days_in_week",
-                            e.target.value ? parseInt(e.target.value) : ""
-                          )
-                        }
-                        disabled={data.consumed !== 1 || item.consumes !== 1}
-                      />
-                      <label>Days in a week</label>
-                    </FloatLabel>
-                  </div>
-                </div>
-              </div>
+              </Fieldset>
             ))}
 
           {/* -------------------------------------------------------------- */}
+          {/* "Other" Section */}
           {data?.products
-            .filter((p) => p.is_other_product === 1)
-            .map((p,index) => (
-              <div key={index} className="border p-2 rounded space-y-7">
-                <h1>Other</h1>
+            ?.filter((p) => p?.is_other_product === 1)
+            .map((p, index) => (
+              <Fieldset key={p?.id || index} legend="Other" toggleable>
+                <div className="p-fluid space-y-7">
+                  {/* Replaced plain input with PrimeReact FloatLabel/InputText */}
+                  <FloatLabel>
+                    <InputText
+                      value={p?.product || ""}
+                      onChange={(e) =>
+                        handleChangeProds(
+                          p?.id,
+                          p?.type || "",
+                          "product",
+                          e.target.value
+                        )
+                      }
+                      disabled={data?.consumed !== 1}
+                    />
+                    <label>Specify Other</label>
+                  </FloatLabel>
 
-                <div className="flex gap-2">
-                  <p> Specify</p>
-                  <input
-                    type="text"
-                    className="border-b-2 focus:outline-none focus:border-slate-500 w-[60%]"
-                    value={p?.product}
-                    onChange={(e) =>
-                      handleChangeProds(
-                        p.id,
-                        p.type || "",
-                        "product",
-                        e.target.value
-                      )
-                    }
-                    disabled={data.consumed !== 1}
-                  />
+                  <FloatLabel>
+                    <InputText
+                      keyfilter="int"
+                      // Removed 'border-1 p-2'
+                      value={p?.from_age?.toString() || ""}
+                      onChange={(e) =>
+                        handleChangeProds(
+                          p?.id,
+                          p?.type || "",
+                          "from_age",
+                          e.target.value ? parseInt(e.target.value) : ""
+                        )
+                      }
+                      disabled={data?.consumed !== 1}
+                    />
+                    <label>From age</label>
+                  </FloatLabel>
+
+                  <FloatLabel>
+                    <InputText
+                      keyfilter="int"
+                      // Removed 'border-1 p-2'
+                      value={p?.to_age?.toString() || ""}
+                      onChange={(e) =>
+                        handleChangeProds(
+                          p?.id,
+                          p?.type || "",
+                          "to_age",
+                          e.target.value ? parseInt(e.target.value) : ""
+                        )
+                      }
+                      disabled={data?.consumed !== 1}
+                    />
+                    <label>To age</label>
+                  </FloatLabel>
+
+                  <FloatLabel>
+                    <InputText
+                      keyfilter="int"
+                      // Removed 'border-1 p-2'
+                      value={p?.number_per_day?.toString() || ""}
+                      onChange={(e) =>
+                        handleChangeProds(
+                          p?.id,
+                          p?.type || "",
+                          "number_per_day",
+                          e.target.value ? parseInt(e.target.value) : ""
+                        )
+                      }
+                      disabled={data?.consumed !== 1}
+                    />
+                    <label>Number per day</label>
+                  </FloatLabel>
+
+                  <FloatLabel>
+                    <InputText
+                      keyfilter="int"
+                      // Removed 'border-1 p-2'
+                      value={p?.days_in_week?.toString() || ""}
+                      onChange={(e) =>
+                        handleChangeProds(
+                          p?.id,
+                          p?.type || "",
+                          "days_in_week",
+                          e.target.value ? parseInt(e.target.value) : ""
+                        )
+                      }
+                      disabled={data?.consumed !== 1}
+                    />
+                    <label>Days in a week</label>
+                  </FloatLabel>
                 </div>
-                <div className="space-y-5 pt-4">
-                  <div>
-                    <FloatLabel>
-                      <InputText
-                        keyfilter="int"
-                        className="border-1 p-2"
-                        value={p.from_age?.toString()}
-                        onChange={(e) =>
-                          handleChangeProds(
-                            p.id,
-                            p.type || "",
-                            "from_age",
-                            e.target.value ? parseInt(e.target.value) : ""
-                          )
-                        }
-                        disabled={data.consumed !== 1}
-                      />
-                      <label>From age</label>
-                    </FloatLabel>
-                  </div>
-                  <div>
-                    <FloatLabel>
-                      <InputText
-                        keyfilter="int"
-                        className="border-1 p-2"
-                        value={p.to_age?.toString()}
-                        onChange={(e) =>
-                          handleChangeProds(
-                            p.id,
-                            p.type || "",
-                            "to_age",
-                            e.target.value ? parseInt(e.target.value) : ""
-                          )
-                        }
-                        disabled={data.consumed !== 1}
-                      />
-                      <label>To age</label>
-                    </FloatLabel>
-                  </div>
-                  <div>
-                    <FloatLabel>
-                      <InputText
-                        keyfilter="int"
-                        className="border-1 p-2"
-                        value={p.number_per_day?.toString()}
-                        onChange={(e) =>
-                          handleChangeProds(
-                            p.id,
-                            p.type || "",
-                            "number_per_day",
-                            e.target.value ? parseInt(e.target.value) : ""
-                          )
-                        }
-                        disabled={data.consumed !== 1}
-                      />
-                      <label>Number per day</label>
-                    </FloatLabel>
-                  </div>
-                  <div>
-                    <FloatLabel>
-                      <InputText
-                        keyfilter="int"
-                        className="border-1 p-2"
-                        value={p.days_in_week?.toString()}
-                        onChange={(e) =>
-                          handleChangeProds(
-                            p.id,
-                            p.type || "",
-                            "days_in_week",
-                            e.target.value ? parseInt(e.target.value) : ""
-                          )
-                        }
-                        disabled={data.consumed !== 1}
-                      />
-                      <label>Days in a week</label>
-                    </FloatLabel>
-                  </div>
-                </div>
-              </div>
+              </Fieldset>
             ))}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

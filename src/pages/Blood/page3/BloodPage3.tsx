@@ -16,6 +16,7 @@ import { InputNumber } from "primereact/inputnumber";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { Card } from "primereact/card";
 export interface RFTType {
   test_name: string;
   result: number;
@@ -80,23 +81,23 @@ export default function BloodPage3() {
           res2?.values?.length
             ? (res2?.values as RFTType[])
             : [
-              {
-                test_name: "Serum Urea",
-                result: 0,
-                unit: "mg/dL",
-                id: shortUUID().generate(),
-                sampleId: sampleId,
-                test_type: "RFT",
-              },
-              {
-                test_name: "Serum Creatinine",
-                result: 0,
-                unit: "mg/dL",
-                id: shortUUID().generate(),
-                sampleId: sampleId,
-                test_type: "RFT",
-              },
-            ]
+                {
+                  test_name: "Serum Urea",
+                  result: 0,
+                  unit: "mg/dL",
+                  id: shortUUID().generate(),
+                  sampleId: sampleId,
+                  test_type: "RFT",
+                },
+                {
+                  test_name: "Serum Creatinine",
+                  result: 0,
+                  unit: "mg/dL",
+                  id: shortUUID().generate(),
+                  sampleId: sampleId,
+                  test_type: "RFT",
+                },
+              ]
         );
         console.log(res, curId);
       } catch (error) {
@@ -107,7 +108,11 @@ export default function BloodPage3() {
   }, [location.pathname, db]);
   const handleSave = async () => {
     try {
-      if (db && editFlag && !(await checkElibleToSave(db, sampleId || "", tabId, 'blood_sample'))) {
+      if (
+        db &&
+        editFlag &&
+        !(await checkElibleToSave(db, sampleId || "", tabId, "blood_sample"))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -141,7 +146,7 @@ export default function BloodPage3() {
         rft.test_type || "RFT",
         id,
         tabId,
-        new Date().toLocaleString('sv-SE').replace('T', ' '),
+        new Date().toLocaleString("sv-SE").replace("T", " "),
       ]);
       for (let i = 0; i < values.length; i++) {
         const params = values[i];
@@ -164,19 +169,20 @@ export default function BloodPage3() {
       <IonPage>
         <Header title={"Renal Function Test (RFT)"} />
         <IonContent fullscreen>
-          <ShowRegisteredTab id={sampleId || ''} table_name="blood_sample" />
+          <ShowRegisteredTab id={sampleId || ""} table_name="blood_sample" />
           <main className="p-2">
-            <div className="p-2 shadow border rounded text-slate-600">
-              <p className="text-lg  font-semibold">Participant's details</p>
-              <div>
-                <span className="font-semibold">ID: </span>{" "}
-                <span>{participant?.id}</span>
+            <Card title="Participant's Details" className="shadow border">
+              <div className="text-slate-600 dark:text-gray-300 space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-semibold">ID: </span>
+                  <span>{participant?.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Name: </span>
+                  <span>{participant?.name}</span>
+                </div>
               </div>
-              <div>
-                <span className="font-semibold">Name: </span>{" "}
-                <span>{participant?.name}</span>
-              </div>
-            </div>
+            </Card>
 
             <div className="mt-10">
               <DataTable
@@ -210,9 +216,9 @@ export default function BloodPage3() {
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                ...item,
-                                result: parseInt(e.target.value) || 0,
-                              }
+                                  ...item,
+                                  result: parseInt(e.target.value) || 0,
+                                }
                               : item
                           )
                         )
@@ -237,14 +243,23 @@ export default function BloodPage3() {
                 label="Save"
                 className="px-10 py-2 rounded"
                 severity="success"
+                icon = "pi pi-check"
               />
             </div>
 
             <div className="flex gap-2 mt-5 justify-end ">
-              <Link to={`/blood2?id=${id}&sampleId=${sampleId}&edit=${editFlag ? 'yes' : 'no'}`}>
+              <Link
+                to={`/blood2?id=${id}&sampleId=${sampleId}&edit=${
+                  editFlag ? "yes" : "no"
+                }`}
+              >
                 <Button label="PREV" className="px-5 py-2 rounded" />
               </Link>
-              <Link to={`/blood4?id=${id}&sampleId=${sampleId}&edit=${editFlag ? 'yes' : 'no'}`}>
+              <Link
+                to={`/blood4?id=${id}&sampleId=${sampleId}&edit=${
+                  editFlag ? "yes" : "no"
+                }`}
+              >
                 <Button label="NEXT" className="px-5 py-2 rounded" />
               </Link>
             </div>
@@ -258,7 +273,6 @@ export default function BloodPage3() {
           />
         </IonContent>
         <div className="pb-[250px]"></div>
-
       </IonPage>
     </div>
   );

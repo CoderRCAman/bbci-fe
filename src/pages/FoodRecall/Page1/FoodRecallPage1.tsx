@@ -43,7 +43,6 @@ export default function FoodRecallPage1() {
     const header = (
         <div className="flex justify-content-end">
             <span className="p-input-icon-left">
-                <i className="pi pi-search" />
                 <InputText
                     value={globalFilterValue}
                     onInput={(e) => setGlobalFilterValue(e.currentTarget.value)}
@@ -56,7 +55,6 @@ export default function FoodRecallPage1() {
     const header2 = (
         <div className="flex justify-content-end">
             <span className="p-input-icon-left">
-                <i className="pi pi-search" />
                 <InputText
                     value={globalFilterValue1}
                     onInput={(e) => setGlobalFilterValue1(e.currentTarget.value)}
@@ -74,9 +72,9 @@ export default function FoodRecallPage1() {
                 <Header title={"Food Recall"} />
                 <IonContent class='' fullscreen>
                     <main className="p-2">
-                        <div className="mt-5 border-2 rounded">
+                        <div className="mt-5 border rounded">
                             <div className="pl-5 py-2">
-                                <h1 className="text-slate-600 font-semibold">Process a new Food Recall</h1>
+                                <h2 className="text-slate-600 font-semibold">Process a new Food Recall</h2>
                             </div>
                             <DataTable value={participants}
                                 tableStyle={{ minWidth: '6rem' }}
@@ -99,7 +97,7 @@ export default function FoodRecallPage1() {
 
                         <div className="mt-10 border rounded">
                             <div className="pl-5 py-2">
-                                <h1 className="text-slate-500 font-semibold">Looking for previous food recall?</h1>
+                                <h2 className="text-slate-500 font-semibold">Looking for previous food recall?</h2>
                             </div>
                             <DataTable value={bloodSample}
                                 tableStyle={{ minWidth: '6rem' }}

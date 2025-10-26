@@ -11,6 +11,7 @@ import shortUUID from "short-uuid";
 import { checkElibleToSave } from "../Tab11/data";
 import { saveToStore } from "../../../utils/helper";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { Card } from "primereact/card";
 export interface DEMOGRAPHIC_INFO {
   id: string;
   user_id: string;
@@ -118,7 +119,7 @@ export default function Tab12() {
   useEffect(() => {
     if (db === null) return;
     const id = searchParams?.get("id") || "";
-    setId(id)
+    setId(id);
     async function fetchExisting() {
       try {
         const res = await db?.query(
@@ -189,7 +190,7 @@ export default function Tab12() {
         demographicInfo.mother_tongue,
         demographicInfo.place_of_birth,
         tabId,
-        new Date().toLocaleString('sv-SE').replace('T', ' '),
+        new Date().toLocaleString("sv-SE").replace("T", " "),
       ];
       await db.run(query, values);
       await saveToStore(sqlite);
@@ -206,64 +207,85 @@ export default function Tab12() {
   return (
     <IonPage>
       <Header
-        title={0 ? "Edit Demographic Information" : "Demographic Information"}
+        // Using 'id' variable, following the pattern from your ShowRegisteredTab
+        title={id ? "Edit Demographic Information" : "Demographic Information"}
       />
       <IonContent class="" fullscreen>
-        <ShowRegisteredTab id={id || ''} />
-        <main className="p-2 space-y-5">
-          {data.map((d, index) => (
-            <DemoInput
-              key={index}
-              item={d}
-              handleChange={handleChange}
-              data={demographicInfo}
-            />
-          ))}
-          <div className="space-y-7 pt-3">
-            <div>
-              <FloatLabel>
-                <InputText
-                  className="border-1 p-2 w-[60%]"
-                  value={demographicInfo.mother_tongue}
-                  onChange={(e) =>
-                    handleChange("mother_tongue", e.target.value)
-                  }
-                />
-                <label>What is your mother tongue?</label>
-              </FloatLabel>
-            </div>
-            <div>
-              <FloatLabel>
-                <InputText
-                  className="border-1 p-2 w-[60%]"
-                  onChange={(e) =>
-                    handleChange("place_of_birth", e.target.value)
-                  }
-                  value={demographicInfo.place_of_birth}
-                />
-                <label>What is your place of birth?</label>
-              </FloatLabel>
+        <ShowRegisteredTab id={id || ""} />
+
+        {/* Use a Card for a premium container. 'm-3' adds margin. */}
+        <Card title="Demographic Information" className="m-3 shadow-lg">
+          {/* 'p-fluid' makes child inputs full-width.
+          'p-4' adds padding inside the card.
+          'space-y-7' adds vertical spacing.
+      */}
+          <div className="p-fluid space-y-7 p-4">
+            {data?.map((d, index) => (
+              <DemoInput
+                key={index}
+                item={d}
+                handleChange={handleChange}
+                data={demographicInfo}
+              />
+            ))}
+
+            {/* These inputs are now part of the same fluid grid */}
+            <FloatLabel>
+              <InputText
+                // Removed className="border-1 p-2 w-[60%]"
+                value={demographicInfo?.mother_tongue || ""}
+                onChange={(e) => handleChange("mother_tongue", e.target.value)}
+              />
+              <label>What is your mother tongue?</label>
+            </FloatLabel>
+
+            <FloatLabel>
+              <InputText
+                // Removed className="border-1 p-2 w-[60%]"
+                onChange={(e) => handleChange("place_of_birth", e.target.value)}
+                value={demographicInfo?.place_of_birth || ""}
+              />
+              <label>What is your place of birth?</label>
+            </FloatLabel>
+
+            {/* Align the save button to the right */}
+            <div className="flex justify-end pt-4">
+              <Button
+                label="Save"
+                severity="success"
+                onClick={handleSave}
+                icon="pi pi-check" // Added icon
+                raised // Added for emphasis
+              />
             </div>
           </div>
-          <div>
-            <Button label="Save" severity="success" onClick={handleSave} />
-          </div>
-        </main>
+        </Card>
+
         <IonAlert
-          isOpen={alert.show}
+          isOpen={alert?.show}
           onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
-          header={alert.header}
-          message={alert.message}
+          header={alert?.header}
+          message={alert?.message}
           buttons={["OK"]}
         />
-        <div className="pt-10 pb-2 flex justify-end gap-2">
+
+        {/* Cleaned up button styling and container padding */}
+        <div className="pt-8 pb-2 flex justify-end gap-2 px-3">
           <Link to={"/tab11?id=" + id}>
-            <Button className="px-10 py-2 rounded" label="PREV" />
+            <Button
+              // Removed className="px-10 py-2 rounded"
+              label="PREV"
+              icon="pi pi-arrow-left" // Added icon
+              severity="secondary" // Use secondary style
+              outlined
+            />
           </Link>
         </div>
-      </IonContent>
-      <div className="pb-[250px]"></div>
 
+        {/* MOVED this spacer div INSIDE IonContent */}
+        <div className="pb-[250px]"></div>
+      </IonContent>
+      {/* The spacer div was incorrectly here */}
     </IonPage>
   );
 }

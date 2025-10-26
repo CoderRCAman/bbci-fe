@@ -1,4 +1,11 @@
-import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import Header from "../../../components/Header";
 import { Button } from "primereact/button";
 import { Link, useLocation } from "react-router-dom";
@@ -22,13 +29,13 @@ export default function Tab8() {
     height: 0,
     weight: 0,
     id: shortUUID().generate(),
-    date: new Date().toLocaleString('sv-SE').replace('T', ' '),
+    date: new Date().toLocaleString("sv-SE").replace("T", " "),
   });
   const [reading2, setReading2] = useState({
     height: 0,
     weight: 0,
     id: shortUUID().generate(),
-    date: new Date().toLocaleString('sv-SE').replace('T', ' '),
+    date: new Date().toLocaleString("sv-SE").replace("T", " "),
   });
   const [alert, setAlert] = useState({
     show: false,
@@ -55,7 +62,9 @@ export default function Tab8() {
           height: res?.values?.[0]?.height || 0,
           weight: res?.values?.[0]?.weight || 0,
           id: res?.values?.[0]?.id || shortUUID().generate(),
-          date: res?.values?.[0]?.date || new Date().toLocaleString('sv-SE').replace('T', ' '),
+          date:
+            res?.values?.[0]?.date ||
+            new Date().toLocaleString("sv-SE").replace("T", " "),
         });
         setIsDisabledReading2(
           differenceInMonths(new Date(), new Date(reading1.date)) <= 3
@@ -65,23 +74,24 @@ export default function Tab8() {
             height: res?.values?.[1]?.height || 0,
             weight: res?.values?.[1]?.weight || 0,
             id: res?.values?.[1]?.id || shortUUID().generate(),
-            date: res?.values?.[1]?.date || new Date().toLocaleString('sv-SE').replace('T', ' '),
+            date:
+              res?.values?.[1]?.date ||
+              new Date().toLocaleString("sv-SE").replace("T", " "),
           });
         }
-      }
-      else {
+      } else {
         setReading1({
           height: 0,
           weight: 0,
           id: shortUUID().generate(),
-          date: new Date().toLocaleString('sv-SE').replace('T', ' '),
-        })
+          date: new Date().toLocaleString("sv-SE").replace("T", " "),
+        });
         setReading2({
           height: 0,
           weight: 0,
           id: shortUUID().generate(),
-          date: new Date().toLocaleString('sv-SE').replace('T', ' '),
-        })
+          date: new Date().toLocaleString("sv-SE").replace("T", " "),
+        });
       }
     } catch (error) {
       console.log(error);
@@ -137,7 +147,7 @@ export default function Tab8() {
         reading1.height,
         reading1.weight,
         tabId,
-        new Date().toLocaleString('sv-SE').replace('T', ' '),
+        new Date().toLocaleString("sv-SE").replace("T", " "),
       ];
 
       await db?.run(query, values);
@@ -171,7 +181,7 @@ export default function Tab8() {
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await fetchExisting();
     event.detail.complete();
-  }
+  };
   return (
     <div>
       <IonPage>
@@ -181,10 +191,10 @@ export default function Tab8() {
             <IonRefresherContent
               className="spinner-only" // <-- Add this class
               refreshingSpinner="circles"
-            // You can remove the other text props
+              // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
-          <ShowRegisteredTab id={id || ''} />
+          <ShowRegisteredTab id={id || ""} />
           <main className="p-2 space-y-5">
             <div className="p-2 border rounded-md">
               <p className="text-slate-500">Reading 1</p>
@@ -256,17 +266,30 @@ export default function Tab8() {
             <div className="flex justify-end gap-2 mt-4 ">
               <Button
                 onClick={handleSave}
-                className="px-10 py-2"
-                label="SAVE"
+                label="Save"
                 severity="success"
+                icon="pi pi-check" // Added icon
+                raised // Added for emphasis
               />
             </div>
             <div className="pt-10 flex justify-end gap-2">
               <Link to={"/tab7?id=" + id}>
-                <Button className="px-10 py-2 rounded" label="PREV" />
+                <Button
+                  className="px-10 py-2 rounded"
+                  label="PREV"
+                  icon="pi pi-arrow-left" // Added icon
+                  severity="secondary" // Use secondary style
+                  outlined
+                />
               </Link>
               <Link to={"/tab9?id=" + id}>
-                <Button className="px-10 py-2 rounded" label="NEXT" />
+                <Button
+                  className="px-10 py-2 rounded"
+                  label="NEXT"
+                  icon="pi pi-arrow-right" // Added icon
+                  severity="secondary" // Use secondary style
+                  outlined
+                />
               </Link>
             </div>
           </main>
@@ -279,7 +302,6 @@ export default function Tab8() {
           />
         </IonContent>
         <div className="pb-[250px]"></div>
-
       </IonPage>
     </div>
   );

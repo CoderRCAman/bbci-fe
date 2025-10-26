@@ -1,6 +1,6 @@
 // src/pages/Tab1.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { App } from '@capacitor/app';
+import { App } from "@capacitor/app";
 import { InputText } from "primereact/inputtext";
 import {
   IonContent,
@@ -34,7 +34,11 @@ import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { Geolocation } from "@capacitor/geolocation";
 import Header from "../../../components/Header";
 import { useSQLite } from "../../../utils/Sqlite";
-import { fetchCurrentUserDetails, generateUniqueId, saveToStore } from "../../../utils/helper";
+import {
+  fetchCurrentUserDetails,
+  generateUniqueId,
+  saveToStore,
+} from "../../../utils/helper";
 import { useHistory, useLocation } from "react-router";
 import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from "primereact/dropdown";
@@ -47,6 +51,7 @@ import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import SignaturePad, { roundPoint } from "./SignaturePad";
 import { PluginListenerHandle } from "@capacitor/core";
+import { Card } from "primereact/card";
 interface Patient {
   id?: string;
   name: string;
@@ -61,13 +66,39 @@ interface Patient {
   tab_id?: string;
 }
 
-
-
 const forcedStyle = {
   label: { marginBottom: "10px" },
   item: { margin: 0 },
   btnPadd: { marginTop: "30px" },
 };
+
+const employeeNameOptions = [
+  { name: "ITTEST1", value: "ITEST1" },
+  { name: "ITTEST2", value: "ITEST2" },
+];
+
+const employeeCodeOptions = [
+  { name: "CODE1", value: "CODE1" },
+  { name: "CODE2", value: "CODE2" },
+];
+
+const genderOptions = [
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+  { label: "Other", value: "other" },
+];
+
+/**
+ * --- 2. Create a Reusable Form Field Component ---
+ * This component wraps the Controller and error message logic,
+ * making the main form *much* cleaner.
+ */
+const ControlledFormField = ({ name, control, rules, errors, render }: any) => (
+  <div className="w-full">
+    <Controller name={name} control={control} rules={rules} render={render} />
+    {errors[name] && <RenderError text={errors[name].message?.toString()} />}
+  </div>
+);
 
 const Tab1: React.FC = () => {
   const [patient, setPatient] = useState<Patient>({
@@ -100,7 +131,7 @@ const Tab1: React.FC = () => {
     formState: { errors },
     formState,
     watch,
-    reset
+    reset,
   } = useForm({
     values: {
       i_name: patient.i_name,
@@ -117,11 +148,14 @@ const Tab1: React.FC = () => {
   useIonViewWillEnter(() => {
     const registerListener = async () => {
       // AWAIT the promise to get the actual handle
-      listenerHandle.current = await App.addListener('appStateChange', (state) => {
-        if (!state.isActive) {
-          router.push('/tab2');
+      listenerHandle.current = await App.addListener(
+        "appStateChange",
+        (state) => {
+          if (!state.isActive) {
+            router.push("/tab2");
+          }
         }
-      });
+      );
     };
 
     // Call the async function to register the listener
@@ -139,9 +173,7 @@ const Tab1: React.FC = () => {
   //below checks if this is for edit purpose
   async function fetchPatient(id: string) {
     try {
-      const res = await db?.query("select * from patients where id = ?", [
-        id,
-      ]);
+      const res = await db?.query("select * from patients where id = ?", [id]);
       if ((res as any)?.values?.length > 0) {
         setPatient((res as any)?.values[0]);
         if (res?.values && res?.values[0]?.signature) {
@@ -149,10 +181,9 @@ const Tab1: React.FC = () => {
         }
       }
       reset((res as any)?.values[0]);
-    } catch (error) { }
+    } catch (error) {}
   }
   useEffect(() => {
-
     const id = searchParams.get("id");
     const flag = searchParams.get("edit");
     setId(id);
@@ -292,7 +323,7 @@ const Tab1: React.FC = () => {
     const currentId = searchParams?.get("id") || "";
     await fetchPatient(currentId);
     event.detail.complete();
-  }
+  };
   const onSubmit = (data: any) => {
     console.log(data);
     savePatient(data);
@@ -304,234 +335,215 @@ const Tab1: React.FC = () => {
       <IonContent fullscreen>
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent
-            className="spinner-only" // <-- Add this class
+            className="spinner-only"
             refreshingSpinner="circles"
-          // You can remove the other text props
-          ></IonRefresherContent>
+          />
         </IonRefresher>
+
         <ShowRegisteredTab id={id || ""} />
-        <form
-          className=" shadow-1 border  rounded-md m-2 p-2 pt-5 flex flex-col gap-10"
-          onSubmit={handleSubmit(onSubmit)}
-        >
-          <Controller
-            name="i_name"
-            control={control}
-            rules={{
-              required: "Employee name field is required",
-            }}
-            render={({ field: { onChange, value } }) => (
-              <Dropdown
-                onChange={(e) => onChange(e.value)}
-                optionLabel="name"
-                value={value}
-                optionValue="value"
-                className="border-1"
-                placeholder="Select empoloyee name"
-                options={[
-                  { name: "ITTEST1", value: "ITEST1" },
-                  { name: "ITTEST2", value: "ITEST2" },
-                ]}
+
+        {/* Use a <form> tag for semantics, but let the <Card> do the styling.
+          The submit handler is on the <form> tag.
+        */}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Card
+            title={id ? "Participant Details" : "New Participant Registration"}
+            className="m-3"
+          >
+            {/* 'p-fluid' makes inputs full-width.
+              'gap-6' is a more reasonable spacing than 'gap-10'.
+            */}
+            <div className="p-fluid flex flex-col gap-6">
+              {/* --- 1. Employee Name Dropdown --- */}
+              <ControlledFormField
+                name="i_name"
+                control={control}
+                errors={errors}
+                rules={{ required: "Employee name field is required" }}
+                render={({ field }: any) => (
+                  <FloatLabel>
+                    <Dropdown
+                      {...field}
+                      options={employeeNameOptions}
+                      optionLabel="name"
+                      optionValue="value"
+                      className="w-full"
+                    />
+                    <label>Select employee name</label>
+                  </FloatLabel>
+                )}
               />
-            )}
-          />
-          {errors?.i_name && (
-            <RenderError text={errors?.i_name.message?.toString()} />
-          )}
-          {/* ------------------------------------- */}
 
-          <Controller
-            name="i_emp_code"
-            control={control}
-            rules={{
-              required: "Employee code is required",
-            }}
-            render={({ field: { onChange } }) => (
-              <Dropdown
-                onChange={(e) => onChange(e.value)}
-                optionLabel="name"
-                value={watch("i_emp_code")}
-                className="border-1"
-                placeholder="Select empoloyee code"
-                options={[
-                  { name: "CODE1", value: "CODE1" },
-                  { name: "CODE2", value: "CODE2" },
-                ]}
+              {/* --- 2. Employee Code Dropdown --- */}
+              <ControlledFormField
+                name="i_emp_code"
+                control={control}
+                errors={errors}
+                rules={{ required: "Employee code is required" }}
+                render={({ field }: any) => (
+                  <FloatLabel>
+                    <Dropdown
+                      {...field}
+                      options={employeeCodeOptions}
+                      optionLabel="name"
+                      optionValue="value"
+                      className="w-full"
+                    />
+                    <label>Select employee code</label>
+                  </FloatLabel>
+                )}
               />
-            )}
-          />
-          {errors?.i_emp_code && (
-            <RenderError text={errors?.i_emp_code.message?.toString()} />
-          )}
-          {/* ------------------------------------- */}
 
-          <Button
-            label="Get co-ordinates"
-            type="button"
-            onClick={getCurrentPosition}
-            className="p-3 rounded-md"
-          />
-          <div className="flex border rounded-md w-full align-items-center gap-5 p-2 ">
-            <div className="flex align-items-center">
-              <p>Latitude : </p>
-              <p>{patient.lat}</p>
-            </div>
-            <div className="flex align-items-center">
-              <p>Longitude : </p>
-              <p>{patient.long}</p>
-            </div>
-          </div>
-
-          {/* ------------------------------------- */}
-
-          <FloatLabel>
-            <InputText
-              className="border-1 p-2"
-              value={watch("name")}
-              {...register("name", { required: "Name is required" })}
-            />
-            <label>Participant's name</label>
-          </FloatLabel>
-          {errors?.name && (
-            <RenderError text={errors?.name.message?.toString()} />
-          )}
-          {/* ------------------------------------- */}
-
-          <div className="border rounded p-2 plainBorder ">
-            <p className="m-0">Select gender</p>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Controller
-                  name="gender"
-                  control={control}
-                  rules={{
-                    required: "Gender is required",
-                  }}
-                  render={({ field: { onChange } }) => (
-                    <input
-                      type="radio"
-                      value={"male"}
-                      checked={watch("gender") === "male"}
-                      onChange={(e) => onChange(e.target.value)}
-                    />
-                  )}
+              {/* --- 3. Coordinates Section --- */}
+              <div className="flex flex-col gap-3">
+                <Button
+                  label="Get Co-ordinates"
+                  type="button"
+                  onClick={getCurrentPosition}
+                  icon="pi pi-map-marker"
+                  outlined // A nicer 'outlined' style
                 />
-                <p>Male</p>
+                {/* Only show the info box if we have data */}
+                {patient.lat != null || patient.long != null ? (
+                  <div className="flex justify-around border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
+                    <div className="text-center">
+                      <span className="text-sm text-gray-500">Latitude</span>
+                      <p className="font-bold">
+                        {patient.lat != null ? patient.lat : "N/A"}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <span className="text-sm text-gray-500">Longitude</span>
+                      <p className="font-bold">
+                        {patient.long != null ? patient.long : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
               </div>
-              <div className="flex items-center gap-2">
-                <Controller
-                  name="gender"
-                  control={control}
-                  rules={{
-                    required: "Gender is required",
-                  }}
-                  render={({ field: { onChange } }) => (
-                    <input
-                      type="radio"
-                      value={"female"}
-                      checked={watch("gender") === "female"}
-                      onChange={(e) => onChange(e.target.value)}
+
+              {/* --- 4. Participant Name --- */}
+              <ControlledFormField
+                name="name"
+                control={control}
+                errors={errors}
+                rules={{ required: "Name is required" }}
+                render={({ field }: any) => (
+                  <FloatLabel>
+                    <InputText {...field} className="w-full" />
+                    <label>Participant's name</label>
+                  </FloatLabel>
+                )}
+              />
+
+              {/* --- 5. Gender Radio Group --- */}
+              <ControlledFormField
+                name="gender"
+                control={control}
+                errors={errors}
+                rules={{ required: "Gender is required" }}
+                render={({ field }: any) => (
+                  <div className="border border-gray-300 rounded-md p-3">
+                    <p className="font-medium mb-3">Select Gender</p>
+                    <div className="flex flex-wrap gap-4">
+                      {genderOptions.map((option) => (
+                        <div
+                          key={option.value}
+                          className="flex align-items-center"
+                        >
+                          {/* Use the PrimeReact <RadioButton> */}
+                          <RadioButton
+                            inputId={option.value}
+                            name="gender"
+                            value={option.value}
+                            onChange={field.onChange}
+                            checked={field.value === option.value}
+                          />
+                          <label htmlFor={option.value} className="ml-2">
+                            {option.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              />
+
+              {/* --- 6. Age --- */}
+              <ControlledFormField
+                name="age"
+                control={control}
+                errors={errors}
+                rules={{ required: "Age is required" }}
+                render={({ field }: any) => (
+                  <FloatLabel>
+                    <InputText {...field} keyfilter="int" className="w-full" />
+                    <label>Age</label>
+                  </FloatLabel>
+                )}
+              />
+
+              {/* --- 7. Date of Birth --- */}
+              <ControlledFormField
+                name="dob"
+                control={control}
+                errors={errors}
+                rules={{ required: "Date of birth is required" }}
+                render={({ field: { onChange, value } }: any) => (
+                  <FloatLabel>
+                    <Calendar
+                      value={value ? new Date(value) : null}
+                      onChange={onChange}
+                      showIcon
+                      className="w-full"
                     />
-                  )}
-                />
-                <p>Female</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Controller
-                  name="gender"
-                  control={control}
-                  rules={{
-                    required: "Gender is required",
-                  }}
-                  render={({ field: { onChange } }) => (
-                    <input
-                      type="radio"
-                      value={"other"}
-                      checked={watch("gender") === "other"}
-                      onChange={(e) => onChange(e.target.value)}
-                    />
-                  )}
-                />
-                <p>Other</p>
-              </div>
-            </div>
-          </div>
-          {errors?.gender && (
-            <RenderError text={errors?.gender.message?.toString()} />
-          )}
-          {/* ------------------------------------- */}
+                    <label>Date of Birth</label>
+                  </FloatLabel>
+                )}
+              />
 
-          <FloatLabel>
-            <InputText
-              keyfilter="int"
-              className="border-1 p-2"
-              value={watch("age").toString()}
-              {...register("age", { required: "Age is required" })}
-            />
-            <label>Age</label>
-          </FloatLabel>
-          {errors?.age && (
-            <RenderError text={errors?.age.message?.toString()} />
-          )}
-
-          {/* ------------------------------------- */}
-          <div className="border-1 plainBorder p-2 border-round-md flex flex-col gap-2">
-            <p className="m-0">Date of Birth</p>
-            <Controller
-              name="dob"
-              control={control}
-              rules={{
-                required: "Date of birth is required",
-              }}
-              render={({ field: { onChange, value } }) => {
-                // let dateValue: any = value;
-                // if (typeof value === 'string') {
-                //   const parsed = parse(value, 'yyyy-MM-dd', new Date());
-                //   dateValue = isValid(parsed) ? parsed : null;
-                // }
-
-                return (
-                  <Calendar
-                    className="border-1  focus:outline-none"
-                    value={value ? new Date(value) : null}
-                    onChange={(e) => onChange(e.value)}
-                    showIcon
+              {/* --- 8. Signature Pad --- */}
+              <div className="flex flex-col gap-2">
+                <label className="font-medium">Participant's Signature</label>
+                <SignaturePad strokes={strokes} setStrokes={setStrokes} />
+                <div className="flex justify-end">
+                  <Button
+                    label="Clear"
+                    severity="warning"
+                    type="button"
+                    onClick={() => setStrokes([])}
+                    text // Use a 'text' button for a cleaner look
+                    raised
                   />
-                );
-              }}
-            />
-          </div>
-          {errors?.dob && (
-            <RenderError text={errors?.dob.message?.toString()} />
-          )}
-          <div className="space-y-2">
-            <p>Participant's signature</p>
-            <SignaturePad strokes={strokes} setStrokes={setStrokes} />
-            <div className="flex gap-2">
+                </div>
+              </div>
+
+              {/* --- 9. Save Button --- */}
               <Button
-                label="Clear"
-                severity="warning"
-                type="button"
-                onClick={() => setStrokes([])}
+                label={id ? "Update Participant" : "Save Participant"}
+                type="submit"
+                icon="pi pi-check"
+                size="large" // Make the primary action pop
               />
             </div>
-          </div>
-
-          <div className="flex justify-center">
-            <Button
-              label="Save"
-              type="submit"
-              className="px-4 py-2 border-1 border-round-md"
-            />
-          </div>
+          </Card>
         </form>
+
+        {/* --- "Next" Button (Outside the Card, but still in IonContent) --- */}
         {id && (
-          <div className="flex justify-end p-2 gap-2  ">
+          <div className="flex justify-end p-3">
             <Link to={`/tab5?id=${id}&edit=${editFlag}`}>
-              <Button label="NEXT" className="px-3 py-2 rounded" />
+              <Button
+                label="NEXT"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                severity="secondary" // Use a secondary style
+                outlined
+              />
             </Link>
           </div>
         )}
+
         <IonAlert
           isOpen={alert.show}
           onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
@@ -540,9 +552,10 @@ const Tab1: React.FC = () => {
           buttons={["OK"]}
         />
 
+        {/* Spacer at the bottom */}
+        <div className="pb-[250px]"></div>
       </IonContent>
-      <div className="pb-[250px]"></div>
-    </IonPage >
+    </IonPage>
   );
 };
 

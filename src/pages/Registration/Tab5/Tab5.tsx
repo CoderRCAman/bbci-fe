@@ -1,4 +1,11 @@
-import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import React, { useEffect, useRef, useState } from "react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
@@ -24,7 +31,7 @@ export interface RESIDENTIAL_TYPE {
 
 function isResidentialDataValid(
   data: RESIDENTIAL_TYPE[],
-  userData: any,
+  userData: any
 ): boolean {
   const allItemsValid = data.every((item) => {
     const hasRequiredFields =
@@ -35,8 +42,10 @@ function isResidentialDataValid(
     const hasValidNumbers = item.from_age >= 0 && item.to_age > 0;
     const isRangeCorrect = item.from_age <= item.to_age;
     const isWithinUserAge =
-      item.to_age <= (userData.age) && item.from_age <= userData.age;
-    return hasRequiredFields && hasValidNumbers && isRangeCorrect && isWithinUserAge;
+      item.to_age <= userData.age && item.from_age <= userData.age;
+    return (
+      hasRequiredFields && hasValidNumbers && isRangeCorrect && isWithinUserAge
+    );
   });
   if (!allItemsValid) {
     return false;
@@ -87,7 +96,7 @@ export default function Tab5() {
       city: "",
       state: "",
       code: 0,
-      village: ''
+      village: "",
     };
 
     setResidentialData((d) => [...d, newResidential]);
@@ -131,7 +140,7 @@ export default function Tab5() {
       });
     }
     const userData = await fetchCurrentUserDetails(db, id || "");
-    console.log(userData)
+    console.log(userData);
     //for fresh records
     if (!isResidentialDataValid(residentialData, userData)) {
       return setAlert({
@@ -151,7 +160,7 @@ export default function Tab5() {
         "id",
         "user_id",
         "tab_id",
-        "created_at"
+        "created_at",
       ];
       const updateColumns = columns.filter((col) => col !== "id");
 
@@ -166,7 +175,7 @@ export default function Tab5() {
           `'${item.id}'`,
           `'${id}'`,
           `'${tabId}'`,
-          `'${new Date().toLocaleString('sv-SE').replace('T', ' ')}'`
+          `'${new Date().toLocaleString("sv-SE").replace("T", " ")}'`,
         ];
         return `(${values.join(", ")})`;
       });
@@ -209,12 +218,12 @@ export default function Tab5() {
   const handleSaveUpdated = () => {
     //for updated records
   };
-  console.log(residentialData.length)
+  console.log(residentialData.length);
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
     await loadExisting(currentId);
     event.detail.complete();
-  }
+  };
   return (
     <>
       <IonPage>
@@ -222,13 +231,15 @@ export default function Tab5() {
         <IonContent class="" fullscreen>
           <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
             <IonRefresherContent
-              className="spinner-only" // <-- Add this class
+              className="spinner-only"
               refreshingSpinner="circles"
-            // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
-          <ShowRegisteredTab id={id || ''} />
-          <main className="mt-6 p-2  space-y-8">
+
+          <ShowRegisteredTab id={id || ""} />
+
+          {/* Use slightly more padding and less aggressive vertical spacing */}
+          <main className="mt-6 p-3 space-y-6">
             {residentialData.map((item) => (
               <AddResidential
                 handleRemoveUi={handleRemoveUi}
@@ -238,33 +249,36 @@ export default function Tab5() {
               />
             ))}
           </main>
-          <div className="mt-4 flex justify-between flex-row-reverse gap-4 px-2 pb-5">
+
+          {/* Aligned all buttons to the right (end) for a cleaner look */}
+          <div className="mt-4 flex justify-end gap-3 px-3 pb-5">
             <Button
-              label="+ Add new"
-              text
-              raised
-              className="px-3 py-2 px-10 py-3 rounded-md font-bold"
+              label="Add new"
+              icon="pi pi-plus" // Added icon
+              outlined // Use outlined instead of text + raised
+              className="font-bold"
               onClick={handleAddNewUi}
             />
             {editFlag === "yes" ? (
               <Button
                 label="Save"
-                text
+                icon="pi pi-check" // Added icon
                 raised
-                className="px-3 py-2 px-10 rounded-md font-bold"
+                className="font-bold"
                 onClick={handleSaveUpdated}
               />
             ) : (
               <Button
                 label="Save"
+                icon="pi pi-check" // Added icon
                 severity="success"
-                text
                 raised
-                className=" px-10   rounded-md font-bold"
+                className="font-bold"
                 onClick={() => handleSaveFresh()}
               />
             )}
           </div>
+
           <IonAlert
             isOpen={alert.show}
             onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))}
@@ -272,17 +286,33 @@ export default function Tab5() {
             message={alert.message}
             buttons={["OK"]}
           />
-          <div className="flex gap-2 mt-20 justify-end  pb-5 pr-2">
+
+          {/* Use justify-between for PREV/NEXT and reduce the huge margin-top */}
+          <div className="flex gap-2 mt-8 justify-between pb-5 px-3">
             <Link to={`/tab1?id=${id}&edit=no`}>
-              <Button label="PREV" className="px-10 py-2  rounded-md" />
+              <Button
+                label="PREV"
+                icon="pi pi-arrow-left" // Added icon
+                severity="secondary" // Use secondary style for PREV
+                outlined
+              />
             </Link>
 
             <Link to={`/tab6?id=${id}`}>
-              <Button label="NEXT" className="px-10 py-2  rounded-md" />
+              <Button
+                label="NEXT"
+                icon="pi pi-arrow-right" // Added icon
+                iconPos="right" 
+                outlined 
+                severity="secondary"
+              />
             </Link>
           </div>
+
+          {/* MOVED THIS DIV INSIDE IonContent so it provides scrollable padding */}
+          <div className="pb-[250px]"></div>
         </IonContent>
-        <div className="pb-[250px]"></div>
+        {/* The spacer div was here, which is incorrect. It's now moved up. */}
       </IonPage>
     </>
   );

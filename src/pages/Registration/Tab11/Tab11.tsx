@@ -6,7 +6,7 @@ import ChewingWithoutTobacco from "./ChewingWithoutTobacco";
 import Alcohol from "./Alcohol";
 import { Button } from "primereact/button";
 import { Link, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import {
   checkElibleToSave,
@@ -28,6 +28,7 @@ export default function Tab11() {
   const [allowNext, setAllowNext] = useState(false);
   const location = useLocation();
   const [id, setId] = useState<string>("");
+  const scrollRef = useRef<HTMLDivElement>(null);
   const searchParams = new URLSearchParams(location.search);
   useEffect(() => {
     setId(searchParams?.get("id") || "");
@@ -177,9 +178,9 @@ export default function Tab11() {
       d.map((item) =>
         item.product_type === type
           ? {
-            ...item,
-            products: item.products.filter((x) => x.id !== id),
-          }
+              ...item,
+              products: item.products.filter((x) => x.id !== id),
+            }
           : item
       )
     );
@@ -230,8 +231,8 @@ export default function Tab11() {
         }
       />
       <IonContent class="" fullscreen>
-        <ShowRegisteredTab id={id || ''} />
-        <main className="p-2 space-y-10">
+        <ShowRegisteredTab id={id || ""} />
+        <main ref={scrollRef} className="p-2 space-y-10">
           <Accordion className="space-y-2 outline-none" activeIndex={0}>
             <AccordionTab
               className="border-1 rounded  border-slate-200"
@@ -282,10 +283,11 @@ export default function Tab11() {
           </Accordion>
           <div className="flex justify-end ">
             <Button
+              onClick={handleSave}
               label="Save"
               severity="success"
-              className="py-2"
-              onClick={handleSave}
+              icon="pi pi-check" // Added icon
+              raised // Added for emphasis
             />
           </div>
         </main>
@@ -296,14 +298,43 @@ export default function Tab11() {
           message={alert.message}
           buttons={["OK"]}
         />
+
         <div className="pt-10 pb-2 px-2 flex justify-end gap-2">
           <Link to={"/tab9?id=" + id}>
-            <Button className="px-10 py-2 rounded" label="PREV" />
+            <Button
+              className="px-10 py-2 rounded"
+              label="PREV"
+              icon="pi pi-arrow-left" // Added icon
+              severity="secondary" // Use secondary style
+              outlined
+            />
           </Link>
           <Link to={"/tab12?id=" + id}>
-            <Button className="px-10 py-2 rounded" label="NEXT" />
+            <Button
+              className="px-10 py-2 rounded"
+              label="NEXT"
+              icon="pi pi-arrow-right" // Added icon
+              severity="secondary" // Use secondary style
+              outlined
+            />
           </Link>
         </div>
+        <Button
+          icon="pi pi-arrow-up"
+          // WindiCSS classes for styling and position
+          className={`
+                fixed bottom-6 right-6 
+                p-button-rounded p-button-secondary shadow-lg
+                transition-opacity duration-300
+                
+              `} // <-- Fixed broken string
+          style={{ zIndex: 2000 }}
+          onClick={() => {
+            console.log("HELLo");
+            if (scrollRef.current)
+              scrollRef.current.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
       </IonContent>
     </IonPage>
   );

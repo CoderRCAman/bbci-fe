@@ -44,7 +44,6 @@ const Tab2: React.FC = () => {
   const header = (
     <div className="flex justify-content-end">
       <span className="p-input-icon-left">
-        <i className="pi pi-search" />
         <InputText
           value={globalFilterValue}
           onInput={(e) => setGlobalFilterValue(e.currentTarget.value)}
