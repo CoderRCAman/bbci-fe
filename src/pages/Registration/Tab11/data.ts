@@ -8,10 +8,10 @@ export interface TOBACCO_ALCOHOL_CONSUMPION {
   id: string;
   user_id: string;
   type:
-  | "smoking_tobacco"
-  | "chewing_tobacco"
-  | "chewing_without_tobacco"
-  | "alcohol";
+    | "smoking_tobacco"
+    | "chewing_tobacco"
+    | "chewing_without_tobacco"
+    | "alcohol";
   product?: string;
   consumes?: number;
   from_age?: number;
@@ -34,10 +34,10 @@ export interface TOBACCO_ALCOHOL_CONSUMPION {
 
 export interface initialState {
   product_type:
-  | "smoking_tobacco"
-  | "chewing_tobacco"
-  | "chewing_without_tobacco"
-  | "alcohol";
+    | "smoking_tobacco"
+    | "chewing_tobacco"
+    | "chewing_without_tobacco"
+    | "alcohol";
   consumed: number;
   products: TOBACCO_ALCOHOL_CONSUMPION[];
   id: string;
@@ -297,14 +297,15 @@ export const checkElibleToSave = async (
   user_id: string,
   tab_id: string,
   table_name: string = "patients",
+  field_name: string = "id"
 ) => {
   try {
     if (!table_name) return false;
     const res = await db.query(
-      `select * from ${table_name} where id = '${user_id}'`
+      `select * from ${table_name} where ${field_name} = '${user_id}'`
     );
     const user = res?.values?.[0];
-    if (!user) return false;
+    if (!user) return true;
     if (user.tab_id !== tab_id) return false;
     return true;
   } catch (error) {
@@ -344,7 +345,7 @@ export const saveToDBAlcohol = async (
         user_id,
         data.consumed,
         tab_id,
-        new Date().toLocaleString('sv-SE').replace('T', ' '),
+        new Date().toLocaleString("sv-SE").replace("T", " "),
       ];
       await db.run(queryM, values);
     }
@@ -404,7 +405,7 @@ export const saveToDBAlcohol = async (
         data.is_other_product,
         tab_id,
         data.master_id,
-        new Date().toLocaleString('sv-SE').replace('T', ' '),
+        new Date().toLocaleString("sv-SE").replace("T", " "),
       ];
 
       await db.run(query, values);

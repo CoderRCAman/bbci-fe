@@ -293,6 +293,12 @@ const Tab1: React.FC = () => {
           JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))),
         ]
       );
+      const params = new URLSearchParams(location.search);
+      params.set("id", uniqueId ); // add or update
+      history.replace({
+        pathname: location.pathname,
+        search: params.toString(),
+      });
       await saveToStore(sqlite);
       setAlert((a) => ({
         ...a,

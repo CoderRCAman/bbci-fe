@@ -109,6 +109,21 @@ BEGIN
     INSERT INTO tracksync (rowId, synch, table_name)
     VALUES (NEW.id, 0, 'family_history_of_cancer_relatives');
 END;
+
+CREATE TRIGGER IF NOT EXISTS trg_endo_reports_insert
+AFTER INSERT ON endo_reports
+BEGIN
+    INSERT INTO tracksync (rowId, synch, table_name)
+    VALUES (NEW.id, 0, 'endo_reports');
+END;
+
+
+CREATE TRIGGER IF NOT EXISTS trg_stomach_lesions_insert
+AFTER INSERT ON stomach_lesions
+BEGIN
+    INSERT INTO tracksync (rowId, synch, table_name)
+    VALUES (NEW.id, 0, 'stomach_lesions');
+END;
 `;
 
 export const trackTableUpdateTriggers = `
@@ -226,6 +241,22 @@ BEGIN
     WHERE rowId = NEW.id;
 END;
 
+CREATE TRIGGER IF NOT EXISTS trg_endo_reports_update
+AFTER UPDATE ON endo_reports
+BEGIN
+    UPDATE tracksync
+    SET synch = 2
+    WHERE rowId = NEW.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_stomach_lesions_update
+AFTER UPDATE ON stomach_lesions
+BEGIN
+    UPDATE tracksync
+    SET synch = 2
+    WHERE rowId = NEW.id;
+END;
+
 `;
 
 export const trackTableDeleteTriggers = `
@@ -337,6 +368,22 @@ END;
 
 CREATE TRIGGER IF NOT EXISTS trg_family_history_of_cancer_relatives_delete
 AFTER DELETE ON family_history_of_cancer_relatives
+BEGIN
+    UPDATE tracksync
+    SET synch = 3
+ WHERE rowId = OLD.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_endo_reports_delete
+AFTER DELETE ON endo_reports
+BEGIN
+    UPDATE tracksync
+    SET synch = 3
+ WHERE rowId = OLD.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_stomach_lesions_delete
+AFTER DELETE ON stomach_lesions
 BEGIN
     UPDATE tracksync
     SET synch = 3

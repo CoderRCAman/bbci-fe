@@ -92,7 +92,7 @@ export default function EndoPage1() {
                   sortable
                   header="Id"
                   body={(rowData) => (
-                    <Link to={`/endo3?id=${rowData.id}`}>{rowData.id}</Link>
+                    <Link to={`/endo4?id=${rowData.id}`}>{rowData.id}</Link>
                   )}
                 ></Column>
                 <Column field="name" sortable header="Name"></Column>
@@ -123,7 +123,7 @@ export default function EndoPage1() {
                   header="Id"
                   body={(rowData) => (
                     <Link
-                      to={`/endo3?endoId=${rowData.id}&id=${rowData.user_id}&edit=yes`}
+                      to={`/endo4?endoId=${rowData.id}&id=${rowData.user_id}&edit=yes`}
                     >
                       {rowData.id}
                     </Link>

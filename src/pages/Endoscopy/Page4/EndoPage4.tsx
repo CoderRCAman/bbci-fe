@@ -1,8 +1,15 @@
-import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import Header from "../../../components/Header";
 import { Ref, useEffect, useState } from "react";
 import { useSQLite } from "../../../utils/Sqlite";
-import { useLocation } from "react-router";
+import { useLocation, useHistory } from "react-router";
 import { FloatLabel } from "primereact/floatlabel";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
@@ -11,17 +18,23 @@ import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Card } from "primereact/card";
+import { Calendar } from "primereact/calendar";
+import shortUUID from "short-uuid";
 
 export default function EndoPage4() {
   const location = useLocation();
+  const history = useHistory();
   const [videoFileName, setVideoFileName] = useState("");
   const [pdfFileName, setPdfFileName] = useState("");
+  const [endoscopyDate, setEndoscopyDate] = useState("");
   const searchParams = new URLSearchParams(location.search);
   const [id, setId] = useState("");
   const [editFlag, setEditFlag] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
-  const [endoId, setEndoId] = useState("");
+  const [endoId, setEndoId] = useState(
+    new Date().toLocaleString("sv-SE").replace("T", " ")
+  );
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -42,6 +55,9 @@ export default function EndoPage4() {
       console.log(val);
       setVideoFileName(val?.endoscopy_video_filename || "");
       setPdfFileName(val?.endoscopy_pdf_filename || "");
+      setEndoscopyDate(
+        val?.date || new Date().toLocaleString("sv-SE").replace("T", " ")
+      );
     } catch (error) {
       console.log(error);
     }
@@ -53,12 +69,18 @@ export default function EndoPage4() {
     setId(curId);
     setEndoId(searchParams.get("endoId") || "");
     setEditFlag(edit === "yes");
-
+    if (!endoIdd) {
+      setEndoId(shortUUID().generate());
+    }
     fetchCurrentUser(curId, endoIdd);
   }, [location.pathname, db]);
   const AddMediaReportFilenames = async () => {
     try {
-      if (db && editFlag && !(await checkElibleToSave(db, endoId || "", tabId, 'ENDOSCOPY'))) {
+      if (
+        db &&
+        editFlag &&
+        !(await checkElibleToSave(db, endoId || "", tabId, "ENDOSCOPY"))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -74,15 +96,27 @@ export default function EndoPage4() {
         return;
       }
       const query = `
-                UPDATE ENDOSCOPY SET endoscopy_video_filename = '${videoFileName}' , 
-                endoscopy_pdf_filename = '${pdfFileName}' 
-                WHERE id = '${endoId}';
+              INSERT INTO ENDOSCOPY (id, endoscopy_video_filename, endoscopy_pdf_filename , date , user_id , tab_id,  created_at)
+              VALUES ('${endoId}', '${videoFileName}', '${pdfFileName}' , '${endoscopyDate}' , '${id}' , '${tabId}' , '${new Date()
+        .toLocaleString("sv-SE")
+        .replace("T", " ")}')
+                    ON CONFLICT(id) DO UPDATE SET
+                        endoscopy_video_filename = excluded.endoscopy_video_filename,
+                        endoscopy_pdf_filename = excluded.endoscopy_pdf_filename,
+                        date = excluded.date;
             `;
       await db?.execute(query);
       await saveToStore(sqlite);
+      const params = new URLSearchParams(location.search);
+      params.set("endoId", endoId); // add or update
+      params.set("edit", "yes"); // add or update
+      history.replace({
+        pathname: location.pathname,
+        search: params.toString(),
+      });
       setAlert({
         header: "Success",
-        message: "Endoscopy report updated successfully!",
+        message: "Endoscopy report saved successfully!",
         show: true,
       });
     } catch (error) {
@@ -94,7 +128,7 @@ export default function EndoPage4() {
     const endoIdd = searchParams.get("endoId") || "";
     fetchCurrentUser(curId, endoIdd);
     event.detail.complete();
-  }
+  };
   return (
     <>
       <IonPage>
@@ -123,6 +157,19 @@ export default function EndoPage4() {
             <div className="mt-10 border shadow rounded p-2">
               <div className="mt-5 space-y-7">
                 <FloatLabel>
+                  <Calendar
+                    value={new Date(endoscopyDate)}
+                    onChange={(e) => {
+                      setEndoscopyDate(
+                        e.value?.toLocaleString("sv-SE").replace("T", " ") || ""
+                      );
+                    }}
+                    showIcon
+                    className="w-full"
+                  />
+                  <label>Endoscopy date</label>
+                </FloatLabel>
+                <FloatLabel>
                   <InputText
                     value={videoFileName}
                     className="border-1 p-2 w-[400px]"
@@ -148,12 +195,33 @@ export default function EndoPage4() {
                 onClick={() => AddMediaReportFilenames()}
               />
             </div>
-            <div className="flex justify-end mt-2 gap-2">
-              <Link to={`/endo3?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
-                <Button label="PREV" className="px-10 py-2 rounded" />
+            <div className="flex justify-between mt-20 gap-2 ">
+              <Link
+                to={`/endo1?id=${id}&endoId=${endoId}&edit=${
+                  editFlag ? "yes" : "no"
+                }`}
+              >
+                <Button
+                  label="PREV"
+                  className="px-10 py-2 rounded"
+                  severity="secondary"
+                  outlined
+                  icon="pi pi-arrow-left"
+                />
               </Link>
-              <Link to={`/endo2?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
-                <Button label="NEXT" className="px-10 py-2 rounded" />
+              <Link
+                to={`/endo2?id=${id}&endoId=${endoId}&edit=${
+                  editFlag ? "yes" : "no"
+                }`}
+              >
+                <Button
+                  label="NEXT"
+                  className="px-10 py-2 rounded"
+                  severity="secondary"
+                  outlined
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                />
               </Link>
             </div>
           </main>

@@ -111,11 +111,17 @@ export default function BloodPage3() {
       if (
         db &&
         editFlag &&
-        !(await checkElibleToSave(db, sampleId || "", tabId, "blood_sample"))
+        !(await checkElibleToSave(
+          db,
+          sampleId || "",
+          tabId,
+          "gtgh_blood_report",
+          "sampleId"
+        ))
       ) {
         return setAlert({
           header: "Restricted access",
-          message: "This user was registered with a different tab id.",
+          message: "This record was registered with a different tab id.",
           show: true,
         });
       }
@@ -169,7 +175,11 @@ export default function BloodPage3() {
       <IonPage>
         <Header title={"Renal Function Test (RFT)"} />
         <IonContent fullscreen>
-          <ShowRegisteredTab id={sampleId || ""} table_name="blood_sample" />
+          <ShowRegisteredTab
+            id={sampleId || ""}
+            table_name="gtgh_blood_report"
+            field_name="sampleId"
+          />
           <main className="p-2">
             <Card title="Participant's Details" className="shadow border">
               <div className="text-slate-600 dark:text-gray-300 space-y-2">
@@ -243,7 +253,7 @@ export default function BloodPage3() {
                 label="Save"
                 className="px-10 py-2 rounded"
                 severity="success"
-                icon = "pi pi-check"
+                icon="pi pi-check"
               />
             </div>
 

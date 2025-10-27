@@ -132,7 +132,7 @@ export default function Tab5() {
     loadExisting(curId);
   }, [db, location.pathname]);
   const handleSaveFresh = async () => {
-    if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+    if (db && !(await checkElibleToSave(db, id || "", tabId  ))) {
       return setAlert({
         header: "Restricted access",
         message: "This user was registered with a different tab id.",
@@ -236,7 +236,7 @@ export default function Tab5() {
             ></IonRefresherContent>
           </IonRefresher>
 
-          <ShowRegisteredTab id={id || ""} />
+          <ShowRegisteredTab id={id || ""}  />
 
           {/* Use slightly more padding and less aggressive vertical spacing */}
           <main className="mt-6 p-3 space-y-6">

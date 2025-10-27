@@ -23,14 +23,12 @@ export default function AddResidential({
   return (
     /* Use a softer shadow, larger rounding, and better padding */
     <div className="border border-gray-200 dark:border-gray-700 py-4 px-4 rounded-lg space-y-8 flex justify-between flex-row-reverse shadow-lg">
-      <div className="-mt-2 -mr-1">
+      <div className="-mt-3 -mr-1">
         {/* Use an icon, make it fully rounded */}
         <Button
-          icon="pi pi-times" // Use icon instead of label='X'
-          rounded // Use rounded instead of rounded-[500px]
-          outlined
+          icon="pi pi-trash" // Use icon instead of label='X'
+          text
           severity="danger"
-          className="w-10 h-10"
           onClick={() => handleRemoveUi(data.id)}
         />
       </div>

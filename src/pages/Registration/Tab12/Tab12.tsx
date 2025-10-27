@@ -251,9 +251,9 @@ export default function Tab12() {
             {/* Align the save button to the right */}
             <div className="flex justify-end pt-4">
               <Button
+                onClick={handleSave}
                 label="Save"
                 severity="success"
-                onClick={handleSave}
                 icon="pi pi-check" // Added icon
                 raised // Added for emphasis
               />

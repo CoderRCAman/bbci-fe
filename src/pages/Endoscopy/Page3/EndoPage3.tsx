@@ -1,4 +1,11 @@
-import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import Header from "../../../components/Header";
 import { Button } from "primereact/button";
 import { useEffect, useState } from "react";
@@ -20,7 +27,9 @@ export default function EndoPage3() {
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [endoId, setEndoId] = useState("");
-  const [collection_date, setCollectionDate] = useState<string>(new Date().toLocaleTimeString("sv-SE").replace("T", " "));;
+  const [collection_date, setCollectionDate] = useState<string>(
+    new Date().toLocaleTimeString("sv-SE").replace("T", " ")
+  );
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -36,9 +45,9 @@ export default function EndoPage3() {
                 `;
       const res = await db?.query(query);
       const res2 = await db?.query(query2);
-      console.log(res)
+      console.log(res);
       setParticipants(res?.values?.[0]);
-      setBarCodeData(res2?.values?.[0]?.vial_code);
+      setBarCodeData(res2?.values?.[0]?.vial_code || "HEY");
       setCollectionDate(res2?.values?.[0]?.date);
       console.log(res2);
     } catch (error) {
@@ -71,7 +80,11 @@ export default function EndoPage3() {
   }, [location.pathname]);
   const handleSaveEndocode = async () => {
     try {
-      if (db && editFlag && !(await checkElibleToSave(db, endoId || "", tabId, 'ENDOSCOPY'))) {
+      if (
+        db &&
+        editFlag &&
+        !(await checkElibleToSave(db, endoId || "", tabId, "ENDOSCOPY"))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -90,8 +103,7 @@ export default function EndoPage3() {
       const translator = ShortUUID();
       const uid = translator.generate();
       const query = `
-                    INSERT INTO ENDOSCOPY (id , vial_code , user_id , date , tab_id , created_at) 
-                    values ('${uid}' , '${barcodeData}' , '${id}' , '${collection_date}' , '${tabId}' , '${new Date().toLocaleString('sv-SE').replace('T', ' ')}') 
+                   UPDATE ENDOSCOPY SET vial_code = '${barcodeData}', biopsy_collection_date = '${collection_date}' WHERE id = '${endoId}'
                 `;
       await db?.execute(query);
       await saveToStore(sqlite);
@@ -110,7 +122,7 @@ export default function EndoPage3() {
     const endoIdd = searchParams.get("endoId") || "";
     fetchCurrentUser(curId, endoIdd);
     event.detail.complete();
-  }
+  };
   return (
     <>
       <IonPage>
@@ -122,7 +134,7 @@ export default function EndoPage3() {
               refreshingSpinner="circles"
             />
           </IonRefresher>
-          <ShowRegisteredTab id={endoId || ''} table_name="ENDOSCOPY" />
+          <ShowRegisteredTab id={endoId || ""} table_name="ENDOSCOPY" />
           <main className="p-2 space-y-10">
             <Card title="Participant's Details" className="shadow border">
               <div className="text-slate-600 dark:text-gray-300 space-y-2">
@@ -147,7 +159,6 @@ export default function EndoPage3() {
                     <p className="text-sm w-[300px] text-slate-500 p-2 border rounded">
                       {barcodeData || "YOUR BARCODE WILL SHOW UP HERE"}
                     </p>
-
                   </div>
                 </div>
               </div>
@@ -156,9 +167,9 @@ export default function EndoPage3() {
                   <Calendar
                     value={new Date(collection_date)}
                     onChange={(e) => {
-                      setCollectionDate(e.value
-                        ?.toLocaleString("sv-SE")
-                        .replace("T", " ") || "")
+                      setCollectionDate(
+                        e.value?.toLocaleString("sv-SE").replace("T", " ") || ""
+                      );
                     }}
                     showIcon
                     className="w-full"
@@ -177,12 +188,22 @@ export default function EndoPage3() {
             </div>
 
             <div className="mt-10 flex justify-end gap-2 ">
-              <Link to={`/endo1?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
-                <Button label="PREV" className="px-5 py-2 rounded" />
+              <Link
+                to={`/endo2?id=${id}&endoId=${endoId}&edit=${
+                  editFlag ? "yes" : "no"
+                }`}
+              >
+                <Button
+                  label="PREV"
+                  className="px-5 py-2 rounded"
+                  severity="secondary"
+                  icon="pi pi-arrow-left"
+                  outlined
+                />
               </Link>
-              <Link to={`/endo4?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
+              {/* <Link to={`/endo4?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
                 <Button label="NEXT" className="px-5 py-2 rounded" />
-              </Link>
+              </Link> */}
             </div>
           </main>
           <IonAlert

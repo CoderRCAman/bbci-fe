@@ -206,7 +206,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             user_id TEXT ,
             date TEXT,
             tab_id TEXT ,
-            created_at TEXT
+            created_at TEXT ,
+            biopsy_collection_date TEXT 
             );
         `;
         const query6 = `
@@ -340,11 +341,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             created_at TEXTF
           );
 
-        `; 
-        const query16 = trackTable;
-        const query17 = trackTableInsertTriggers;
-        const query18 = trackTableUpdateTriggers;
-        const query19 = trackTableDeleteTriggers; 
+        `;
         const query20 = `
                     CREATE TABLE if not exists endo_reports (
                         id TEXT PRIMARY KEY ,
@@ -389,7 +386,11 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         tab_id TEXT ,
                         FOREIGN KEY (report_id) REFERENCES endo_reports(id) ON DELETE CASCADE 
                     );
-        `
+        `;
+        const query16 = trackTable;
+        const query17 = trackTableInsertTriggers;
+        const query18 = trackTableUpdateTriggers;
+        const query19 = trackTableDeleteTriggers;
         //synch flag -> 0 1 2
         // 0 -> never synched
         // 1 -> synched
@@ -410,11 +411,11 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query13);
         await newDb.execute(query14);
         await newDb.execute(query15);
+        await newDb.execute(query20); 
         await newDb.execute(query16);
         await newDb.execute(query17);
         await newDb.execute(query18);
-        await newDb.execute(query19); 
-        await newDb.execute(query20);
+        await newDb.execute(query19);
         setDb(newDb);
         setIsLoading(false);
       } catch (err: any) {
