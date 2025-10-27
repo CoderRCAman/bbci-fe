@@ -1,4 +1,4 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import Header from "../../../components/Header";
 import { Button } from "primereact/button";
 import { useEffect, useState } from "react";
@@ -8,6 +8,9 @@ import ShortUUID from "short-uuid";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { Card } from "primereact/card";
+import { FloatLabel } from "primereact/floatlabel";
+import { Calendar } from "primereact/calendar";
 export default function EndoPage3() {
   const [barcodeData, setBarCodeData] = useState("");
   const [editFlag, setEditFlag] = useState(false);
@@ -17,13 +20,31 @@ export default function EndoPage3() {
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [endoId, setEndoId] = useState("");
-
+  const [collection_date, setCollectionDate] = useState<string>(new Date().toLocaleTimeString("sv-SE").replace("T", " "));;
   const [alert, setAlert] = useState({
     show: false,
     header: "",
     message: "",
   });
-
+  async function fetchCurrentUser(curId: string, endoIdd: string) {
+    try {
+      const query = `
+                    select * from patients where id = '${curId}'
+                `;
+      const query2 = `
+                 select * from endoscopy where id = '${endoIdd}'
+                `;
+      const res = await db?.query(query);
+      const res2 = await db?.query(query2);
+      console.log(res)
+      setParticipants(res?.values?.[0]);
+      setBarCodeData(res2?.values?.[0]?.vial_code);
+      setCollectionDate(res2?.values?.[0]?.date);
+      console.log(res2);
+    } catch (error) {
+      console.log(error);
+    }
+  }
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     setId(curId);
@@ -31,24 +52,8 @@ export default function EndoPage3() {
     const endoIdd = searchParams.get("endoId") || "";
     setEndoId(searchParams.get("endoId") || "");
     setEditFlag(edit === "yes");
-    async function fetchCurrentUser() {
-      try {
-        const query = `
-                    select * from patients where id = '${curId}'
-                `;
-        const query2 = `
-                 select * from endoscopy where id = '${endoIdd}'
-                `;
-        const res = await db?.query(query);
-        const res2 = await db?.query(query2);
-        setParticipants(res?.values?.[0]);
-        setBarCodeData(res2?.values?.[0]?.vial_code);
-        console.log(res2);
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    fetchCurrentUser();
+
+    fetchCurrentUser(curId, endoIdd);
   }, [location.pathname, db]);
   useEffect(() => {
     let buffer = "";
@@ -86,7 +91,7 @@ export default function EndoPage3() {
       const uid = translator.generate();
       const query = `
                     INSERT INTO ENDOSCOPY (id , vial_code , user_id , date , tab_id , created_at) 
-                    values ('${uid}' , '${barcodeData}' , '${id}' , '${new Date().toLocaleString('sv-SE').replace('T', ' ')}' , '${tabId}' , '${new Date().toLocaleString('sv-SE').replace('T', ' ')}') 
+                    values ('${uid}' , '${barcodeData}' , '${id}' , '${collection_date}' , '${tabId}' , '${new Date().toLocaleString('sv-SE').replace('T', ' ')}') 
                 `;
       await db?.execute(query);
       await saveToStore(sqlite);
@@ -100,47 +105,79 @@ export default function EndoPage3() {
       console.log(error);
     }
   };
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const curId = searchParams.get("id") || "";
+    const endoIdd = searchParams.get("endoId") || "";
+    fetchCurrentUser(curId, endoIdd);
+    event.detail.complete();
+  }
   return (
     <>
       <IonPage>
         <Header title={"Collect Endoscopy Vial "} />
         <IonContent class="" fullscreen>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only"
+              refreshingSpinner="circles"
+            />
+          </IonRefresher>
           <ShowRegisteredTab id={endoId || ''} table_name="ENDOSCOPY" />
           <main className="p-2 space-y-10">
-            <div className="p-2 border rounded text-slate-600">
-              <p className="text-lg  font-semibold">Participant's details</p>
-              <div>
-                <span className="font-semibold">ID: </span>{" "}
-                <span>{participant?.id}</span>
-              </div>
-              <div>
-                <span className="font-semibold">Name: </span>{" "}
-                <span>{participant?.name}</span>
-              </div>
-            </div>
-            <div className="border rounded p-2">
-              <h1 className="my-5 text-slate-500 font-semibold ">
-                Collect Vial Data
-              </h1>
-              <div className="">
-                <div className="flex gap-2 items-center">
-                  <input type="text" autoFocus className="hidden" />
-                  <p className="text-sm w-[300px] text-slate-500 p-2 border rounded">
-                    {barcodeData || "YOUR BARCODE WILL SHOW UP HERE"}
-                  </p>
-                  <Button 
-                    disabled = {!barcodeData}
-                    label="Save"
-                    className="rounded h-10 "
-                    severity="success"
-                    onClick={() => handleSaveEndocode()}
-                  />
+            <Card title="Participant's Details" className="shadow border">
+              <div className="text-slate-600 dark:text-gray-300 space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-semibold">ID: </span>
+                  <span>{participant?.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Name: </span>
+                  <span>{participant?.name}</span>
                 </div>
               </div>
+            </Card>
+            <div className="border rounded p-2">
+              <div>
+                <h2 className=" text-slate-500 font-semibold ">
+                  Collect Biopsy code
+                </h2>
+                <div className="">
+                  <div className="flex gap-2 items-center">
+                    <input type="text" autoFocus className="hidden" />
+                    <p className="text-sm w-[300px] text-slate-500 p-2 border rounded">
+                      {barcodeData || "YOUR BARCODE WILL SHOW UP HERE"}
+                    </p>
+
+                  </div>
+                </div>
+              </div>
+              <div className="mt-7">
+                <FloatLabel>
+                  <Calendar
+                    value={new Date(collection_date)}
+                    onChange={(e) => {
+                      setCollectionDate(e.value
+                        ?.toLocaleString("sv-SE")
+                        .replace("T", " ") || "")
+                    }}
+                    showIcon
+                    className="w-full"
+                  />
+                  <label>Sample collection date</label>
+                </FloatLabel>
+              </div>
+              <Button
+                disabled={!barcodeData}
+                label="Save"
+                className="rounded h-10 mt-3 "
+                severity="success"
+                icon="pi pi-check"
+                onClick={() => handleSaveEndocode()}
+              />
             </div>
 
             <div className="mt-10 flex justify-end gap-2 ">
-              <Link to={`/endo2?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
+              <Link to={`/endo1?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
                 <Button label="PREV" className="px-5 py-2 rounded" />
               </Link>
               <Link to={`/endo4?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>

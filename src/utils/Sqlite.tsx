@@ -340,11 +340,55 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
             created_at TEXTF
           );
 
-        `;
+        `; 
         const query16 = trackTable;
         const query17 = trackTableInsertTriggers;
         const query18 = trackTableUpdateTriggers;
-        const query19 = trackTableDeleteTriggers;
+        const query19 = trackTableDeleteTriggers; 
+        const query20 = `
+                    CREATE TABLE if not exists reports (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER,
+                        -- Oral Cavity
+                        oc_mucosa_status TEXT CHECK(oc_mucosa_status IN ('Normal', 'Lesion')),
+                        oc_description TEXT,
+
+                        -- Oesophagus
+                        oe_status TEXT CHECK(oe_status IN ('Normal', 'Lesion')),
+                        oe_description TEXT,
+
+                        -- GE Junction
+                        ge_level TEXT,
+                        ge_status TEXT CHECK(ge_status IN ('Normal', 'Lesion')),
+                        ge_description TEXT,
+
+                        -- Stomach -- ST
+                        st_fundus_status TEXT CHECK(st_fundus_status IN ('Normal', 'Description')),
+                        st_fundus_desc TEXT,
+                        st_body_status TEXT CHECK(st_body_status IN ('Normal', 'Description')),
+                        st_body_desc TEXT,
+                        st_antrum_status TEXT CHECK(st_antrum_status IN ('Normal', 'Description')),
+                        st_antrum_desc TEXT,
+                        created_at TEXT ,
+                        updated_at TEXT ,
+                        tab_id TEXT ,
+                        FOREIGN KEY (user_id) REFERENCES patients(id)   
+                    );
+
+                    CREATE TABLE if not exists stomach_lesions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        report_id INTEGER NOT NULL,
+                        location TEXT,
+                        appearance TEXT,
+                        mucosa_v TEXT ,
+                        mucosa_s TEXT ,
+                        mucosa_d TEXT 
+                        created_at TEXT , 
+                        updated_at TEXT ,
+                        tab_id TEXT ,
+                        FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE 
+                    );
+        `
         //synch flag -> 0 1 2
         // 0 -> never synched
         // 1 -> synched
@@ -368,7 +412,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query16);
         await newDb.execute(query17);
         await newDb.execute(query18);
-        await newDb.execute(query19);
+        await newDb.execute(query19); 
+        await newDb.execute(query20);
         setDb(newDb);
         setIsLoading(false);
       } catch (err: any) {

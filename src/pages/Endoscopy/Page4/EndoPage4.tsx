@@ -1,6 +1,6 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import Header from "../../../components/Header";
-import { useEffect, useState } from "react";
+import { Ref, useEffect, useState } from "react";
 import { useSQLite } from "../../../utils/Sqlite";
 import { useLocation } from "react-router";
 import { FloatLabel } from "primereact/floatlabel";
@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { Card } from "primereact/card";
 
 export default function EndoPage4() {
   const location = useLocation();
@@ -26,6 +27,25 @@ export default function EndoPage4() {
     header: "",
     message: "",
   });
+  async function fetchCurrentUser(curId: string, endoIdd: string) {
+    try {
+      const query = `
+                        select * from patients where id = '${curId}'
+                    `;
+      const query2 = `
+                    select * from endoscopy where id = '${endoIdd}'
+                `;
+      const res = await db?.query(query);
+      const res2 = await db?.query(query2);
+      setParticipants(res?.values?.[0]);
+      const val = res2?.values?.[0];
+      console.log(val);
+      setVideoFileName(val?.endoscopy_video_filename || "");
+      setPdfFileName(val?.endoscopy_pdf_filename || "");
+    } catch (error) {
+      console.log(error);
+    }
+  }
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     const endoIdd = searchParams.get("endoId") || "";
@@ -33,26 +53,8 @@ export default function EndoPage4() {
     setId(curId);
     setEndoId(searchParams.get("endoId") || "");
     setEditFlag(edit === "yes");
-    async function fetchCurrentUser() {
-      try {
-        const query = `
-                        select * from patients where id = '${curId}'
-                    `;
-        const query2 = `
-                    select * from endoscopy where id = '${endoIdd}'
-                `;
-        const res = await db?.query(query);
-        const res2 = await db?.query(query2);
-        setParticipants(res?.values?.[0]);
-        const val = res2?.values?.[0];
-        console.log(val);
-        setVideoFileName(val?.endoscopy_video_filename || "");
-        setPdfFileName(val?.endoscopy_pdf_filename || "");
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    fetchCurrentUser();
+
+    fetchCurrentUser(curId, endoIdd);
   }, [location.pathname, db]);
   const AddMediaReportFilenames = async () => {
     try {
@@ -87,24 +89,37 @@ export default function EndoPage4() {
       console.log(error);
     }
   };
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const curId = searchParams.get("id") || "";
+    const endoIdd = searchParams.get("endoId") || "";
+    fetchCurrentUser(curId, endoIdd);
+    event.detail.complete();
+  }
   return (
     <>
       <IonPage>
         <Header title={"Collect VIDEO report / PDF report"} />
         <IonContent class="" fullscreen>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only"
+              refreshingSpinner="circles"
+            />
+          </IonRefresher>
           <ShowRegisteredTab id={endoId} table_name="ENDOSCOPY" />
           <main className="p-2">
-            <div className="shadow p-2 border rounded text-slate-600">
-              <p className="text-lg  font-semibold">Participant's details</p>
-              <div>
-                <span className="font-semibold">ID: </span>{" "}
-                <span>{participant?.id}</span>
+            <Card title="Participant's Details" className="shadow border">
+              <div className="text-slate-600 dark:text-gray-300 space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-semibold">ID: </span>
+                  <span>{participant?.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Name: </span>
+                  <span>{participant?.name}</span>
+                </div>
               </div>
-              <div>
-                <span className="font-semibold">Name: </span>{" "}
-                <span>{participant?.name}</span>
-              </div>
-            </div>
+            </Card>
             <div className="mt-10 border shadow rounded p-2">
               <div className="mt-5 space-y-7">
                 <FloatLabel>
@@ -125,15 +140,20 @@ export default function EndoPage4() {
                 </FloatLabel>
               </div>
               <Button
-                label="SAVE"
+                label="Save"
                 severity="success"
-                className="px-10 py-2 mt-2 rounded-full"
+                icon="pi pi-check"
+                className="px-10 py-2 mt-2"
+                disabled={!videoFileName?.trim() && !pdfFileName?.trim()}
                 onClick={() => AddMediaReportFilenames()}
               />
             </div>
-            <div className="flex justify-end mt-2">
+            <div className="flex justify-end mt-2 gap-2">
               <Link to={`/endo3?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
                 <Button label="PREV" className="px-10 py-2 rounded" />
+              </Link>
+              <Link to={`/endo2?id=${id}&endoId=${endoId}&edit=${editFlag ? 'yes' : 'no'}`}>
+                <Button label="NEXT" className="px-10 py-2 rounded" />
               </Link>
             </div>
           </main>

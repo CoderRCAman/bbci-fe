@@ -1,11 +1,4 @@
-import {
-  IonAlert,
-  IonContent,
-  IonPage,
-  IonRefresher,
-  IonRefresherContent,
-  RefresherEventDetail,
-} from "@ionic/react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
 import { useEffect, useState } from "react";
@@ -32,7 +25,7 @@ export interface INDOOR_AIR_POLLUTION {
 }
 function isIndoorAirPollutionDataValid(
   data: INDOOR_AIR_POLLUTION[],
-  userData: any // Must contain userData.age
+  userData: any, // Must contain userData.age
 ): boolean {
   const allItemsValid = data.every((item) => {
     // 1. Replaced with fields from INDOOR_AIR_POLLUTION
@@ -51,9 +44,7 @@ function isIndoorAirPollutionDataValid(
     const isWithinUserAge =
       item.to_age <= userData.age && item.from_age <= userData.age;
 
-    return (
-      hasRequiredFields && hasValidNumbers && isRangeCorrect && isWithinUserAge
-    );
+    return hasRequiredFields && hasValidNumbers && isRangeCorrect && isWithinUserAge;
   });
 
   if (!allItemsValid) {
@@ -124,6 +115,7 @@ export default function Tab9() {
   }, [location.pathname, db]);
 
   const handleAddNewUi = (flag: boolean = false) => {
+
     const translator = shortUUID();
     const newResidential: INDOOR_AIR_POLLUTION = {
       id: translator.new(),
@@ -137,11 +129,11 @@ export default function Tab9() {
       most_cooking: -1,
     };
 
-    setIndoorAirData((d) => (flag ? [newResidential] : [...d, newResidential]));
+    setIndoorAirData((d) => flag ? [newResidential] : [...d, newResidential]);
   };
   const handleRemoveUi = (id: string) => {
     if (indoorAirData.length === 1) return;
-    setRemovedIds((prev) => [...prev, id]);
+    setRemovedIds(prev => [...prev, id]);
     setIndoorAirData((d) => d.filter((x) => x.id !== id));
   };
 
@@ -153,6 +145,7 @@ export default function Tab9() {
         message: "This user was registered with a different tab id.",
         show: true,
       });
+      
     }
     const res = await db?.query("select * from patients where id = ?", [id]);
     const userData = res?.values?.[0];
@@ -202,7 +195,7 @@ export default function Tab9() {
           item.most_cooking,
           id,
           tabId,
-          new Date().toLocaleString("sv-SE").replace("T", " "),
+          new Date().toLocaleString('sv-SE').replace('T', ' '),
         ];
         console.log(query, values);
         await db?.run(query, values);
@@ -230,20 +223,20 @@ export default function Tab9() {
     const currentId = searchParams?.get("id") || "";
     await fetchExisting(currentId);
     event.detail.complete();
-  };
+  }
   return (
     <IonPage>
       <Header
         title={0 ? "Edit Indoor Air Pollution" : "Indoor Air Pollution"}
       />
       <IonContent class="" fullscreen>
-        <ShowRegisteredTab id={id || ""} />
+        <ShowRegisteredTab id={id || ''} />
         <main className="p-2 space-y-2">
           <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
             <IonRefresherContent
               className="spinner-only" // <-- Add this class
               refreshingSpinner="circles"
-              // You can remove the other text props
+            // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
           {indoorAirData.map((data) => (
@@ -263,11 +256,12 @@ export default function Tab9() {
             />
 
             <Button
-              onClick={handleSaveFresh}
               label="Save"
               severity="success"
-              icon="pi pi-check" // Added icon
-              raised // Added for emphasis
+              text
+              raised
+              className="px-3 py-2 px-10 py-3 rounded-md font-bold"
+              onClick={handleSaveFresh}
             />
           </div>
 
@@ -280,27 +274,16 @@ export default function Tab9() {
           />
           <div className="pt-10 flex justify-end gap-2">
             <Link to={"/tab8?id=" + id}>
-              <Button
-                className="px-10 py-2 rounded"
-                label="PREV"
-                icon="pi pi-arrow-left" // Added icon
-                severity="secondary" // Use secondary style
-                outlined
-              />
+              <Button className="px-10 py-2 rounded" label="PREV" />
             </Link>
             <Link to={"/tab11?id=" + id}>
-              <Button
-                className="px-10 py-2 rounded"
-                label="NEXT"
-                icon="pi pi-arrow-right" // Added icon
-                severity="secondary" // Use secondary style
-                outlined
-              />
+              <Button className="px-10 py-2 rounded" label="NEXT" />
             </Link>
           </div>
         </main>
       </IonContent>
       <div className="pb-[250px]"></div>
+
     </IonPage>
   );
 }

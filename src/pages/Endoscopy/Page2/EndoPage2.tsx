@@ -6,6 +6,46 @@ import Header from "../../../components/Header";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Link } from "react-router-dom";
 import { Button } from "primereact/button";
+import { Card } from "primereact/card";
+export interface REPORTS_DB {
+  id: string;
+  user_id: string | null;
+  // Oral Cavity
+  oc_mucosa_status: 'Normal' | 'Lesion' | null;
+  oc_description: string | null;
+  // Oesophagus
+  oe_status: 'Normal' | 'Lesion' | null;
+  oe_description: string | null;
+  // GE Junction
+  ge_level: string | null;
+  ge_status: 'Normal' | 'Lesion' | null;
+  ge_description: string | null;
+  // Stomach (ST)
+  st_fundus_status: 'Normal' | 'Description' | null;
+  st_fundus_desc: string | null;
+  st_body_status: 'Normal' | 'Description' | null;
+  st_body_desc: string | null;
+  st_antrum_status: 'Normal' | 'Description' | null;
+  st_antrum_desc: string | null;
+
+  created_at: string | null;
+  updated_at: string | null;
+  tab_id: string | null;
+}
+
+export type STOMACH_LESIANS = {
+  id: string;
+  report_id: string; // NOT NULL → required
+  location: string | null;
+  appearance: string | null;
+  mucosa_v: string | null;
+  mucosa_s: string | null;
+  mucosa_d: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  tab_id: string | null;
+};
+
 const CustomRadio = ({
   id,
   name,
@@ -74,6 +114,18 @@ export default function EndoPage2() {
   const [stomachAntrumDescription, setStomachAntrumDescription] = useState("");
   // State for dynamic lesions
   const [stomachLesions, setStomachLesions] = useState<any[]>([]);
+  async function fetchExisting(curId: string) {
+    try {
+      const query = `
+                  select * from patients where id = '${curId}'
+              `;
+      const res = await db?.query(query);
+      setParticipants(res?.values?.[0]);
+
+    } catch (error) {
+      console.error(error);
+    }
+  }
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     setId(curId);
@@ -81,6 +133,7 @@ export default function EndoPage2() {
     const endoIdd = searchParams.get("endoId") || "";
     setEndoId(searchParams.get("endoId") || "");
     setEditFlag(edit === "yes");
+    fetchExisting(curId);
   }, [location.pathname, db]);
   const handleAddLesion = () => {
     const newLesion = {
@@ -111,6 +164,49 @@ export default function EndoPage2() {
       )
     );
   };
+
+  const handleOralCavityChange = (newValue: "Normal" | "Lesion") => {
+    // If switching TO Normal FROM Lesion, clear description
+    if (newValue === "Normal" && oralCavityMucosa === "Lesion") {
+      setOralCavityMucosaDescription("");
+    }
+    setOralCavityMucosa(newValue);
+  };
+
+  const handleOesophagusChange = (newValue: "Normal" | "Lesion") => {
+    if (newValue === "Normal" && oesophagus === "Lesion") {
+      setOesophagusDescription("");
+    }
+    setOesophagus(newValue);
+  };
+
+  const handleGeJunctionChange = (newValue: "Normal" | "Lesion") => {
+    if (newValue === "Normal" && geJunction === "Lesion") {
+      setGeJunctionDescription("");
+    }
+    setGeJunction(newValue);
+  };
+
+  const handleStomachFundusChange = (newValue: "Normal" | "Description") => {
+    if (newValue === "Normal" && stomachFundus === "Description") {
+      setStomachFundusDescription("");
+    }
+    setStomachFundus(newValue);
+  };
+
+  const handleStomachBodyChange = (newValue: "Normal" | "Description") => {
+    if (newValue === "Normal" && stomachBody === "Description") {
+      setStomachBodyDescription("");
+    }
+    setStomachBody(newValue);
+  };
+
+  const handleStomachAntrumChange = (newValue: "Normal" | "Description") => {
+    if (newValue === "Normal" && stomachAntrum === "Description") {
+      setStomachAntrumDescription("");
+    }
+    setStomachAntrum(newValue);
+  };
   const LesionRadioGroup = ({ lesion, field, options }: any) => (
     <div className="flex flex-wrap gap-x-4 gap-y-2">
       {options.map((option: any) => (
@@ -130,6 +226,7 @@ export default function EndoPage2() {
   );
   async function handleSave() {
     try {
+
     } catch (error) {
       console.log(error);
     }
@@ -141,6 +238,18 @@ export default function EndoPage2() {
         <IonContent class="" fullscreen>
           <ShowRegisteredTab id={endoId || ""} table_name="ENDOSCOPY" />
           <main className="space-y-10 p-2">
+            <Card title="Participant's Details" className="shadow border">
+              <div className="text-slate-600 dark:text-gray-300 space-y-2">
+                <div className="flex justify-between">
+                  <span className="font-semibold">ID: </span>
+                  <span>{participant?.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Name: </span>
+                  <span>{participant?.name}</span>
+                </div>
+              </div>
+            </Card>
             {/* --- Oral Cavity Section --- */}
             <div className="bg-white p-6 rounded-lg shadow border mb-6">
               <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
@@ -155,7 +264,7 @@ export default function EndoPage2() {
                     id="oc_normal"
                     name="oralCavityMucosa"
                     value="Normal"
-                    onChange={(e: any) => setOralCavityMucosa(e.target.value)}
+                    onChange={(e: any) => handleOralCavityChange(e.target.value)}
                     checked={oralCavityMucosa === "Normal"}
                     label="Normal"
                   />
@@ -163,7 +272,7 @@ export default function EndoPage2() {
                     id="oc_lesion"
                     name="oralCavityMucosa"
                     value="Lesion"
-                    onChange={(e: any) => setOralCavityMucosa(e.target.value)}
+                    onChange={(e: any) => handleOralCavityChange(e.target.value)}
                     checked={oralCavityMucosa === "Lesion"}
                     label="Lesion"
                   />
@@ -201,7 +310,7 @@ export default function EndoPage2() {
                   id="oe_normal"
                   name="oesophagus"
                   value="Normal"
-                  onChange={(e: any) => setOesophagus(e.target.value)}
+                  onChange={(e: any) => handleOesophagusChange(e.target.value)}
                   checked={oesophagus === "Normal"}
                   label="Normal"
                 />
@@ -209,7 +318,7 @@ export default function EndoPage2() {
                   id="oe_lesion"
                   name="oesophagus"
                   value="Lesion"
-                  onChange={(e: any) => setOesophagus(e.target.value)}
+                  onChange={(e: any) => handleOesophagusChange(e.target.value)}
                   checked={oesophagus === "Lesion"}
                   label="Lesion"
                 />
@@ -264,7 +373,7 @@ export default function EndoPage2() {
                     id="ge_normal"
                     name="geJunction"
                     value="Normal"
-                    onChange={(e: any) => setGeJunction(e.target.value)}
+                    onChange={(e: any) => handleGeJunctionChange(e.target.value)}
                     checked={geJunction === "Normal"}
                     label="Normal"
                   />
@@ -272,7 +381,7 @@ export default function EndoPage2() {
                     id="ge_lesion"
                     name="geJunction"
                     value="Lesion"
-                    onChange={(e: any) => setGeJunction(e.target.value)}
+                    onChange={(e: any) => handleGeJunctionChange(e.target.value)}
                     checked={geJunction === "Lesion"}
                     label="Lesion"
                   />
@@ -316,7 +425,7 @@ export default function EndoPage2() {
                     id="s_fundus_normal"
                     name="stomachFundus"
                     value="Normal"
-                    onChange={(e: any) => setStomachFundus(e.target.value)}
+                    onChange={(e: any) => handleStomachFundusChange(e.target.value)}
                     checked={stomachFundus === "Normal"}
                     label="Normal"
                   />
@@ -324,7 +433,7 @@ export default function EndoPage2() {
                     id="s_fundus_desc_radio"
                     name="stomachFundus"
                     value="Description"
-                    onChange={(e: any) => setStomachFundus(e.target.value)}
+                    onChange={(e: any) => handleStomachFundusChange(e.target.value)}
                     checked={stomachFundus === "Description"}
                     label="Description"
                   />
@@ -361,7 +470,7 @@ export default function EndoPage2() {
                     id="s_body_normal"
                     name="stomachBody"
                     value="Normal"
-                    onChange={(e: any) => setStomachBody(e.target.value)}
+                    onChange={(e: any) => handleStomachBodyChange(e.target.value)}
                     checked={stomachBody === "Normal"}
                     label="Normal"
                   />
@@ -369,7 +478,7 @@ export default function EndoPage2() {
                     id="s_body_desc_radio"
                     name="stomachBody"
                     value="Description"
-                    onChange={(e: any) => setStomachBody(e.target.value)}
+                    onChange={(e: any) => handleStomachBodyChange(e.target.value)}
                     checked={stomachBody === "Description"}
                     label="Description"
                   />
@@ -406,7 +515,7 @@ export default function EndoPage2() {
                     id="s_antrum_normal"
                     name="stomachAntrum"
                     value="Normal"
-                    onChange={(e: any) => setStomachAntrum(e.target.value)}
+                    onChange={(e: any) => handleStomachAntrumChange(e.target.value)}
                     checked={stomachAntrum === "Normal"}
                     label="Normal"
                   />
@@ -414,7 +523,7 @@ export default function EndoPage2() {
                     id="s_antrum_desc_radio"
                     name="stomachAntrum"
                     value="Description"
-                    onChange={(e: any) => setStomachAntrum(e.target.value)}
+                    onChange={(e: any) => handleStomachAntrumChange(e.target.value)}
                     checked={stomachAntrum === "Description"}
                     label="Description"
                   />
@@ -447,7 +556,7 @@ export default function EndoPage2() {
                   <h3 className="text-lg font-semibold text-gray-700">
                     Lesions
                   </h3>
-                  <Button label="+ Add Lesions" severity="info" className="py-2" onClick={handleAddLesion} />
+                  <Button label="Add Lesions" icon="pi pi-plus" severity="info" className="py-2" onClick={handleAddLesion} />
                 </div>
 
                 {stomachLesions.length === 0 && (
@@ -565,23 +674,23 @@ export default function EndoPage2() {
 
             <div>
               <Button
+                onClick={handleSave}
+                icon="pi pi-check"
                 label="Save"
                 severity="success"
                 className="px-10 py-2"
-                onClick={handleSave}
               />
             </div>
             <div className="mt-10 flex justify-end gap-2 ">
-              <Link to="/endo1">
+              <Link to={`/endo4?id=${id}&endoId=${endoId}&edit=${editFlag ? "yes" : "no"}`}>
                 <Button label="PREV" className="px-5 py-2 rounded" />
               </Link>
-             
-                <Link
-                  to={`/endo3?id=${id}&endoId=${endoId}&edit=${editFlag ? "yes" : "no"
-                    }`}
-                >
-                  <Button label="NEXT" className="px-5 py-2 rounded" />
-                </Link>
+
+              {/* <Link
+                to={`/endo3?id=${id}&endoId=${endoId}&edit=${editFlag ? "yes" : "no"}`}
+              >
+                <Button label="NEXT" className="px-5 py-2 rounded" />
+              </Link> */}
             </div>
           </main>
         </IonContent>
