@@ -80,7 +80,7 @@ export default function PromptTabId() {
               optionLabel="name"
               value={tabInput}
               className="border-1"
-              placeholder="Select empoloyee code"
+              placeholder="Select Tablet Id!"
               options={[
                 { name: "TAB1 GREEN", value: "TAB1_GREEN" },
                 { name: "TAB2 BLUE ", value: "TAB2_BLUE" },

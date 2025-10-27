@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { useSQLite } from "../../../utils/Sqlite";
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import Header from "../../../components/Header";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Link } from "react-router-dom";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
+import shortUUID from "short-uuid";
+import { saveToStore } from "../../../utils/helper";
 export interface REPORTS_DB {
   id: string;
   user_id: string | null;
+  endo_id: string | null;
   // Oral Cavity
   oc_mucosa_status: 'Normal' | 'Lesion' | null;
   oc_description: string | null;
@@ -84,6 +87,7 @@ export default function EndoPage2() {
   const [editFlag, setEditFlag] = useState(false);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
+  const [reportId, setReportId] = useState(shortUUID().generate());
   const [id, setId] = useState("");
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
@@ -114,14 +118,44 @@ export default function EndoPage2() {
   const [stomachAntrumDescription, setStomachAntrumDescription] = useState("");
   // State for dynamic lesions
   const [stomachLesions, setStomachLesions] = useState<any[]>([]);
-  async function fetchExisting(curId: string) {
+  const [deletedIds, setDeletedIds] = useState<string[]>([])
+  async function fetchExisting(curId: string, endo_id: string) {
     try {
       const query = `
                   select * from patients where id = '${curId}'
               `;
       const res = await db?.query(query);
       setParticipants(res?.values?.[0]);
+      const results = await db?.query(
+        `SELECT * FROM endo_reports WHERE endo_id = ? LIMIT 1`,
+        [endo_id]
+      );
 
+      if (results && results.values?.length === 0) return;
+
+      const report = results?.values?.[0];
+      setReportId(report?.id ?? shortUUID().generate());
+      setOralCavityMucosa(report?.oc_mucosa_status ?? "Normal");
+      setOralCavityMucosaDescription(report?.oc_description ?? "");
+      setOesophagus(report?.oe_status ?? "Normal");
+      setOesophagusDescription(report?.oe_description ?? "");
+      setGeJunctionLevel(report?.ge_level ?? "");
+      setGeJunction(report?.ge_status ?? "Normal");
+      setGeJunctionDescription(report?.ge_description ?? "");
+      setStomachFundus(report?.st_fundus_status ?? "Normal");
+      setStomachFundusDescription(report?.st_fundus_desc ?? "");
+      setStomachBody(report?.st_body_status ?? "Normal");
+      setStomachBodyDescription(report?.st_body_desc ?? "");
+      setStomachAntrum(report?.st_antrum_status ?? "Normal");
+      setStomachAntrumDescription(report?.st_antrum_desc ?? "");
+
+      // Fetch related stomach lesions
+      const lesions = await db?.query(
+        `SELECT * FROM stomach_lesions WHERE report_id = ?`,
+        [report.id]
+      );
+      setStomachLesions(lesions?.values || []);
+      console.log(res, results, lesions)
     } catch (error) {
       console.error(error);
     }
@@ -133,16 +167,16 @@ export default function EndoPage2() {
     const endoIdd = searchParams.get("endoId") || "";
     setEndoId(searchParams.get("endoId") || "");
     setEditFlag(edit === "yes");
-    fetchExisting(curId);
+    fetchExisting(curId, endoIdd);
   }, [location.pathname, db]);
   const handleAddLesion = () => {
     const newLesion = {
-      id: Date.now(), // Unique ID for React key
+      id: shortUUID().generate(), // Unique ID for React key
       location: "",
       appearance: "",
-      v: "", // Regular, Irregular, Absent
-      s: "", // Regular, Irregular, Absent
-      d: "", // Present, Absent
+      mucosa_v: "", // Regular, Irregular, Absent
+      mucosa_s: "", // Regular, Irregular, Absent
+      mucosa_d: "", // Present, Absent
     };
     setStomachLesions([...stomachLesions, newLesion]);
   };
@@ -151,6 +185,7 @@ export default function EndoPage2() {
    * Removes a lesion from the array by its ID.
    */
   const handleRemoveLesion = (id: string) => {
+    setDeletedIds([...deletedIds, id])
     setStomachLesions(stomachLesions.filter((lesion) => lesion.id !== id));
   };
 
@@ -227,16 +262,135 @@ export default function EndoPage2() {
   async function handleSave() {
     try {
 
+      console.log(oralCavityMucosa, oralCavityMucosaDescription)
+
+      const createdAt = new Date().toLocaleString("sv-SE")
+        .replace("T", " ") || "";
+      const updatedAt = new Date().toLocaleString("sv-SE")
+        .replace("T", " ") || "";
+
+      await db?.run(
+        `
+      INSERT INTO endo_reports (
+        id, user_id, endo_id,
+        oc_mucosa_status, oc_description,
+        oe_status, oe_description,
+        ge_level, ge_status, ge_description,
+        st_fundus_status, st_fundus_desc,
+        st_body_status, st_body_desc,
+        st_antrum_status, st_antrum_desc,
+        created_at, updated_at, tab_id
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        user_id = excluded.user_id,
+        endo_id = excluded.endo_id,
+        oc_mucosa_status = excluded.oc_mucosa_status,
+        oc_description = excluded.oc_description,
+        oe_status = excluded.oe_status,
+        oe_description = excluded.oe_description,
+        ge_level = excluded.ge_level,
+        ge_status = excluded.ge_status,
+        ge_description = excluded.ge_description,
+        st_fundus_status = excluded.st_fundus_status,
+        st_fundus_desc = excluded.st_fundus_desc,
+        st_body_status = excluded.st_body_status,
+        st_body_desc = excluded.st_body_desc,
+        st_antrum_status = excluded.st_antrum_status,
+        st_antrum_desc = excluded.st_antrum_desc,
+        updated_at = excluded.updated_at,
+        tab_id = excluded.tab_id;
+      `,
+        [
+          reportId,
+          id,
+          endoId,
+          oralCavityMucosa,
+          oralCavityMucosaDescription,
+          oesophagus,
+          oesophagusDescription,
+          geJunctionLevel,
+          geJunction,
+          geJunctionDescription,
+          stomachFundus,
+          stomachFundusDescription,
+          stomachBody,
+          stomachBodyDescription,
+          stomachAntrum,
+          stomachAntrumDescription,
+          createdAt,
+          updatedAt,
+          tabId
+        ],
+      );
+
+      const now = new Date().toLocaleString("sv-SE")
+        .replace("T", " ") || "";
+
+      for (const lesion of stomachLesions) {
+        await db?.run(
+          `
+      INSERT INTO stomach_lesions (
+        id, report_id, location, appearance,
+        mucosa_v, mucosa_s, mucosa_d,
+        created_at, updated_at, tab_id
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        report_id = excluded.report_id,
+        location = excluded.location,
+        appearance = excluded.appearance,
+        mucosa_v = excluded.mucosa_v,
+        mucosa_s = excluded.mucosa_s,
+        mucosa_d = excluded.mucosa_d,
+        updated_at = excluded.updated_at,
+        tab_id = excluded.tab_id
+      `,
+          [
+            lesion.id,
+            reportId,
+            lesion.location,
+            lesion.appearance,
+            lesion.mucosa_v,
+            lesion.mucosa_s,
+            lesion.mucosa_d,
+            now,
+            now,
+            tabId,
+          ]
+        );
+      }
+      for (const ids of deletedIds) {
+        await db?.run("DELETE FROM stomach_lesions WHERE id = ?", [ids]);
+      }
+      setAlert({
+        header: "Success",
+        message: "Report saved successfully!",
+        show: true,
+      })
+      await saveToStore(sqlite);
     } catch (error) {
       console.log(error);
     }
+  }
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const curId = searchParams.get("id") || "";
+    const endoIdd = searchParams.get("endoId") || "";
+    await fetchExisting(curId, endoIdd);
+    event.detail.complete();
   }
   return (
     <>
       <IonPage>
         <Header title={"UGIE Record"} />
         <IonContent class="" fullscreen>
-          <ShowRegisteredTab id={endoId || ""} table_name="ENDOSCOPY" />
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only"
+              refreshingSpinner="circles"
+            />
+          </IonRefresher>
+          <ShowRegisteredTab id={reportId || ""} table_name="endo_reports" />
           <main className="space-y-10 p-2">
             <Card title="Participant's Details" className="shadow border">
               <div className="text-slate-600 dark:text-gray-300 space-y-2">
@@ -556,7 +710,7 @@ export default function EndoPage2() {
                   <h3 className="text-lg font-semibold text-gray-700">
                     Lesions
                   </h3>
-                  <Button label="Add Lesions" icon="pi pi-plus" severity="info" className="py-2" onClick={handleAddLesion} />
+
                 </div>
 
                 {stomachLesions.length === 0 && (
@@ -640,7 +794,7 @@ export default function EndoPage2() {
                             </label>
                             <LesionRadioGroup
                               lesion={lesion}
-                              field="v"
+                              field="mucosa_v"
                               options={["Regular", "Irregular", "Absent"]}
                             />
                           </div>
@@ -650,7 +804,7 @@ export default function EndoPage2() {
                             </label>
                             <LesionRadioGroup
                               lesion={lesion}
-                              field="s"
+                              field="mucosa_s"
                               options={["Regular", "Irregular", "Absent"]}
                             />
                           </div>
@@ -660,7 +814,7 @@ export default function EndoPage2() {
                             </label>
                             <LesionRadioGroup
                               lesion={lesion}
-                              field="d"
+                              field="mucosa_d"
                               options={["Present", "Absent"]}
                             />
                           </div>
@@ -668,6 +822,9 @@ export default function EndoPage2() {
                       </fieldset>
                     </div>
                   ))}
+                </div>
+                <div className="mt-2">
+                  <Button label="Add Lesions" icon="pi pi-plus" severity="info" className="py-2" onClick={handleAddLesion} />
                 </div>
               </div>
             </div>

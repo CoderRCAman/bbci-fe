@@ -346,9 +346,10 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         const query18 = trackTableUpdateTriggers;
         const query19 = trackTableDeleteTriggers; 
         const query20 = `
-                    CREATE TABLE if not exists reports (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER,
+                    CREATE TABLE if not exists endo_reports (
+                        id TEXT PRIMARY KEY ,
+                        user_id TEXT,
+                        endo_id TEXT,
                         -- Oral Cavity
                         oc_mucosa_status TEXT CHECK(oc_mucosa_status IN ('Normal', 'Lesion')),
                         oc_description TEXT,
@@ -376,17 +377,17 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                     );
 
                     CREATE TABLE if not exists stomach_lesions (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        report_id INTEGER NOT NULL,
+                        id TEXT PRIMARY KEY ,
+                        report_id TEXT NOT NULL,
                         location TEXT,
                         appearance TEXT,
                         mucosa_v TEXT ,
                         mucosa_s TEXT ,
-                        mucosa_d TEXT 
+                        mucosa_d TEXT ,
                         created_at TEXT , 
                         updated_at TEXT ,
                         tab_id TEXT ,
-                        FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE 
+                        FOREIGN KEY (report_id) REFERENCES endo_reports(id) ON DELETE CASCADE 
                     );
         `
         //synch flag -> 0 1 2

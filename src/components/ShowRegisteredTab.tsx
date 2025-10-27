@@ -10,7 +10,8 @@ export default function ShowRegisteredTab({ id, table_name = 'patients' }: { id:
         async function fetchUserInfo() {
             try {
                 if (!table_name) return;
-                const res = await db?.query(`select * from ${table_name} where id = '${id}'`);
+                const res = await db?.query(`select * from ${table_name} where id = '${id}'`); 
+                console.log(res)
                 setUser(res?.values?.[0]);
             } catch (error) {
                 console.log(error);
@@ -19,7 +20,7 @@ export default function ShowRegisteredTab({ id, table_name = 'patients' }: { id:
         }
         fetchUserInfo();
     }, [id, db, table_name])
-    console.log(user)
+    console.log(table_name)
     return (
         <div className="p-2 flex  ">
             {user &&
