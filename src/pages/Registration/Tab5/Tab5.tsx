@@ -116,7 +116,7 @@ export default function Tab5() {
       const values = res?.values;
       if (values?.length === 0 && residentialData.length === 0) {
         handleAddNewUi();
-      } else {
+      } else { 
         setAllowNext(true);
         setResidentialData(values || []);
       }
@@ -132,7 +132,7 @@ export default function Tab5() {
     loadExisting(curId);
   }, [db, location.pathname]);
   const handleSaveFresh = async () => {
-    if (db && !(await checkElibleToSave(db, id || "", tabId  ))) {
+    if (db && !(await checkElibleToSave(db, id || "", tabId , 'residential_history' , 'user_id' ))) {
       return setAlert({
         header: "Restricted access",
         message: "This user was registered with a different tab id.",
@@ -227,7 +227,7 @@ export default function Tab5() {
   return (
     <>
       <IonPage>
-        <Header title={"Residential History"} />
+        <Header title={"Residential History"}  />
         <IonContent class="" fullscreen>
           <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
             <IonRefresherContent
@@ -236,7 +236,7 @@ export default function Tab5() {
             ></IonRefresherContent>
           </IonRefresher>
 
-          <ShowRegisteredTab id={id || ""}  />
+          <ShowRegisteredTab id={id || ""} table_name="residential_history" field_name="user_id"  />
 
           {/* Use slightly more padding and less aggressive vertical spacing */}
           <main className="mt-6 p-3 space-y-6">

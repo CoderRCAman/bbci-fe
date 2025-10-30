@@ -139,7 +139,7 @@ export default function Tab9() {
 
   const handleSaveFresh = async () => {
     //for fresh records
-    if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+    if (db && !(await checkElibleToSave(db, id || "", tabId , "INDOOR_AIR_POLLUTION", "user_id"))) {
       return setAlert({
         header: "Restricted access",
         message: "This user was registered with a different tab id.",
@@ -230,7 +230,7 @@ export default function Tab9() {
         title={0 ? "Edit Indoor Air Pollution" : "Indoor Air Pollution"}
       />
       <IonContent class="" fullscreen>
-        <ShowRegisteredTab id={id || ''} />
+        <ShowRegisteredTab id={id || ''} table_name="indoor_air_pollution" field_name="user_id" />
         <main className="p-2 space-y-2">
           <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
             <IonRefresherContent

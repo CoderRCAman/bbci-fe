@@ -32,6 +32,7 @@ export default function EndoPage4() {
   const [editFlag, setEditFlag] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
+  const [allowNext, setAllowNext] = useState(false);
   const [endoId, setEndoId] = useState(
     new Date().toLocaleString("sv-SE").replace("T", " ")
   );
@@ -53,6 +54,9 @@ export default function EndoPage4() {
       setParticipants(res?.values?.[0]);
       const val = res2?.values?.[0];
       console.log(val);
+      if (res2?.values?.length) {
+        setAllowNext(true);
+      }
       setVideoFileName(val?.endoscopy_video_filename || "");
       setPdfFileName(val?.endoscopy_pdf_filename || "");
       setEndoscopyDate(
@@ -114,6 +118,7 @@ export default function EndoPage4() {
         pathname: location.pathname,
         search: params.toString(),
       });
+      setAllowNext(true);
       setAlert({
         header: "Success",
         message: "Endoscopy report saved successfully!",
@@ -213,8 +218,10 @@ export default function EndoPage4() {
                 to={`/endo2?id=${id}&endoId=${endoId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
+                onClick={(e) => !allowNext && e.preventDefault()}
               >
                 <Button
+                  disabled={!allowNext}
                   label="NEXT"
                   className="px-10 py-2 rounded"
                   severity="secondary"

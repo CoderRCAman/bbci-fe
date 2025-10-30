@@ -162,7 +162,16 @@ export default function Tab6() {
   const handleSave = async () => {
     try {
       if (!id) return;
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (
+        db &&
+        !(await checkElibleToSave(
+          db,
+          id || "",
+          tabId,
+          "personal_medical_history",
+          "user_id"
+        ))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -251,7 +260,11 @@ export default function Tab6() {
             ></IonRefresherContent>
           </IonRefresher>
 
-          <ShowRegisteredTab id={id || ""} />
+          <ShowRegisteredTab
+            id={id || ""}
+            table_name="personal_medical_history"
+            field_name="user_id"
+          />
 
           {/* Added more padding and vertical space */}
           <main ref={scrollRef} className="p-3 space-y-6">

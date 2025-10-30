@@ -16,6 +16,7 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import shortUUID from "short-uuid";
 import { saveToStore } from "../../../utils/helper";
+import { checkElibleToSave } from "../../Registration/Tab11/data";
 export interface REPORTS_DB {
   id: string;
   user_id: string | null;
@@ -274,7 +275,16 @@ export default function EndoPage2() {
         new Date().toLocaleString("sv-SE").replace("T", " ") || "";
       const updatedAt =
         new Date().toLocaleString("sv-SE").replace("T", " ") || "";
-
+      if (
+        db &&
+        !(await checkElibleToSave(db, endoId, tabId, "endo_reports", "endo_id"))
+      ) {
+        return setAlert({
+          header: "Restricted access",
+          message: "This record was registered with a different tab id.",
+          show: true,
+        });
+      }
       await db?.run(
         `
       INSERT INTO endo_reports (
@@ -395,7 +405,7 @@ export default function EndoPage2() {
               refreshingSpinner="circles"
             />
           </IonRefresher>
-          <ShowRegisteredTab id={reportId || ""} table_name="endo_reports" />
+          <ShowRegisteredTab id={endoId || ""} table_name="endo_reports" field_name="endo_id" />
           <main className="space-y-10 p-2">
             <Card title="Participant's Details" className="shadow border">
               <div className="text-slate-600 dark:text-gray-300 space-y-2">

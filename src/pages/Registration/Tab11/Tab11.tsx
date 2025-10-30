@@ -189,7 +189,7 @@ export default function Tab11() {
   async function handleSave() {
     try {
       if (!db || !sqlite) return;
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (db && !(await checkElibleToSave(db, id || "", tabId , "TOBACCO_ALCOHOL_CONSUMPTION_MASTER", "user_id"))) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -231,7 +231,7 @@ export default function Tab11() {
         }
       />
       <IonContent class="" fullscreen>
-        <ShowRegisteredTab id={id || ""} />
+        <ShowRegisteredTab id={id || ""} table_name="TOBACCO_ALCOHOL_CONSUMPTION_MASTER" field_name="user_id" />
         <main ref={scrollRef} className="p-2 space-y-10">
           <Accordion className="space-y-2 outline-none" activeIndex={0}>
             <AccordionTab

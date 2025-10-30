@@ -104,7 +104,16 @@ export default function Tab8() {
 
   const handleSave = async () => {
     try {
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (
+        db &&
+        !(await checkElibleToSave(
+          db,
+          id || "",
+          tabId,
+          "anthropometry",
+          "user_id"
+        ))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -194,7 +203,11 @@ export default function Tab8() {
               // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
-          <ShowRegisteredTab id={id || ""} />
+          <ShowRegisteredTab
+            id={id || ""}
+            table_name="anthropometry"
+            field_name="user_id"
+          />
           <main className="p-2 space-y-5">
             <div className="p-2 border rounded-md">
               <p className="text-slate-500">Reading 1</p>

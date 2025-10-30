@@ -148,7 +148,7 @@ export default function Tab12() {
   async function handleSave() {
     try {
       if (!db || !sqlite) return;
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (db && !(await checkElibleToSave(db, id || "", tabId , "demographic_info", "user_id"))) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -211,7 +211,7 @@ export default function Tab12() {
         title={id ? "Edit Demographic Information" : "Demographic Information"}
       />
       <IonContent class="" fullscreen>
-        <ShowRegisteredTab id={id || ""} />
+        <ShowRegisteredTab id={id || ""} table_name="demographic_info" field_name="user_id" />
 
         {/* Use a Card for a premium container. 'm-3' adds margin. */}
         <Card title="Demographic Information" className="m-3 shadow-lg">

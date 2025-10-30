@@ -176,7 +176,7 @@ export default function BloodPage3() {
         <Header title={"Renal Function Test (RFT)"} />
         <IonContent fullscreen>
           <ShowRegisteredTab
-            id={sampleId || ""}
+            id={sampleId || ""} 
             table_name="gtgh_blood_report"
             field_name="sampleId"
           />
