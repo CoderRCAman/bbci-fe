@@ -48,10 +48,10 @@ const SQLiteContext = createContext<SQLiteContextValue>({
   sqlite: null,
   baseUrl: null,
   conflictedList: [],
-  setBaseUrl: () => {},
-  setConflictedList: () => {},
+  setBaseUrl: () => { },
+  setConflictedList: () => { },
   tabId: "",
-  setTabId: () => {},
+  setTabId: () => { },
 });
 
 // Create a custom hook to use the context
@@ -387,6 +387,66 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         FOREIGN KEY (report_id) REFERENCES endo_reports(id) ON DELETE CASCADE 
                     );
         `;
+        const query21 = `
+                              /* Add these 4 tables to your utils/query.ts initialization logic */
+
+                      CREATE TABLE IF NOT EXISTS FOOD_HABITS_MASTER (
+                          id TEXT PRIMARY KEY NOT NULL,
+                          user_id TEXT NOT NULL,
+                          diet_type TEXT,
+                          diet_duration TEXT,
+                          additives_json TEXT,
+                          method_shallow_frying TEXT DEFAULT '0',
+                          method_deep_frying TEXT DEFAULT '0',
+                          method_boiling TEXT DEFAULT '0',
+                          method_steaming TEXT DEFAULT '0',
+                          method_sauting TEXT DEFAULT '0',
+                          method_grill_bbq TEXT DEFAULT '0',
+                          family_sharing INTEGER,
+                          meals_per_day INTEGER,
+                          water_supply_json TEXT,
+                          created_at TEXT,
+                          updated_at TEXT,
+                          tab_id TEXT,
+                          synch_flag INTEGER DEFAULT 0,
+                          FOREIGN KEY (user_id) REFERENCES patients(id)
+                      );
+
+                      CREATE TABLE IF NOT EXISTS FOOD_HABITS_FAT_USAGE (
+                          id TEXT PRIMARY KEY NOT NULL,
+                          master_id TEXT NOT NULL,
+                          name TEXT,
+                          usage TEXT,
+                          family_consumption TEXT,
+                          years_used TEXT,
+                          FOREIGN KEY (master_id) REFERENCES FOOD_HABITS_MASTER(id) ON DELETE CASCADE
+                      );
+
+                      CREATE TABLE IF NOT EXISTS FOOD_RECALL_ENTRY (
+                          id TEXT PRIMARY KEY NOT NULL,
+                          master_id TEXT NOT NULL,
+                          timing TEXT,
+                          name_of_dish TEXT,
+                          quantity TEXT,
+                          date_time TEXT,
+                          diet_context TEXT,
+                          festival_name TEXT,
+                          created_at TEXT,
+                          updated_at TEXT,
+                          tab_id TEXT,
+                          synch_flag INTEGER DEFAULT 0,
+                          FOREIGN KEY (master_id) REFERENCES FOOD_HABITS_MASTER(id) ON DELETE CASCADE
+                      );
+
+                      CREATE TABLE IF NOT EXISTS FOOD_RECALL_INGREDIENT (
+                          id TEXT PRIMARY KEY NOT NULL,
+                          entry_id TEXT NOT NULL,
+                          name TEXT,
+                          quantity TEXT,
+                          prep_method TEXT,
+                          FOREIGN KEY (entry_id) REFERENCES FOOD_RECALL_ENTRY(id) ON DELETE CASCADE
+                      );
+        `
         const query16 = trackTable;
         const query17 = trackTableInsertTriggers;
         const query18 = trackTableUpdateTriggers;
@@ -411,7 +471,8 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query13);
         await newDb.execute(query14);
         await newDb.execute(query15);
-        await newDb.execute(query20); 
+        await newDb.execute(query20);
+        await newDb.execute(query21);
         await newDb.execute(query16);
         await newDb.execute(query17);
         await newDb.execute(query18);

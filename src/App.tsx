@@ -58,6 +58,8 @@ import BloodPage7 from "./pages/Blood/page7/BloodPage7";
 import PromptTabId from "./components/PromptTabId";
 import EndoPage4 from "./pages/Endoscopy/Page4/EndoPage4";
 import EndoPage3 from "./pages/Endoscopy/Page3/EndoPage3";
+import FoodHabitPage from "./pages/FoodRecall/Page2/FoodRecallPage2";
+import FoodRecallEntryPage from "./pages/FoodRecall/Page3/FoodRecallPage3";
 
 setupIonicReact();
 
@@ -159,12 +161,15 @@ const App: React.FC = () => {
             {/* ----------------------------------------- */}
 
             {/* FOOD RECALL STARTS FROM HERE  */}
-            <Route path="/food1">
+            {/* <Route path="/food1">
               <FoodRecallPage1 />
             </Route>
             <Route path="/food2">
               <FoodRecallPage2 />
-            </Route>
+            </Route> */}
+            <Route path="/food1" component={FoodRecallPage1} exact />
+            <Route path="/food-recall/page2" component={FoodHabitPage} exact />
+            <Route path="/food-recall/page3" component={FoodRecallEntryPage} exact />
           </IonTabs>
           <PromptTabId />
         </IonReactRouter>
