@@ -9,119 +9,132 @@ import { Column } from "primereact/column";
 import { Link } from "react-router-dom";
 
 export default function FoodRecallPage1() {
-    const { db, sqlite } = useSQLite();
+    const { db } = useSQLite();
     const [globalFilterValue, setGlobalFilterValue] = useState('');
     const [globalFilterValue1, setGlobalFilterValue1] = useState('');
     const [participants, setParticipants] = useState<any[]>([]);
-    const [bloodSample, setBloodSample] = useState<any[]>([]);
+    const [previousRecalls, setPreviousRecalls] = useState<any[]>([]); // Renamed from bloodSample
     const location = useLocation();
+
     useEffect(() => {
-        async function fetchUsers() {
+        async function fetchUsersAndRecalls() {
+            if (!db) return;
             try {
-                const query = `
-                select * from patients ; 
-              `
+                // Query 1: Get all patients (for starting a NEW survey)
+                const query1 = `
+                    SELECT * FROM patients; 
+                `;
+                const res1 = await db.query(query1);
+                setParticipants(res1?.values || []);
+
+                // Query 2: Get all existing food habit surveys (for VIEWING/EDITING)
                 const query2 = `
-              select b.* , p.name from blood_sample b  join patients p on b.user_id = p.id order by date_collected desc  ; 
-            `
-                const res = await db?.query(query);
-                const res2 = await db?.query(query2);
-                const values = res?.values as any[];
-                const values2 = res2?.values as any[];
-                console.log(values2)
-                setParticipants(values);
-                setBloodSample(values2)
+                    SELECT 
+                        m.id AS master_id, 
+                        m.user_id, 
+                        p.name, 
+                        m.created_at, 
+                        m.updated_at
+                    FROM FOOD_HABITS_MASTER m
+                    JOIN patients p ON m.user_id = p.id
+                    ORDER BY m.updated_at DESC;
+                `;
+                const res2 = await db.query(query2);
+                setPreviousRecalls(res2?.values || []);
 
             } catch (error) {
                 console.log(error)
             }
         }
-        fetchUsers()
+        fetchUsersAndRecalls();
+    }, [db, location.pathname]);
 
-    }, [db, location.pathname])
-
-    const header = (
+    // Header for the first table (New)
+    const renderHeaderNew = () => (
         <div className="flex justify-content-end">
             <span className="p-input-icon-left">
                 <InputText
                     value={globalFilterValue}
                     onInput={(e) => setGlobalFilterValue(e.currentTarget.value)}
-                    placeholder="Search..."
+                    placeholder="Search Patients..."
                     className="border p-2"
                 />
             </span>
         </div>
     );
-    const header2 = (
+
+    // Header for the second table (View/Edit)
+    const renderHeaderPrevious = () => (
         <div className="flex justify-content-end">
             <span className="p-input-icon-left">
                 <InputText
                     value={globalFilterValue1}
                     onInput={(e) => setGlobalFilterValue1(e.currentTarget.value)}
-                    placeholder="Search..."
+                    placeholder="Search Recalls..."
                     className="border p-2"
                 />
             </span>
         </div>
     );
 
+    // Body template for the "New" table link
+    const newRecallLinkBody = (rowData: any) => {
+        // This link goes to the FoodHabitPage (Page 2) and passes the PATIENT ID (user_id)
+        // This will trigger "create" mode in the habit page
+        return <Link to={`/food-recall/page2?user_id=${rowData.id}`}>{rowData.id}</Link>
+    };
+
+    // Body template for the "View/Edit" table link
+    const previousRecallLinkBody = (rowData: any) => {
+        // This link goes to the FoodHabitPage (Page 2) and passes the MASTER HABIT ID
+        // This will trigger "edit" mode in the habit page
+        return <Link to={`/food-recall/page2?master_id=${rowData.master_id}&user_id=${rowData.user_id}`}>{rowData.master_id}</Link>
+    };
 
     return (
-        <>
-            <IonPage>
-                <Header title={"Food Recall"} />
-                <IonContent class='' fullscreen>
-                    <main className="p-2">
-                        <div className="mt-5 border rounded">
-                            <div className="pl-5 py-2">
-                                <h2 className="text-slate-600 font-semibold">Process a new Food Recall</h2>
-                            </div>
-                            <DataTable value={participants}
-                                tableStyle={{ minWidth: '6rem' }}
-                                // tableClassName="p-datatable-gridlines" 
-                                globalFilter={globalFilterValue}
-                                header={header}
-                                paginator
-                                rows={10}
-                                showGridlines
-                                size='normal'
-                            >
-                                <Column field="id" sortable header="Id"
-                                    body={(rowData) => <Link to={`/food2?id=${rowData.id}`}>{rowData.id}</Link>}
-                                ></Column>
-                                <Column field="name" sortable header="Name"></Column>
-                                <Column field="gender" sortable header="Gender"></Column>
-                            </DataTable>
-
+        <IonPage>
+            <Header title={"Food Recall"} />
+            <IonContent fullscreen>
+                <main className="p-2">
+                    <div className="mt-5 border rounded">
+                        <div className="pl-5 py-2">
+                            <h2 className="text-slate-600 font-semibold">Process a new Food Recall (Select Patient)</h2>
                         </div>
+                        <DataTable 
+                            value={participants}
+                            globalFilter={globalFilterValue}
+                            header={renderHeaderNew}
+                            paginator rows={10}
+                            showGridlines size='normal'
+                            tableStyle={{ minWidth: '6rem' }}
+                        >
+                            <Column field="id" sortable header="Patient Id" body={newRecallLinkBody}></Column>
+                            <Column field="name" sortable header="Name"></Column>
+                            <Column field="gender" sortable header="Gender"></Column>
+                        </DataTable>
+                    </div>
 
-                        <div className="mt-10 border rounded">
-                            <div className="pl-5 py-2">
-                                <h2 className="text-slate-500 font-semibold">Looking for previous food recall?</h2>
-                            </div>
-                            <DataTable value={bloodSample}
-                                tableStyle={{ minWidth: '6rem' }}
-                                // tableClassName="p-datatable-gridlines" 
-                                globalFilter={globalFilterValue}
-                                header={header2}
-                                paginator
-                                rows={10}
-                                showGridlines
-                                size='normal'
-                            >
-                                <Column field="id" sortable header="Sample Id"
-                                    body={(rowData) => <Link to={`/food2?id=${rowData.user_id}&sampleId=${rowData.id}`}>{rowData.id}</Link>}
-                                ></Column>
-                                <Column field="name" sortable header="Name"></Column>
-                                <Column field="user_id" sortable header="User Id"></Column>
-                            </DataTable>
-
+                    <div className="mt-10 border rounded">
+                        <div className="pl-5 py-2">
+                            <h2 className="text-slate-500 font-semibold">View/Edit Previous Food Recalls</h2>
                         </div>
-
-                    </main>
-                </IonContent>
-            </IonPage>
-
-        </>
-    )
+                        <DataTable 
+                            value={previousRecalls}
+                            globalFilter={globalFilterValue1}
+                            header={renderHeaderPrevious}
+                            paginator rows={10}
+                            showGridlines size='normal'
+                            tableStyle={{ minWidth: '6rem' }}
+                        >
+                            <Column field="master_id" sortable header="Recall Survey ID" body={previousRecallLinkBody}></Column>
+                            <Column field="name" sortable header="Patient Name"></Column>
+                            <Column field="user_id" sortable header="Patient Id"></Column>
+                            <Column field="updated_at" sortable header="Last Updated"></Column>
+                        </DataTable>
+                    </div>
+                </main>
+            </IonContent>
+        </IonPage>
+    );
 }
+
