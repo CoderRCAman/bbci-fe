@@ -18,6 +18,8 @@ import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Card } from "primereact/card";
 import { FloatLabel } from "primereact/floatlabel";
 import { Calendar } from "primereact/calendar";
+import { set } from "date-fns";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 export default function EndoPage3() {
   const [barcodeData, setBarCodeData] = useState("");
   const [editFlag, setEditFlag] = useState(false);
@@ -30,6 +32,7 @@ export default function EndoPage3() {
   const [collection_date, setCollectionDate] = useState<string>(
     new Date().toLocaleTimeString("sv-SE").replace("T", " ")
   );
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -47,7 +50,7 @@ export default function EndoPage3() {
       const res2 = await db?.query(query2);
       console.log(res);
       setParticipants(res?.values?.[0]);
-      setBarCodeData(res2?.values?.[0]?.vial_code || "HEY");
+      setBarCodeData(res2?.values?.[0]?.vial_code);
       setCollectionDate(res2?.values?.[0]?.date);
       console.log(res2);
     } catch (error) {
@@ -71,6 +74,7 @@ export default function EndoPage3() {
         console.log("Scanned:", buffer);
         setBarCodeData(buffer);
         buffer = "";
+        setIsUnsaved(true);
       } else {
         buffer += e.key;
       }
@@ -113,6 +117,7 @@ export default function EndoPage3() {
         message: "Vial linked successfully!",
         show: true,
       });
+      setIsUnsaved(false);
     } catch (error) {
       console.log(error);
     }
@@ -121,8 +126,17 @@ export default function EndoPage3() {
     const curId = searchParams.get("id") || "";
     const endoIdd = searchParams.get("endoId") || "";
     fetchCurrentUser(curId, endoIdd);
+    setIsUnsaved(false);
     event.detail.complete();
   };
+
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved changes",
+      message: "You have unsaved changes. Please save before leaving.",
+    });
+  });
   return (
     <>
       <IonPage>
@@ -167,6 +181,7 @@ export default function EndoPage3() {
                   <Calendar
                     value={new Date(collection_date)}
                     onChange={(e) => {
+                      setIsUnsaved(true);
                       setCollectionDate(
                         e.value?.toLocaleString("sv-SE").replace("T", " ") || ""
                       );
@@ -192,6 +207,17 @@ export default function EndoPage3() {
                 to={`/endo2?id=${id}&endoId=${endoId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
+                onClick={(e) => {
+                  if (isUnsaved) {
+                    e.preventDefault();
+                    setAlert({
+                      show: true,
+                      header: "Unsaved Changes",
+                      message:
+                        "You have unsaved changes. Please save before leaving the page.",
+                    });
+                  }
+                }}
               >
                 <Button
                   label="PREV"

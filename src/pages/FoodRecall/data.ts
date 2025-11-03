@@ -72,7 +72,7 @@ export interface IFoodRecallIngredient {
 export const generateDefaultHabitState = (user_id: string, tab_id: string): { master: IFoodHabitMaster, fats: IFoodHabitFat[] } => {
     const translator = shortUUID();
     const masterId = translator.generate();
-    const now = new Date().toISOString();
+    const now = new Date().toLocaleString("SV-SE").replace("T", " ");
 
     return {
         master: {
@@ -140,7 +140,7 @@ export const saveHabitData = async (
     tabId : string
 ) => {
     try {
-        const now = new Date().toISOString();
+        const now = new Date().toLocaleString("SV-SE").replace("T", " ");
         master.updated_at = now;
         master.synch_flag = 2; // Mark as updated
 

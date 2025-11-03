@@ -189,7 +189,16 @@ export default function Tab11() {
   async function handleSave() {
     try {
       if (!db || !sqlite) return;
-      if (db && !(await checkElibleToSave(db, id || "", tabId , "TOBACCO_ALCOHOL_CONSUMPTION_MASTER", "user_id"))) {
+      if (
+        db &&
+        !(await checkElibleToSave(
+          db,
+          id || "",
+          tabId,
+          "TOBACCO_ALCOHOL_CONSUMPTION_MASTER",
+          "user_id"
+        ))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -231,9 +240,16 @@ export default function Tab11() {
         }
       />
       <IonContent class="" fullscreen>
-        <ShowRegisteredTab id={id || ""} table_name="TOBACCO_ALCOHOL_CONSUMPTION_MASTER" field_name="user_id" />
+        <ShowRegisteredTab
+          id={id || ""}
+          table_name="TOBACCO_ALCOHOL_CONSUMPTION_MASTER"
+          field_name="user_id"
+        />
         <main ref={scrollRef} className="p-2 space-y-10">
-          <Accordion className="space-y-2 outline-none" activeIndex={0}>
+          <Accordion
+            className="space-y-2 outline-none"
+            activeIndex={0}
+          >
             <AccordionTab
               className="border-1 rounded  border-slate-200"
               header="Smoking tobacco"
@@ -299,7 +315,7 @@ export default function Tab11() {
           buttons={["OK"]}
         />
 
-        <div className="pt-10 pb-2 px-2 flex justify-end gap-2">
+        <div className="pt-10 pb-2 px-2 flex justify-between gap-2">
           <Link to={"/tab9?id=" + id}>
             <Button
               className="px-10 py-2 rounded"

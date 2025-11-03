@@ -8,6 +8,7 @@ import {
   IonRefresher,
   IonRefresherContent,
   RefresherEventDetail,
+  useIonViewWillLeave,
 } from "@ionic/react";
 import Header from "../../../components/Header";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
@@ -17,6 +18,8 @@ import { Card } from "primereact/card";
 import shortUUID from "short-uuid";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
+import { set } from "date-fns";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 export interface REPORTS_DB {
   id: string;
   user_id: string | null;
@@ -127,6 +130,7 @@ export default function EndoPage2() {
   // State for dynamic lesions
   const [stomachLesions, setStomachLesions] = useState<any[]>([]);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   async function fetchExisting(curId: string, endo_id: string) {
     try {
       const query = `
@@ -178,6 +182,7 @@ export default function EndoPage2() {
     fetchExisting(curId, endoIdd);
   }, [location.pathname, db]);
   const handleAddLesion = () => {
+    setIsUnsaved(true);
     const newLesion = {
       id: shortUUID().generate(), // Unique ID for React key
       location: "",
@@ -193,6 +198,7 @@ export default function EndoPage2() {
    * Removes a lesion from the array by its ID.
    */
   const handleRemoveLesion = (id: string) => {
+    setIsUnsaved(true);
     setDeletedIds([...deletedIds, id]);
     setStomachLesions(stomachLesions.filter((lesion) => lesion.id !== id));
   };
@@ -201,6 +207,7 @@ export default function EndoPage2() {
    * Updates a specific field of a specific lesion.
    */
   const handleLesionChange = (id: string, field: string, value: any) => {
+    setIsUnsaved(true);
     setStomachLesions(
       stomachLesions.map((lesion) =>
         lesion.id === id ? { ...lesion, [field]: value } : lesion
@@ -210,6 +217,7 @@ export default function EndoPage2() {
 
   const handleOralCavityChange = (newValue: "Normal" | "Lesion") => {
     // If switching TO Normal FROM Lesion, clear description
+    setIsUnsaved(true);
     if (newValue === "Normal" && oralCavityMucosa === "Lesion") {
       setOralCavityMucosaDescription("");
     }
@@ -217,6 +225,7 @@ export default function EndoPage2() {
   };
 
   const handleOesophagusChange = (newValue: "Normal" | "Lesion") => {
+    setIsUnsaved(true);
     if (newValue === "Normal" && oesophagus === "Lesion") {
       setOesophagusDescription("");
     }
@@ -224,6 +233,7 @@ export default function EndoPage2() {
   };
 
   const handleGeJunctionChange = (newValue: "Normal" | "Lesion") => {
+    setIsUnsaved(true);
     if (newValue === "Normal" && geJunction === "Lesion") {
       setGeJunctionDescription("");
     }
@@ -231,6 +241,7 @@ export default function EndoPage2() {
   };
 
   const handleStomachFundusChange = (newValue: "Normal" | "Description") => {
+    setIsUnsaved(true);
     if (newValue === "Normal" && stomachFundus === "Description") {
       setStomachFundusDescription("");
     }
@@ -238,6 +249,7 @@ export default function EndoPage2() {
   };
 
   const handleStomachBodyChange = (newValue: "Normal" | "Description") => {
+    setIsUnsaved(true);
     if (newValue === "Normal" && stomachBody === "Description") {
       setStomachBodyDescription("");
     }
@@ -245,6 +257,7 @@ export default function EndoPage2() {
   };
 
   const handleStomachAntrumChange = (newValue: "Normal" | "Description") => {
+    setIsUnsaved(true);
     if (newValue === "Normal" && stomachAntrum === "Description") {
       setStomachAntrumDescription("");
     }
@@ -384,6 +397,7 @@ export default function EndoPage2() {
         show: true,
       });
       await saveToStore(sqlite);
+      setIsUnsaved(false);
     } catch (error) {
       console.log(error);
     }
@@ -391,9 +405,18 @@ export default function EndoPage2() {
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const curId = searchParams.get("id") || "";
     const endoIdd = searchParams.get("endoId") || "";
-    await fetchExisting(curId, endoIdd);
+    await fetchExisting(curId, endoIdd); 
+    setIsUnsaved(false);
     event.detail.complete();
   };
+
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved changes",
+      message: "You have unsaved changes. Please save before leaving.",
+    });
+  });
   return (
     <>
       <IonPage>
@@ -405,7 +428,11 @@ export default function EndoPage2() {
               refreshingSpinner="circles"
             />
           </IonRefresher>
-          <ShowRegisteredTab id={endoId || ""} table_name="endo_reports" field_name="endo_id" />
+          <ShowRegisteredTab
+            id={endoId || ""}
+            table_name="endo_reports"
+            field_name="endo_id"
+          />
           <main className="space-y-10 p-2">
             <Card title="Participant's Details" className="shadow border">
               <div className="text-slate-600 dark:text-gray-300 space-y-2">
@@ -461,9 +488,10 @@ export default function EndoPage2() {
                     <textarea
                       id="oc_desc"
                       value={oralCavityMucosaDescription}
-                      onChange={(e) =>
-                        setOralCavityMucosaDescription(e.target.value)
-                      }
+                      onChange={(e) => {
+                        setIsUnsaved(true);
+                        setOralCavityMucosaDescription(e.target.value);
+                      }}
                       rows={3}
                       className="w-full p-2 border outline-none border-gray-300 rounded-md focus:ring-cyan-500 focus:border-cyan-500 transition"
                       placeholder="Enter lesion details..."
@@ -507,7 +535,10 @@ export default function EndoPage2() {
                   <textarea
                     id="oe_desc"
                     value={oesophagusDescription}
-                    onChange={(e) => setOesophagusDescription(e.target.value)}
+                    onChange={(e) => {
+                      setIsUnsaved(true);
+                      setOesophagusDescription(e.target.value);
+                    }}
                     rows={3}
                     className="w-full p-2 border outline-none border-gray-300 rounded-md focus:ring-cyan-500 focus:border-cyan-500 transition"
                     placeholder="Enter lesion details..."
@@ -532,7 +563,10 @@ export default function EndoPage2() {
                   type="text"
                   id="ge_level"
                   value={geJunctionLevel}
-                  onChange={(e) => setGeJunctionLevel(e.target.value)}
+                  onChange={(e) => {
+                    setIsUnsaved(true);
+                    setGeJunctionLevel(e.target.value);
+                  }}
                   placeholder="Enter level in cm"
                   className="w-full p-2 border outline-none border-gray-300 rounded-md focus:ring-cyan-500 focus:border-cyan-500 transition"
                 />
@@ -574,9 +608,10 @@ export default function EndoPage2() {
                     <textarea
                       id="ge_desc"
                       value={geJunctionDescription}
-                      onChange={(e: any) =>
-                        setGeJunctionDescription(e.target.value)
-                      }
+                      onChange={(e: any) => {
+                        setIsUnsaved(true);
+                        setGeJunctionDescription(e.target.value);
+                      }}
                       rows={3}
                       className="w-full p-2 border outline-none border-gray-300 rounded-md focus:ring-cyan-500 focus:border-cyan-500 transition"
                       placeholder="Enter lesion details..."
@@ -630,9 +665,10 @@ export default function EndoPage2() {
                     <textarea
                       id="s_fundus_desc"
                       value={stomachFundusDescription}
-                      onChange={(e) =>
-                        setStomachFundusDescription(e.target.value)
-                      }
+                      onChange={(e) => {
+                        setIsUnsaved(true);
+                        setStomachFundusDescription(e.target.value);
+                      }}
                       rows={3}
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 transition"
                       placeholder="Enter details..."
@@ -679,9 +715,10 @@ export default function EndoPage2() {
                     <textarea
                       id="s_body_desc"
                       value={stomachBodyDescription}
-                      onChange={(e) =>
-                        setStomachBodyDescription(e.target.value)
-                      }
+                      onChange={(e) => {
+                        setIsUnsaved(true);
+                        setStomachBodyDescription(e.target.value);
+                      }}
                       rows={3}
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 transition"
                       placeholder="Enter details..."
@@ -728,9 +765,10 @@ export default function EndoPage2() {
                     <textarea
                       id="s_antrum_desc"
                       value={stomachAntrumDescription}
-                      onChange={(e) =>
-                        setStomachAntrumDescription(e.target.value)
-                      }
+                      onChange={(e) => {
+                        setIsUnsaved(true);
+                        setStomachAntrumDescription(e.target.value);
+                      }}
                       rows={3}
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 transition"
                       placeholder="Enter details..."
@@ -883,6 +921,17 @@ export default function EndoPage2() {
                 to={`/endo4?id=${id}&endoId=${endoId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
+                onClick={(e) => {
+                  if (isUnsaved) {
+                    e.preventDefault();
+                    setAlert({
+                      header: "Unsaved Changes",
+                      message:
+                        "You have unsaved changes. Please save before proceeding.",
+                      show: true,
+                    });
+                  }
+                }}
               >
                 <Button
                   label="PREV"
@@ -897,6 +946,17 @@ export default function EndoPage2() {
                 to={`/endo3?id=${id}&endoId=${endoId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
+                onClick={(e) => {
+                  if (isUnsaved) {
+                    e.preventDefault();
+                    setAlert({
+                      header: "Unsaved Changes",
+                      message:
+                        "You have unsaved changes. Please save before proceeding.",
+                      show: true,
+                    });
+                  }
+                }}
               >
                 <Button
                   label="NEXT"

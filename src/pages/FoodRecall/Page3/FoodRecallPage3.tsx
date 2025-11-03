@@ -22,6 +22,7 @@ import {
 import shortUUID from "short-uuid";
 import { Button } from "primereact/button";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 
 export default function FoodRecallEntryPage() {
   const { db, sqlite, tabId } = useSQLite();
@@ -33,7 +34,7 @@ export default function FoodRecallEntryPage() {
   // State for this page
   const [foodLog, setFoodLog] = useState<IFoodRecallEntry[]>([]);
   const [alert, setAlert] = useState({ show: false, header: "", message: "" });
-
+  const [isUnsaved, setIsUnsaved] = useState(false);
   // Get IDs from URL
   const searchParams = new URLSearchParams(location.search);
   const userId = searchParams.get("user_id") || "";
@@ -72,29 +73,37 @@ export default function FoodRecallEntryPage() {
 
     loadData();
   }, [db, sqlite, masterId, tabId]);
-
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved Changes",
+      message: "You have unsaved changes. Please save before navigating away.",
+    });
+  });
   // --- 7.3 Dynamic Log Functions ---
   const handleAddFoodEntry = () => {
     if (!masterId) return;
+    setIsUnsaved(true);
     const newEntry: IFoodRecallEntry = {
       id: shortUUID.generate(),
       master_id: masterId,
       timing: "Breakfast",
       name_of_dish: "",
       quantity: "",
-      date_time: new Date().toISOString().substring(0, 16),
+      date_time: new Date().toLocaleString("sv-SE").replace("T", " "),
       ingredients: [],
       diet_context: "regular",
       festival_name: "",
       synch_flag: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: new Date().toLocaleString("sv-SE").replace("T", " "),
+      updated_at: new Date().toLocaleString("sv-SE").replace("T", " "),
       tab_id: tabId,
     };
     setFoodLog([...foodLog, newEntry]);
   };
 
   const handleRemoveFoodEntry = (id: string) => {
+    setIsUnsaved(true);
     setFoodLog(foodLog.filter((entry) => entry.id !== id));
   };
 
@@ -103,6 +112,7 @@ export default function FoodRecallEntryPage() {
     field: keyof IFoodRecallEntry,
     value: any
   ) => {
+    setIsUnsaved(true);
     setFoodLog(
       foodLog.map((entry) =>
         entry.id === id ? { ...entry, [field]: value } : entry
@@ -111,6 +121,7 @@ export default function FoodRecallEntryPage() {
   };
 
   const handleAddIngredient = (foodId: string) => {
+    setIsUnsaved(true);
     setFoodLog(
       foodLog.map((food) => {
         if (food.id === foodId) {
@@ -134,6 +145,7 @@ export default function FoodRecallEntryPage() {
     field: keyof IFoodRecallIngredient,
     value: any
   ) => {
+    setIsUnsaved(true);
     setFoodLog(
       foodLog.map((food) => {
         if (food.id === foodId) {
@@ -150,6 +162,7 @@ export default function FoodRecallEntryPage() {
   };
 
   const handleRemoveIngredient = (foodId: string, ingId: string) => {
+    setIsUnsaved(true);
     setFoodLog(
       foodLog.map((food) => {
         if (food.id === foodId) {
@@ -202,6 +215,7 @@ export default function FoodRecallEntryPage() {
         header: "Success",
         message: "Food Recall (7.3) data has been saved.",
       });
+      setIsUnsaved(false);
     } catch (e: any) {
       setIsLoading(false);
       setAlert({
@@ -224,8 +238,10 @@ export default function FoodRecallEntryPage() {
   }
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await loadData();
+    setIsUnsaved(false);
     event.detail.complete();
   };
+
   return (
     <IonPage>
       <Header title="Food Recall Entry (Module 2: 7.3)" />
@@ -521,6 +537,17 @@ export default function FoodRecallEntryPage() {
             />
             <Link
               to={`/food-recall/page2?master_id=${masterId}&user_id=${userId}`}
+              onClick={(e) => {
+                if (isUnsaved) {
+                  e.preventDefault();
+                  setAlert({
+                    show: true,
+                    header: "Unsaved Changes",
+                    message:
+                      "You have unsaved changes. Please save before navigating away.",
+                  });
+                }
+              }}
             >
               <Button
                 label="Back to Habits (Module 1)"
@@ -528,6 +555,7 @@ export default function FoodRecallEntryPage() {
               />
             </Link>
           </div>
+          <div className="pb-[250px]"></div>
         </main>
 
         <IonAlert

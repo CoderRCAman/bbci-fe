@@ -170,7 +170,7 @@ export const generateDefaultState = (
   );
 
   const findExisting = (type: initialState["product_type"]) =>
-    masterData.find((item) => item.product_type === type);
+    masterData?.find((item) => item.product_type === type);
 
   const initialState: initialState[] = [
     findExisting("smoking_tobacco") || {
@@ -212,7 +212,7 @@ export const populateWithBackend = (
   const normalize = (str?: string) => (str || "").trim().toLowerCase();
   // Group backend data by type
   const backendByType: Record<string, TOBACCO_ALCOHOL_CONSUMPION[]> = {};
-  backendData.forEach((item) => {
+  backendData?.forEach((item) => {
     if (!backendByType[item.type]) backendByType[item.type] = [];
     backendByType[item.type].push(item);
   });

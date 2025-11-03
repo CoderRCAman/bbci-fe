@@ -1,4 +1,11 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import { useEffect, useState } from "react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
@@ -16,6 +23,8 @@ import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Card } from "primereact/card";
 import { RadioButton } from "primereact/radiobutton";
 import { Fieldset } from "primereact/fieldset";
+import { set } from "date-fns";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 export interface BLOOD_SAMPLE_COLLECTION {
   blood_collection_tube: string;
   blood_collection_tube_other: string;
@@ -63,6 +72,7 @@ export default function BloodPage2() {
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [editFlag, setEditFlag] = useState(false);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [bloodSample, setBloodSample] = useState<BLOOD_SAMPLE>({
     id: shortUUID().generate(),
     user_id: id,
@@ -81,6 +91,72 @@ export default function BloodPage2() {
     header: "",
     message: "",
   });
+  async function fetchCurrentUser(curId: string, sampleId: string) {
+    try {
+      console.log(sampleId);
+      const query = `
+                        select * from patients where id = '${curId}'
+                    `;
+      const query2 = `
+         select * from blood_sample where id = '${sampleId}' ; 
+        `;
+      const query3 = `
+         select * from blood_tube_collection where blood_sample_id = '${sampleId}'
+        `;
+      const res = await db?.query(query);
+      setParticipants(res?.values?.[0]);
+      const res1 = await db?.query(query2);
+      const res2 = await db?.query(query3);
+      if (!sampleId) {
+        setBloodSample({
+          id: shortUUID().generate(),
+          user_id: curId,
+          date_collected: new Date().toLocaleString("sv-SE").replace("T", " "),
+          time_collected: new Date().toLocaleString("sv-SE").replace("T", " "),
+          last_meal_date: new Date().toLocaleString("sv-SE").replace("T", " "),
+          last_meal_time: new Date().toLocaleString("sv-SE").replace("T", " "),
+          received_blood_last_6_months: 2,
+          sample_classification: "",
+          is_sample_collected: 0,
+          collection_tubes: [
+            new BloodSample({
+              blood_collection_tube: "",
+              blood_collection_tube_other: "",
+              identification_code_tube: "",
+              volume: 0,
+              characteristic: "",
+              id: shortUUID().generate(),
+              user_id: curId,
+            }),
+          ],
+        });
+      }
+      console.log(res1, res2);
+      if (res1?.values?.length == 0) return;
+
+      setBloodSample((prev) => ({
+        ...prev,
+        ...res1?.values?.[0],
+
+        collection_tubes:
+          res2?.values?.length == 0
+            ? [
+                new BloodSample({
+                  blood_collection_tube: "",
+                  blood_collection_tube_other: "",
+                  identification_code_tube: "",
+                  volume: 0,
+                  characteristic: "",
+                  id: shortUUID().generate(),
+                  user_id: curId,
+                }),
+              ]
+            : res2?.values,
+      }));
+    } catch (error) {
+      console.log(error);
+    }
+  }
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     const edit = searchParams.get("edit") || "";
@@ -90,82 +166,25 @@ export default function BloodPage2() {
     setBloodSample((prev) => ({ ...prev, user_id: curId }));
     setSampleId(sampleId);
     if (!db) return;
-    async function fetchCurrentUser() {
-      try {
-        console.log(sampleId);
-        const query = `
-                        select * from patients where id = '${curId}'
-                    `;
-        const query2 = `
-         select * from blood_sample where id = '${sampleId}' ; 
-        `;
-        const query3 = `
-         select * from blood_tube_collection where blood_sample_id = '${sampleId}'
-        `;
-        const res = await db?.query(query);
-        setParticipants(res?.values?.[0]);
-        const res1 = await db?.query(query2);
-        const res2 = await db?.query(query3);
-        if (!sampleId) {
-          setBloodSample({
-            id: shortUUID().generate(),
-            user_id: curId,
-            date_collected: new Date()
-              .toLocaleString("sv-SE")
-              .replace("T", " "),
-            time_collected: new Date()
-              .toLocaleString("sv-SE")
-              .replace("T", " "),
-            last_meal_date: new Date()
-              .toLocaleString("sv-SE")
-              .replace("T", " "),
-            last_meal_time: new Date()
-              .toLocaleString("sv-SE")
-              .replace("T", " "),
-            received_blood_last_6_months: 2,
-            sample_classification: "",
-            is_sample_collected: 0,
-            collection_tubes: [
-              new BloodSample({
-                blood_collection_tube: "",
-                blood_collection_tube_other: "",
-                identification_code_tube: "",
-                volume: 0,
-                characteristic: "",
-                id: shortUUID().generate(),
-                user_id: curId,
-              }),
-            ],
-          });
-        }
-        console.log(res1, res2);
-        if (res1?.values?.length == 0) return;
 
-        setBloodSample((prev) => ({
-          ...prev,
-          ...res1?.values?.[0],
-
-          collection_tubes:
-            res2?.values?.length == 0
-              ? [
-                  new BloodSample({
-                    blood_collection_tube: "",
-                    blood_collection_tube_other: "",
-                    identification_code_tube: "",
-                    volume: 0,
-                    characteristic: "",
-                    id: shortUUID().generate(),
-                    user_id: curId,
-                  }),
-                ]
-              : res2?.values,
-        }));
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    fetchCurrentUser();
+    fetchCurrentUser(curId, sampleId);
   }, [location.pathname, db]);
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved Changes",
+      message: "You have unsaved changes. Please save before navigating away.",
+    });
+  });
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const curId = searchParams.get("id") || "";
+    const sampleId = searchParams.get("sampleId") || "";
+    await fetchCurrentUser(curId, sampleId);
+    setIsUnsaved(false);
+    event.detail.complete();
+  };
+
   const handleSave = async () => {
     try {
       if (
@@ -197,7 +216,7 @@ export default function BloodPage2() {
       }
       await saveToStore(sqlite);
       setSampleId(bloodSample.id);
-
+      setIsUnsaved(false);
       setAlert({
         header: "Success",
         show: true,
@@ -214,6 +233,7 @@ export default function BloodPage2() {
   };
 
   const addNewCollectionTube = () => {
+    setIsUnsaved(true);
     const translator = shortUUID();
     const newSample = new BloodSample({
       blood_collection_tube: "",
@@ -229,6 +249,7 @@ export default function BloodPage2() {
     }));
   };
   const removeCollectionTube = (id: string) => {
+    setIsUnsaved(true);
     if (bloodSample.collection_tubes.length === 1) return;
     setRemovedIds((prev) => [...prev, id]);
     const updatedTubes = bloodSample.collection_tubes.filter(
@@ -250,8 +271,13 @@ export default function BloodPage2() {
       <IonPage>
         <Header title={"Blood sample report"} />
         <IonContent fullscreen>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only"
+              refreshingSpinner="circles"
+            />
+          </IonRefresher>
           <ShowRegisteredTab id={sampleId || ""} table_name="blood_sample" />
-
           {/* Use p-3 or p-4 for better spacing on mobile and desktop */}
           <main className="p-3 md:p-4">
             {/* --- 1. Replaced simple div with a Card --- */}
@@ -285,6 +311,7 @@ export default function BloodPage2() {
                       checked={bloodSample?.is_sample_collected === 1}
                       onChange={(e) => {
                         // Logic is unchanged, just using e.value
+                        setIsUnsaved(true);
                         setBloodSample({
                           ...bloodSample,
                           is_sample_collected: e.checked ? 1 : 0,
@@ -300,6 +327,7 @@ export default function BloodPage2() {
                       value={0}
                       checked={bloodSample?.is_sample_collected === 0}
                       onChange={(e) => {
+                        setIsUnsaved(true);
                         setBloodSample({
                           ...bloodSample,
                           is_sample_collected: e.checked ? 0 : 1,
@@ -319,6 +347,7 @@ export default function BloodPage2() {
                     removeCollectionTube={removeCollectionTube}
                     setBloodSample={setBloodSample}
                     isSampleCollected={bloodSample?.is_sample_collected === 1}
+                    setIsUnsaved={setIsUnsaved}
                   />
                 ))}
 
@@ -347,6 +376,7 @@ export default function BloodPage2() {
                           name="sample_classification"
                           value={option.value}
                           onChange={(e) => {
+                            setIsUnsaved(true);
                             setBloodSample({
                               ...bloodSample,
                               sample_classification: e.checked ? e.value : "",
@@ -383,15 +413,16 @@ export default function BloodPage2() {
                             ? new Date(bloodSample.date_collected)
                             : null
                         }
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setIsUnsaved(true);
                           setBloodSample({
                             ...bloodSample,
                             date_collected:
                               e.value
                                 ?.toLocaleString("sv-SE")
                                 .replace("T", " ") || "",
-                          })
-                        }
+                          });
+                        }}
                         showIcon
                       />
                     </div>
@@ -408,6 +439,7 @@ export default function BloodPage2() {
                             : null
                         }
                         onChange={(e) => {
+                          setIsUnsaved(true);
                           setBloodSample({
                             ...bloodSample,
                             time_collected:
@@ -441,15 +473,16 @@ export default function BloodPage2() {
                             ? new Date(bloodSample.last_meal_date)
                             : null
                         }
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setIsUnsaved(true);
                           setBloodSample({
                             ...bloodSample,
                             last_meal_date:
                               e.value
                                 ?.toLocaleString("sv-SE")
                                 .replace("T", " ") || "",
-                          })
-                        }
+                          });
+                        }}
                       />
                     </div>
                     <div className="flex flex-col gap-2">
@@ -465,6 +498,7 @@ export default function BloodPage2() {
                             : null
                         }
                         onChange={(e) => {
+                          setIsUnsaved(true);
                           setBloodSample({
                             ...bloodSample,
                             last_meal_time:
@@ -505,6 +539,7 @@ export default function BloodPage2() {
                             option.value
                           }
                           onChange={(e) => {
+                            setIsUnsaved(true);
                             if (e.checked) {
                               setBloodSample({
                                 ...bloodSample,

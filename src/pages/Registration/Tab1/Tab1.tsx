@@ -243,13 +243,13 @@ const Tab1: React.FC = () => {
       }
 
       await db?.run(
-        `UPDATE patients SET name = ?, age = ?, gender = ? , i_name = ? , 
+        `UPDATE patients SET name = ?,  gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
          DOB = ? , updated_at = ? , signature = ?
          WHERE id = ?`,
         [
           data.name,
-          data.age,
+          
           data.gender,
           data.i_name,
           data.i_emp_code,
@@ -272,15 +272,14 @@ const Tab1: React.FC = () => {
       // Insert
       const uniqueId = generateUniqueId(data.name);
       await db?.run(
-        `INSERT INTO patients (id, i_name, i_emp_code, name, age, gender,
+        `INSERT INTO patients (id, i_name, i_emp_code, name,  gender,
          lat, long, time, dob, date , created_at , updated_at , tab_id,signature )
-         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ? , ?)`,
+         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ? )`,
         [
           uniqueId,
           data.i_name,
           data.i_emp_code,
           data.name,
-          data.age,
           data.gender,
           patient.lat,
           patient.long,
@@ -472,20 +471,6 @@ const Tab1: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                )}
-              />
-
-              {/* --- 6. Age --- */}
-              <ControlledFormField
-                name="age"
-                control={control}
-                errors={errors}
-                rules={{ required: "Age is required" }}
-                render={({ field }: any) => (
-                  <FloatLabel>
-                    <InputText {...field} keyfilter="int" className="w-full" />
-                    <label>Age</label>
-                  </FloatLabel>
                 )}
               />
 

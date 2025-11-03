@@ -437,7 +437,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                           synch_flag INTEGER DEFAULT 0,
                           FOREIGN KEY (master_id) REFERENCES FOOD_HABITS_MASTER(id) ON DELETE CASCADE
                       );
-
+                      
                       CREATE TABLE IF NOT EXISTS FOOD_RECALL_INGREDIENT (
                           id TEXT PRIMARY KEY NOT NULL,
                           entry_id TEXT NOT NULL,

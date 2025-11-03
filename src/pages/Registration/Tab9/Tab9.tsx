@@ -1,4 +1,11 @@
-import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
 import { useEffect, useState } from "react";
@@ -23,12 +30,44 @@ export interface INDOOR_AIR_POLLUTION {
   user_id?: string;
   tab_id?: string;
 }
+import { differenceInYears, parseISO } from "date-fns";
+
+// Assuming INDOOR_AIR_POLLUTION type is defined elsewhere
+
 function isIndoorAirPollutionDataValid(
   data: INDOOR_AIR_POLLUTION[],
-  userData: any, // Must contain userData.age
+  userData: any // Must contain userData.dob
 ): boolean {
+  // --- Start: Age Calculation with date-fns ---
+
+  // 1. Check if DOB exists
+  if (!userData.dob) {
+    console.error("Validation failed: userData.dob is missing.");
+    return false;
+  }
+
+  // 2. Parse the DOB string (assuming ISO format)
+  const birthDate = parseISO(userData.dob);
+
+  // 3. Check for invalid date
+  if (isNaN(birthDate.getTime())) {
+    console.error("Validation failed: userData.dob is an invalid date string.");
+    return false;
+  }
+
+  // 4. Calculate the age
+  const today = new Date();
+  const calculatedAge = differenceInYears(today, birthDate);
+
+  // 5. Handle invalid age (e.g., DOB is in the future)
+  if (calculatedAge < 0) {
+    console.error("Validation failed: DOB is in the future.");
+    return false;
+  }
+  // --- End: Age Calculation ---
+
   const allItemsValid = data.every((item) => {
-    // 1. Replaced with fields from INDOOR_AIR_POLLUTION
+    // 1. Fields specific to INDOOR_AIR_POLLUTION
     const hasRequiredFields =
       item.id?.trim() &&
       item.hours > -1 &&
@@ -38,20 +77,25 @@ function isIndoorAirPollutionDataValid(
       item.smokiness > -1 &&
       item.most_cooking > -1;
 
-    // 2. Copied validation logic from isResidentialDataValid
+    // 2. Copied age range validation logic
     const hasValidNumbers = item.from_age >= 0 && item.to_age > 0;
     const isRangeCorrect = item.from_age <= item.to_age;
-    const isWithinUserAge =
-      item.to_age <= userData.age && item.from_age <= userData.age;
 
-    return hasRequiredFields && hasValidNumbers && isRangeCorrect && isWithinUserAge;
+    // --- MODIFIED LINE ---
+    // Uses the `calculatedAge` from date-fns instead of userData.age
+    const isWithinUserAge =
+      item.to_age <= calculatedAge && item.from_age <= calculatedAge;
+
+    return (
+      hasRequiredFields && hasValidNumbers && isRangeCorrect && isWithinUserAge
+    );
   });
 
   if (!allItemsValid) {
     return false;
   }
 
-  // 3. Copied list-wide validation from isResidentialDataValid
+  // 3. Copied list-wide validation (unchanged)
   const zeroRecords = data.filter((item) => item.from_age === 0).length;
   if (zeroRecords > 1) {
     return false;
@@ -115,7 +159,6 @@ export default function Tab9() {
   }, [location.pathname, db]);
 
   const handleAddNewUi = (flag: boolean = false) => {
-
     const translator = shortUUID();
     const newResidential: INDOOR_AIR_POLLUTION = {
       id: translator.new(),
@@ -129,23 +172,31 @@ export default function Tab9() {
       most_cooking: -1,
     };
 
-    setIndoorAirData((d) => flag ? [newResidential] : [...d, newResidential]);
+    setIndoorAirData((d) => (flag ? [newResidential] : [...d, newResidential]));
   };
   const handleRemoveUi = (id: string) => {
     if (indoorAirData.length === 1) return;
-    setRemovedIds(prev => [...prev, id]);
+    setRemovedIds((prev) => [...prev, id]);
     setIndoorAirData((d) => d.filter((x) => x.id !== id));
   };
 
   const handleSaveFresh = async () => {
     //for fresh records
-    if (db && !(await checkElibleToSave(db, id || "", tabId , "INDOOR_AIR_POLLUTION", "user_id"))) {
+    if (
+      db &&
+      !(await checkElibleToSave(
+        db,
+        id || "",
+        tabId,
+        "INDOOR_AIR_POLLUTION",
+        "user_id"
+      ))
+    ) {
       return setAlert({
         header: "Restricted access",
         message: "This user was registered with a different tab id.",
         show: true,
       });
-      
     }
     const res = await db?.query("select * from patients where id = ?", [id]);
     const userData = res?.values?.[0];
@@ -195,7 +246,7 @@ export default function Tab9() {
           item.most_cooking,
           id,
           tabId,
-          new Date().toLocaleString('sv-SE').replace('T', ' '),
+          new Date().toLocaleString("sv-SE").replace("T", " "),
         ];
         console.log(query, values);
         await db?.run(query, values);
@@ -223,20 +274,24 @@ export default function Tab9() {
     const currentId = searchParams?.get("id") || "";
     await fetchExisting(currentId);
     event.detail.complete();
-  }
+  };
   return (
     <IonPage>
       <Header
         title={0 ? "Edit Indoor Air Pollution" : "Indoor Air Pollution"}
       />
       <IonContent class="" fullscreen>
-        <ShowRegisteredTab id={id || ''} table_name="indoor_air_pollution" field_name="user_id" />
+        <ShowRegisteredTab
+          id={id || ""}
+          table_name="indoor_air_pollution"
+          field_name="user_id"
+        />
         <main className="p-2 space-y-2">
           <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
             <IonRefresherContent
               className="spinner-only" // <-- Add this class
               refreshingSpinner="circles"
-            // You can remove the other text props
+              // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
           {indoorAirData.map((data) => (
@@ -248,18 +303,16 @@ export default function Tab9() {
           ))}
           <div className="mt-4 flex justify-end gap-4 pr-2 pb-5">
             <Button
-              label="+ Add new"
-              text
+              label="Add new"
               raised
-              className="px-3 py-2 px-10 py-3 rounded-md font-bold"
+              icon="pi pi-plus"
               onClick={() => handleAddNewUi(false)}
             />
 
             <Button
               label="Save"
               severity="success"
-              text
-              raised
+              icon="pi pi-check"
               className="px-3 py-2 px-10 py-3 rounded-md font-bold"
               onClick={handleSaveFresh}
             />
@@ -272,18 +325,30 @@ export default function Tab9() {
             message={alert.message}
             buttons={["OK"]}
           />
-          <div className="pt-10 flex justify-end gap-2">
+          <div className="pt-10 flex justify-between gap-2">
             <Link to={"/tab8?id=" + id}>
-              <Button className="px-10 py-2 rounded" label="PREV" />
+              <Button
+                className="px-10 py-2 rounded"
+                label="PREV"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                outlined
+              />
             </Link>
             <Link to={"/tab11?id=" + id}>
-              <Button className="px-10 py-2 rounded" label="NEXT" />
+              <Button
+                className="px-10 py-2 rounded"
+                label="NEXT"
+                icon="pi pi-arrow-right"
+                severity="secondary" 
+                iconPos="right"
+                outlined
+              />
             </Link>
           </div>
         </main>
       </IonContent>
       <div className="pb-[250px]"></div>
-
     </IonPage>
   );
 }

@@ -23,6 +23,8 @@ import {
 import shortUUID from "short-uuid";
 import { Button } from "primereact/button"; // Using PrimeReact components
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { set } from "date-fns";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 
 // --- Re-usable UI Components (from original file) ---
 const CustomRadio = ({
@@ -87,12 +89,12 @@ export default function FoodHabitPage() {
   const history = useHistory();
   const [isLoading, setIsLoading] = useState(true);
   const [isEditable, setIsEditable] = useState(true);
-
+  const [isUnsaved, setIsUnsaved] = useState(false);
   // State
   const [master, setMaster] = useState<IFoodHabitMaster | null>(null);
   const [fats, setFats] = useState<IFoodHabitFat[]>([]);
   const [alert, setAlert] = useState({ show: false, header: "", message: "" });
-
+  const [allowNext, setAllowNext] = useState(false);
   // Get IDs from URL
   const searchParams = new URLSearchParams(location.search);
   const userId = searchParams.get("user_id") || "";
@@ -108,6 +110,7 @@ export default function FoodHabitPage() {
         // LOAD/EDIT MODE
         setMaster(existingData.master);
         setFats(existingData.fats);
+        setAllowNext(true);
       } else if (userId) {
         // CREATE MODE
         const { master: newMaster, fats: newFats } = generateDefaultHabitState(
@@ -141,14 +144,22 @@ export default function FoodHabitPage() {
 
     loadOrCreateData();
   }, [db, sqlite, userId, masterId, tabId]);
-
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved Changes",
+      message: "You have unsaved changes. Please save before leaving the page.",
+    });
+  });
   // --- State Handlers ---
   const handleMasterChange = (field: keyof IFoodHabitMaster, value: any) => {
     if (!master) return;
+    setIsUnsaved(true);
     setMaster((prev: any) => ({ ...prev!, [field]: value }));
   };
 
   const handleAddFat = () => {
+    setIsUnsaved(true);
     const newFat: IFoodHabitFat = {
       id: shortUUID.generate(),
       master_id: master!.id,
@@ -165,10 +176,12 @@ export default function FoodHabitPage() {
     field: keyof IFoodHabitFat,
     value: any
   ) => {
+    setIsUnsaved(true);
     setFats(fats.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
   };
 
   const handleRemoveFat = (id: string) => {
+    setIsUnsaved(true);
     setFats(fats.filter((f) => f.id !== id));
   };
 
@@ -199,6 +212,8 @@ export default function FoodHabitPage() {
         header: "Success",
         message: "Food Habit data has been saved.",
       });
+      setIsUnsaved(false);
+      setAllowNext(true);
       // Navigate to the recall entry page, passing the master ID
     } catch (e: any) {
       setIsLoading(false);
@@ -241,8 +256,10 @@ export default function FoodHabitPage() {
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await loadOrCreateData();
+    setIsUnsaved(false);
     event.detail.complete();
   };
+
   return (
     <IonPage>
       <Header title="Food Habit Survey (Module 1)" />
@@ -630,7 +647,20 @@ export default function FoodHabitPage() {
           </div>
           {/* --- Save and Navigation Buttons --- */}
           <div className="mt-10 flex justify-between gap-2">
-            <Link to={`/food1`}>
+            <Link
+              to={`/food1`}
+              onClick={(e) => {
+                if (isUnsaved) {
+                  setAlert({
+                    show: true,
+                    header: "Unsaved Changes",
+                    message:
+                      "You have unsaved changes. Please save before leaving the page.",
+                  });
+                  e.preventDefault();
+                }
+              }}
+            >
               <Button
                 label="Back to Patient List"
                 className="px-5 py-2 rounded"
@@ -638,18 +668,32 @@ export default function FoodHabitPage() {
                 outlined
               />
             </Link>
-            <Link
-              to={`/food-recall/page3?master_id=${master.id}&user_id=${master.user_id}`}
-            >
-              <Button
-                label="Next"
-                className="px-5 py-2 rounded"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                outlined
-              />
-            </Link>
+            {allowNext && (
+              <Link
+                to={`/food-recall/page3?master_id=${master.id}&user_id=${master.user_id}`}
+                onClick={(e) => {
+                  if (isUnsaved) {
+                    setAlert({
+                      show: true,
+                      header: "Unsaved Changes",
+                      message:
+                        "You have unsaved changes. Please save before leaving the page.",
+                    });
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <Button
+                  label="Next"
+                  className="px-5 py-2 rounded"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  outlined
+                />
+              </Link>
+            )}
           </div>
+          <div className="pb-[250px]"></div>
         </main>
 
         <IonAlert

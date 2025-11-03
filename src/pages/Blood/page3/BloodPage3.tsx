@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { useSQLite } from "../../../utils/Sqlite";
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import Header from "../../../components/Header";
 import { DataTable } from "primereact/datatable";
 import { Button } from "primereact/button";
@@ -17,6 +24,7 @@ import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Card } from "primereact/card";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 export interface RFTType {
   test_name: string;
   result: number;
@@ -34,11 +42,51 @@ export default function BloodPage3() {
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [rfts, setRfts] = useState<RFTType[]>([]);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
     message: "",
   });
+  async function fetchCurrentUser(curId: string, sampleId: string) {
+    try {
+      const query = `
+                            select * from patients where id = '${curId}'
+                        `;
+      const query2 = `
+                            select * from gtgh_blood_report  where sampleId = '${sampleId}' and test_type = 'RFT'
+                        `;
+      const res = await db?.query(query);
+      const res2 = await db?.query(query2);
+      console.log(res2);
+      setParticipants(res?.values?.[0]);
+      setRfts(
+        res2?.values?.length
+          ? (res2?.values as RFTType[])
+          : [
+              {
+                test_name: "Serum Urea",
+                result: 0,
+                unit: "mg/dL",
+                id: shortUUID().generate(),
+                sampleId: sampleId,
+                test_type: "RFT",
+              },
+              {
+                test_name: "Serum Creatinine",
+                result: 0,
+                unit: "mg/dL",
+                id: shortUUID().generate(),
+                sampleId: sampleId,
+                test_type: "RFT",
+              },
+            ]
+      );
+      console.log(res, curId);
+    } catch (error) {
+      console.log(error);
+    }
+  }
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     const edit = searchParams.get("edit") || "";
@@ -65,47 +113,25 @@ export default function BloodPage3() {
     setSampleId(sampleId);
     setId(curId);
     if (!db) return;
-    async function fetchCurrentUser() {
-      try {
-        const query = `
-                            select * from patients where id = '${curId}'
-                        `;
-        const query2 = `
-                            select * from gtgh_blood_report  where sampleId = '${sampleId}' and test_type = 'RFT'
-                        `;
-        const res = await db?.query(query);
-        const res2 = await db?.query(query2);
-        console.log(res2);
-        setParticipants(res?.values?.[0]);
-        setRfts(
-          res2?.values?.length
-            ? (res2?.values as RFTType[])
-            : [
-                {
-                  test_name: "Serum Urea",
-                  result: 0,
-                  unit: "mg/dL",
-                  id: shortUUID().generate(),
-                  sampleId: sampleId,
-                  test_type: "RFT",
-                },
-                {
-                  test_name: "Serum Creatinine",
-                  result: 0,
-                  unit: "mg/dL",
-                  id: shortUUID().generate(),
-                  sampleId: sampleId,
-                  test_type: "RFT",
-                },
-              ]
-        );
-        console.log(res, curId);
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    fetchCurrentUser();
+
+    fetchCurrentUser(curId, sampleId);
   }, [location.pathname, db]);
+
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved Changes",
+      message: "You have unsaved changes. Please save before navigating away.",
+    });
+  });
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const curId = searchParams.get("id") || "";
+    const sampleId = searchParams.get("sampleId") || "";
+    await fetchCurrentUser(curId, sampleId);
+    setIsUnsaved(false);
+    event.detail.complete();
+  };
+
   const handleSave = async () => {
     try {
       if (
@@ -159,7 +185,7 @@ export default function BloodPage3() {
         await db?.run(query, params);
       }
       await saveToStore(sqlite);
-      console.log(values);
+      setIsUnsaved(false);
       setAlert({
         show: true,
         header: "Success",
@@ -175,8 +201,14 @@ export default function BloodPage3() {
       <IonPage>
         <Header title={"Renal Function Test (RFT)"} />
         <IonContent fullscreen>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only"
+              refreshingSpinner="circles"
+            />
+          </IonRefresher>
           <ShowRegisteredTab
-            id={sampleId || ""} 
+            id={sampleId || ""}
             table_name="gtgh_blood_report"
             field_name="sampleId"
           />
@@ -221,7 +253,8 @@ export default function BloodPage3() {
                       value={rowData.result}
                       className="p-2 border"
                       id="result_blood"
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setIsUnsaved(true);
                         setRfts((prev) =>
                           prev.map((item) =>
                             item.id === rowData.id
@@ -231,8 +264,8 @@ export default function BloodPage3() {
                                 }
                               : item
                           )
-                        )
-                      }
+                        );
+                      }}
                     />
                   )}
                 ></Column>
@@ -257,20 +290,20 @@ export default function BloodPage3() {
               />
             </div>
 
-            <div className="flex gap-2 mt-5 justify-end ">
+            <div className="flex gap-2 mt-5 justify-between mt-10 ">
               <Link
                 to={`/blood2?id=${id}&sampleId=${sampleId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
               >
-                <Button label="PREV" className="px-5 py-2 rounded" />
+                <Button label="PREV" className="px-5 py-2 rounded " outlined icon="pi pi-arrow-left" />
               </Link>
               <Link
                 to={`/blood4?id=${id}&sampleId=${sampleId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
               >
-                <Button label="NEXT" className="px-5 py-2 rounded" />
+                <Button label="NEXT" className="px-5 py-2 rounded" icon="pi pi-arrow-right" iconPos="right" outlined />
               </Link>
             </div>
           </main>
