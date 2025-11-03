@@ -161,9 +161,11 @@ const strokeOptions = {
 export default function SignaturePad({
   strokes,
   setStrokes,
+  setIsUnsaved
 }: {
   strokes: number[][][];
   setStrokes: React.Dispatch<React.SetStateAction<number[][][]>>;
+  setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   // 1. Remove `currentStroke` state
   // 2. Add refs for the live stroke data and the live path element
@@ -220,7 +222,8 @@ export default function SignaturePad({
     const stroke = currentStrokeRef.current;
     if (stroke.length > 0) {
       // 3. ONLY update React state ONCE when the stroke is finished
-      setStrokes((prev) => [...prev, stroke]);
+      setStrokes((prev) => [...prev, stroke]); 
+      setIsUnsaved(true);
     }
 
     // Clear the ref and the live path

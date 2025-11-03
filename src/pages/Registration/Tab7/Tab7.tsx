@@ -28,6 +28,7 @@ import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { chevronDownCircleOutline } from "ionicons/icons";
 import { Card } from "primereact/card";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 export type FAMILY_HISTORY_OF_CANCER_MASTER = {
   id: string;
   user_id: string;
@@ -78,6 +79,7 @@ export default function Tab7() {
   const searchParams = new URLSearchParams(location.search);
   const [familyHistoryMaster, setfamilyHistoryMaster] = useState(initialState);
   const [removedIds, setRemovedIds] = useState<string[]>([]);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [familyHistoryRelatives, setfamilyHistoryRelatives] = useState(
     initialStateRelatives
   );
@@ -119,10 +121,17 @@ export default function Tab7() {
   }
   useEffect(() => {
     const currentId = searchParams?.get("id") || "";
-    setId(currentId);
-
+    setId(currentId); 
+    if(isUnsaved) return ;
     fetchInitialState(currentId);
   }, [location.pathname, db]);
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved changes",
+      message: "You have unsaved changes. Are you sure you want to leave?",
+    })
+  });
   const handleAddNewUi = () => {
     const translator = shortUUID();
     const newRelatives: FAMILY_HISTORY_OF_CANCER_RELATIVES = {
@@ -134,14 +143,17 @@ export default function Tab7() {
       treatment_received: 0,
       user_id: "",
     };
+    setIsUnsaved(true);
     setfamilyHistoryRelatives((d) => [...d, newRelatives]);
   };
   const handleRemoveUi = (id: string) => {
     if (familyHistoryRelatives.length === 1) return;
+    setIsUnsaved(true);
     setRemovedIds((prev) => [...prev, id]);
     setfamilyHistoryRelatives((d) => d.filter((x) => x.id !== id));
   };
   const handleChangeRelative = (id: string, field: string, value: any) => {
+    setIsUnsaved(true);
     setfamilyHistoryRelatives((d) =>
       d.map((item) => (item.id == id ? { ...item, [field]: value } : item))
     );
@@ -153,6 +165,7 @@ export default function Tab7() {
         message: "Value must be between 0 and 9",
         success: false,
       });
+    setIsUnsaved(true);
     setfamilyHistoryMaster((d) =>
       d.map((item) => (item.id == id ? { ...item, [field]: value } : item))
     );
@@ -252,6 +265,7 @@ export default function Tab7() {
           }
         }
       }
+      setIsUnsaved(false);
       setAlert({
         show: true,
         header: "Success!",
@@ -270,9 +284,9 @@ export default function Tab7() {
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
     await fetchInitialState(currentId);
+    setIsUnsaved(false);
     event.detail.complete();
   };
-  console.log(familyHistoryMaster);
   return (
     <IonPage>
       <Header
@@ -283,7 +297,7 @@ export default function Tab7() {
           <IonRefresherContent
             className="spinner-only" // <-- Add this class
             refreshingSpinner="circles"
-            // You can remove the other text props
+          // You can remove the other text props
           ></IonRefresherContent>
         </IonRefresher>
         <ShowRegisteredTab

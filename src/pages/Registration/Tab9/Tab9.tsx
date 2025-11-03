@@ -31,6 +31,7 @@ export interface INDOOR_AIR_POLLUTION {
   tab_id?: string;
 }
 import { differenceInYears, parseISO } from "date-fns";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 
 // Assuming INDOOR_AIR_POLLUTION type is defined elsewhere
 
@@ -125,6 +126,7 @@ export default function Tab9() {
   const [allowNext, setAllowNext] = useState(false);
   const searchParams = new URLSearchParams(location.search);
   const [removedIds, setRemovedIds] = useState<string[]>([]);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [indoorAirData, setIndoorAirData] = useState<INDOOR_AIR_POLLUTION[]>(
     []
   );
@@ -155,11 +157,19 @@ export default function Tab9() {
     const curId = searchParams?.get("id");
     setId(curId);
     setEditFlag(searchParams?.get("edit") === "YES");
+    if (isUnsaved) return;
     fetchExisting(curId || "");
   }, [location.pathname, db]);
-
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved changes",
+      message: "Are you sure you want to leave without saving?",
+    })
+  })
   const handleAddNewUi = (flag: boolean = false) => {
     const translator = shortUUID();
+    setIsUnsaved(true);
     const newResidential: INDOOR_AIR_POLLUTION = {
       id: translator.new(),
       from_age: 0,
@@ -176,6 +186,7 @@ export default function Tab9() {
   };
   const handleRemoveUi = (id: string) => {
     if (indoorAirData.length === 1) return;
+    setIsUnsaved(true);
     setRemovedIds((prev) => [...prev, id]);
     setIndoorAirData((d) => d.filter((x) => x.id !== id));
   };
@@ -255,6 +266,7 @@ export default function Tab9() {
         await db?.run(`DELETE FROM indoor_air_pollution WHERE id = ?`, [id]);
       }
       setAllowNext(true);
+      setIsUnsaved(false);
       await saveToStore(sqlite);
       setAlert({
         show: true,
@@ -273,6 +285,7 @@ export default function Tab9() {
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
     await fetchExisting(currentId);
+    setIsUnsaved(false);
     event.detail.complete();
   };
   return (
@@ -291,7 +304,7 @@ export default function Tab9() {
             <IonRefresherContent
               className="spinner-only" // <-- Add this class
               refreshingSpinner="circles"
-              // You can remove the other text props
+            // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
           {indoorAirData.map((data) => (
@@ -299,6 +312,7 @@ export default function Tab9() {
               data={data}
               handleRemoveUi={handleRemoveUi}
               setIndoorAirData={setIndoorAirData}
+              setIsUnsaved={setIsUnsaved}
             />
           ))}
           <div className="mt-4 flex justify-end gap-4 pr-2 pb-5">
@@ -340,7 +354,7 @@ export default function Tab9() {
                 className="px-10 py-2 rounded"
                 label="NEXT"
                 icon="pi pi-arrow-right"
-                severity="secondary" 
+                severity="secondary"
                 iconPos="right"
                 outlined
               />

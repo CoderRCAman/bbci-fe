@@ -30,6 +30,7 @@ export interface RESIDENTIAL_TYPE {
 }
 
 import { differenceInYears, parseISO } from "date-fns";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 
 // Assuming RESIDENTIAL_TYPE is defined elsewhere
 
@@ -129,12 +130,13 @@ export default function Tab5() {
     header: "",
     message: "",
   });
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [allowNext, setAllowNext] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
   const [removedIds, setRemovedIds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const handleAddNewUi = () => {
-    console.log("hello");
+    setIsUnsaved(true);
     const translator = ShortUUID();
     const newResidential: RESIDENTIAL_TYPE = {
       id: translator.new(),
@@ -150,10 +152,10 @@ export default function Tab5() {
   };
   const handleRemoveUi = (id: string) => {
     if (residentialData.length === 1) return;
+    setIsUnsaved(true);
     setRemovedIds((prev) => [...prev, id]);
     setResidentialData((d) => d.filter((x) => x.id !== id));
   };
-  console.log(residentialData);
   const loadExisting = async (curId: string) => {
     try {
       const query = `
@@ -178,6 +180,13 @@ export default function Tab5() {
     setEditFlag(searchParams?.get("edit"));
     loadExisting(curId);
   }, [db, location.pathname]);
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved changes",
+      message: "You have unsaved changes. Are you sure you want to leave?",
+    })
+  })
   const handleSaveFresh = async () => {
     if (
       db &&
@@ -262,6 +271,7 @@ export default function Tab5() {
         message: "DATA SAVED SUCCESSFULLY!",
       });
       setAllowNext(true);
+      setIsUnsaved(false);
     } catch (error) {
       setAlert({
         show: true,
@@ -278,6 +288,7 @@ export default function Tab5() {
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
     await loadExisting(currentId);
+    setIsUnsaved(false);
     event.detail.complete();
   };
   return (
@@ -306,6 +317,7 @@ export default function Tab5() {
                 key={item.id}
                 data={item}
                 setResidentialData={setResidentialData}
+                setIsUnsaved={setIsUnsaved}
               />
             ))}
           </main>

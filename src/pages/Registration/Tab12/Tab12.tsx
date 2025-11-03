@@ -1,4 +1,4 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import Header from "../../../components/Header";
 import { Button } from "primereact/button";
 import { Link } from "react-router-dom";
@@ -12,6 +12,7 @@ import { checkElibleToSave } from "../Tab11/data";
 import { saveToStore } from "../../../utils/helper";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Card } from "primereact/card";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 export interface DEMOGRAPHIC_INFO {
   id: string;
   user_id: string;
@@ -110,45 +111,53 @@ export default function Tab12() {
   });
   const { db, sqlite, tabId } = useSQLite();
   const [id, setId] = useState<string | null>("");
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const searchParams = new URLSearchParams(location.search);
   const [demographicInfo, setDemographicInfo] =
     useState<DEMOGRAPHIC_INFO>(initialState);
   useEffect(() => {
     setId(searchParams?.get("id"));
   }, []);
+  async function fetchExisting() {
+    try {
+      const res = await db?.query(
+        `
+                select * from demographic_info where user_id = '${id}'
+          `
+      );
+      if (res?.values?.length === 0) {
+        setDemographicInfo({ ...initialState, user_id: id!! });
+      } else {
+        const values = res?.values as DEMOGRAPHIC_INFO[];
+        setDemographicInfo(values[0]);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
   useEffect(() => {
     if (db === null) return;
     const id = searchParams?.get("id") || "";
     setId(id);
-    async function fetchExisting() {
-      try {
-        const res = await db?.query(
-          `
-                select * from demographic_info where user_id = '${id}'
-          `
-        );
-
-        if (res?.values?.length === 0) {
-          setDemographicInfo({ ...initialState, user_id: id });
-        } else {
-          const values = res?.values as DEMOGRAPHIC_INFO[];
-          console.log(values);
-          setDemographicInfo(values[0]);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    }
+    if (isUnsaved) return;
     fetchExisting();
   }, [db, location.pathname]);
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved changes",
+      message: "You have unsaved changes. Are you sure you want to leave?"
+    })
+  })
   const handleChange = (type: string, value: string) => {
+    setIsUnsaved(true);
     setDemographicInfo((d) => ({ ...d, [type]: value }));
   };
-
+  console.log(demographicInfo)
   async function handleSave() {
     try {
       if (!db || !sqlite) return;
-      if (db && !(await checkElibleToSave(db, id || "", tabId , "demographic_info", "user_id"))) {
+      if (db && !(await checkElibleToSave(db, id || "", tabId, "demographic_info", "user_id"))) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -194,6 +203,7 @@ export default function Tab12() {
       ];
       await db.run(query, values);
       await saveToStore(sqlite);
+      setIsUnsaved(false);
       setAlert({
         show: true,
         header: "Success",
@@ -203,7 +213,11 @@ export default function Tab12() {
       console.log(error);
     }
   }
-
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await fetchExisting();
+    setIsUnsaved(false);
+    event.detail.complete();
+  };
   return (
     <IonPage>
       <Header
@@ -211,6 +225,12 @@ export default function Tab12() {
         title={id ? "Edit Demographic Information" : "Demographic Information"}
       />
       <IonContent class="" fullscreen>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent
+            className="spinner-only"
+            refreshingSpinner="circles"
+          />
+        </IonRefresher>
         <ShowRegisteredTab id={id || ""} table_name="demographic_info" field_name="user_id" />
 
         {/* Use a Card for a premium container. 'm-3' adds margin. */}

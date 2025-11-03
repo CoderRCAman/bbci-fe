@@ -19,12 +19,14 @@ import { differenceInMonths, set } from "date-fns";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 
 // dont create seperate table for this one!
 export default function Tab8() {
   const { db, sqlite, tabId } = useSQLite();
   const [id, setId] = useState<string | null>("");
   const [allowNext, setAllowNext] = useState(false);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [reading1, setReading1] = useState({
     height: 0,
     weight: 0,
@@ -99,9 +101,16 @@ export default function Tab8() {
   }
   useEffect(() => {
     if (db === null) return;
+    if (isUnsaved) return;
     fetchExisting();
   }, [db, location.pathname]);
-
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved Changes",
+      message: "You have unsaved changes. Are you sure you want to leave?"
+    })
+  })
   const handleSave = async () => {
     try {
       if (
@@ -178,6 +187,7 @@ export default function Tab8() {
         header: "Success",
         message: "Anthropometry data saved successfully.",
       });
+      setIsUnsaved(false)
     } catch (error) {
       console.log(error);
       setAlert({
@@ -189,6 +199,7 @@ export default function Tab8() {
   };
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await fetchExisting();
+    setIsUnsaved(false);
     event.detail.complete();
   };
   return (
@@ -200,7 +211,7 @@ export default function Tab8() {
             <IonRefresherContent
               className="spinner-only" // <-- Add this class
               refreshingSpinner="circles"
-              // You can remove the other text props
+            // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
           <ShowRegisteredTab
@@ -218,11 +229,13 @@ export default function Tab8() {
                   keyfilter={"int"}
                   id="result_blood"
                   className="p-2 border"
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    setIsUnsaved(true);
                     setReading1((prev) => ({
                       ...prev,
                       height: parseInt(e.target.value) || 0,
                     }))
+                  }
                   }
                   value={reading1.height.toString()}
                 />
@@ -231,11 +244,13 @@ export default function Tab8() {
                 <label className=" text-slate-500 ">Weight (in kg)</label>
                 <InputText
                   id="result_blood"
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    setIsUnsaved(true);
                     setReading1((prev) => ({
                       ...prev,
                       weight: parseInt(e.target.value) || 0,
                     }))
+                  }
                   }
                   value={reading1.weight.toString()}
                   className="p-2 border"
@@ -251,11 +266,13 @@ export default function Tab8() {
                   disabled={isDisabledReading2}
                   id="result_blood"
                   className="p-2 border"
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    setIsUnsaved(true);
                     setReading2((prev) => ({
                       ...prev,
                       height: parseInt(e.target.value) || 0,
                     }))
+                  }
                   }
                   value={reading2.height.toString()}
                 />
@@ -265,11 +282,13 @@ export default function Tab8() {
                 <InputText
                   disabled={isDisabledReading2}
                   id="result_blood"
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    setIsUnsaved(true);
                     setReading2((prev) => ({
                       ...prev,
                       weight: parseInt(e.target.value) || 0,
                     }))
+                  }
                   }
                   value={reading2.weight.toString()}
                   className="p-2 border"
