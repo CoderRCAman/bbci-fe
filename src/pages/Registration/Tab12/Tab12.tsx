@@ -39,9 +39,9 @@ const initialState: DEMOGRAPHIC_INFO = {
 };
 const data = [
   {
-    type: "Regligion",
+    type: "Religion",
     data: [
-      "Hindi",
+      "Hindu",
       "Jain",
       "Christian",
       "Muslim",

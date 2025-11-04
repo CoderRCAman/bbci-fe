@@ -249,7 +249,7 @@ export default function BloodPage3() {
                   body={(rowData) => (
                     <InputText
                       placeholder="Modify"
-                      keyfilter={"int"}
+                      keyfilter={"num"}
                       value={rowData.result}
                       className="p-2 border"
                       id="result_blood"
@@ -260,7 +260,7 @@ export default function BloodPage3() {
                             item.id === rowData.id
                               ? {
                                   ...item,
-                                  result: parseInt(e.target.value) || 0,
+                                  result: parseFloat(e.target.value) || 0,
                                 }
                               : item
                           )
