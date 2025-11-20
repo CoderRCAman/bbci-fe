@@ -53,6 +53,8 @@ import SignaturePad, { roundPoint } from "./SignaturePad";
 import { PluginListenerHandle } from "@capacitor/core";
 import { Card } from "primereact/card";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import UserVerificationCard from "./UserVerificationCard";
+import { card } from "ionicons/icons";
 interface Patient {
   id?: string;
   name: string;
@@ -120,7 +122,7 @@ const Tab1: React.FC = () => {
   const { db, sqlite, tabId } = useSQLite();
   const listenerHandle = useRef<PluginListenerHandle | null>(null);
   const [isUnsaved, setIsUnsaved] = useState(false);
-  const [alert, setAlert] = useState({
+  const [alert, setAlert] = useState({ 
     show: false,
     header: "",
     message: "",
@@ -145,6 +147,8 @@ const Tab1: React.FC = () => {
     },
   });
   const [strokes, setStrokes] = useState<number[][][]>([]);
+  const [cardType , setCardType] = useState<string>('') ;
+  const [cardInput , setCardInput] = useState<string>('') ;
   const router = useIonRouter();
   const searchParams = new URLSearchParams(location.search);
   useIonViewWillEnter(() => {
@@ -239,7 +243,15 @@ const Tab1: React.FC = () => {
       }));
       return;
     }
-
+    if(!cardType || !cardInput) {
+      setAlert((a) => ({
+        ...a,
+        show: true,
+        header: "Missing fields",
+        message: "Please enter card details",
+      }));
+      return;
+    }
     if (id) {
       // Update
       if (db && !(await checkElibleToSave(db, id, tabId))) {
@@ -260,7 +272,7 @@ const Tab1: React.FC = () => {
       await db?.run(
         `UPDATE patients SET name = ?,  gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
-         DOB = ? , updated_at = ? , signature = ?
+         DOB = ? , updated_at = ? , signature = ? , card_type = ? , card_no = ?
          WHERE id = ?`,
         [
           data.name,
@@ -272,7 +284,9 @@ const Tab1: React.FC = () => {
           patient.long,
           format(data.dob, "yyyy-MM-dd"),
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
-          JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))),
+          JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))), 
+          cardType,
+          cardInput,
           id,
         ]
       );
@@ -288,7 +302,7 @@ const Tab1: React.FC = () => {
       const uniqueId = generateUniqueId(data.name);
       await db?.run(
         `INSERT INTO patients (id, i_name, i_emp_code, name,  gender,
-         lat, long, time, dob, date , created_at , updated_at , tab_id,signature )
+         lat, long, time, dob, date , created_at , updated_at , tab_id,signature , card_type , card_no)
          VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ? )`,
         [
           uniqueId,
@@ -304,7 +318,9 @@ const Tab1: React.FC = () => {
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
           tabId,
-          JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))),
+          JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))), 
+          cardType,
+          cardInput
         ]
       );
       const params = new URLSearchParams(location.search);
@@ -511,7 +527,11 @@ const Tab1: React.FC = () => {
                   </FloatLabel>
                 )}
               />
-
+              {/* choose id validation methods  */}
+                <UserVerificationCard 
+                 setCardInput={setCardInput}
+                 setCardType={setCardType}
+                />
               {/* --- 8. Signature Pad --- */}
               <div className="flex flex-col gap-2">
                 <label className="font-medium">Participant's Signature</label>

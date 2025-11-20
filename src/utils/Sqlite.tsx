@@ -138,7 +138,9 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
                         updated_at TEXT ,
                         updated_by TEXT DEFAULT 'UNKNOWN',
                         tab_id TEXT ,
-                        signature TEXT 
+                        signature TEXT ,
+                        card_type TEXT,
+                        card_no TEXT
                     );
                 `;
         const query2 = `
