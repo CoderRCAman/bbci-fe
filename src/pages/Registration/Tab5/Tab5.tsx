@@ -136,7 +136,7 @@ export default function Tab5() {
   const [removedIds, setRemovedIds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const handleAddNewUi = () => {
-    setIsUnsaved(true);
+    if (residentialData.length > 0) setIsUnsaved(true);
     const translator = ShortUUID();
     const newResidential: RESIDENTIAL_TYPE = {
       id: translator.new(),
@@ -291,6 +291,8 @@ export default function Tab5() {
     setIsUnsaved(false);
     event.detail.complete();
   };
+
+  console.log(isUnsaved);
   return (
     <>
       <IonPage>

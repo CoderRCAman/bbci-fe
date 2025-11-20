@@ -193,8 +193,8 @@ export default function BloodPage4() {
                   body={(rowData) => (
                     <InputText
                       placeholder="Modify"
-                      keyfilter={"int"}
-                      value={rowData.result}
+                      type="number"
+                       value={parseFloat(rowData.result).toString()}
                       className="p-2 border"
                       id="result_blood"
                       onChange={(e) => {
@@ -204,7 +204,7 @@ export default function BloodPage4() {
                             item.id === rowData.id
                               ? {
                                   ...item,
-                                  result: parseInt(e.target.value) || 0,
+                                  result: parseFloat(e.target.value) || 0,
                                 }
                               : item
                           )

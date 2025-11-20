@@ -169,7 +169,7 @@ export default function Tab9() {
   })
   const handleAddNewUi = (flag: boolean = false) => {
     const translator = shortUUID();
-    setIsUnsaved(true);
+    if(indoorAirData.length>1) setIsUnsaved(true);
     const newResidential: INDOOR_AIR_POLLUTION = {
       id: translator.new(),
       from_age: 0,
@@ -190,7 +190,7 @@ export default function Tab9() {
     setRemovedIds((prev) => [...prev, id]);
     setIndoorAirData((d) => d.filter((x) => x.id !== id));
   };
-
+  console.log(isUnsaved) ;
   const handleSaveFresh = async () => {
     //for fresh records
     if (

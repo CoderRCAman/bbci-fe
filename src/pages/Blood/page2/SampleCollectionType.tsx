@@ -112,7 +112,7 @@ export default function SampleCollectionType({
         <p>Volume (ml)</p>
         <InputText
           className="border-1 p-2"
-          keyfilter={"int"}
+          type="number"
           value={data?.volume?.toString()}
           disabled={!isSampleCollected}
           onChange={(e) => {
@@ -124,7 +124,7 @@ export default function SampleCollectionType({
                 );
                 if (index === -1) return;
                 draft.collection_tubes![index]!.volume =
-                  parseInt(e.target.value) || 0;
+                  parseFloat(e.target.value) || 0;
               })
             );
           }}

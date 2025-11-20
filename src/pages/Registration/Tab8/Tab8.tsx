@@ -304,7 +304,7 @@ export default function Tab8() {
                 raised // Added for emphasis
               />
             </div>
-            <div className="pt-10 flex justify-end gap-2">
+            <div className="pt-10 flex justify-between gap-2">
               <Link to={"/tab7?id=" + id}>
                 <Button
                   className="px-10 py-2 rounded"
@@ -321,6 +321,7 @@ export default function Tab8() {
                   icon="pi pi-arrow-right" // Added icon
                   severity="secondary" // Use secondary style
                   outlined
+                  iconPos="right"
                 />
               </Link>
             </div>

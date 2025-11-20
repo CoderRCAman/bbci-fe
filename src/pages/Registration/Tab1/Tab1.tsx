@@ -309,7 +309,7 @@ const Tab1: React.FC = () => {
       );
       const params = new URLSearchParams(location.search);
       params.set("id", uniqueId); // add or update
-      history.replace({
+    history.replace({
         pathname: location.pathname,
         search: params.toString(),
       });
@@ -321,8 +321,7 @@ const Tab1: React.FC = () => {
         header: "Success",
         message: "Added successfully",
       }));
-      setId(uniqueId);
-      // history.push(`/tab5?id=${uniqueId}`);
+      setId(uniqueId); 
     }
   };
 

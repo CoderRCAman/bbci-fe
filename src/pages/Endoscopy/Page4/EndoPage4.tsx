@@ -120,14 +120,14 @@ export default function EndoPage4() {
       history.replace({
         pathname: location.pathname,
         search: params.toString(),
-      });
+      }); 
       setIsUnsaved(false);
       setAllowNext(true);
       setAlert({
         header: "Success",
         message: "Endoscopy report saved successfully!",
         show: true,
-      });
+      }); 
     } catch (error) {
       console.log(error);
     }
