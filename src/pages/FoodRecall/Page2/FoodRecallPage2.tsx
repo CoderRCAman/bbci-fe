@@ -169,7 +169,7 @@ export default function FoodHabitPage() {
                         <fieldset className="border border-gray-200 p-4 rounded-md mb-4" disabled={!isEditable}>
                             <legend className="text-sm font-semibold text-gray-600 px-2">7.4 Do you add following to cooked food? (Multiple Select)</legend>
                             <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
-                                {["Salt", "Sugar", "Jaggery", "Ghee", "Raw Chilli with Salt", "None"].map(item => (
+                                {["Salt", "Sugar", "Jaggery", "Ghee", "Pickled Vegetables","Mustard Oil","Khar/Tapigo", "None"].map(item => (
                                     <div key={item} className="flex items-center">
                                         <input type="checkbox" id={`add-${item}`} checked={additives.includes(item)} disabled={!isEditable}
                                             onChange={(e) => {
