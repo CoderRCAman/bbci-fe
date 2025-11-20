@@ -361,7 +361,8 @@ export default function FoodHabitPage() {
                   "Sugar",
                   "Jaggery",
                   "Ghee",
-                  "Raw Chilli with Salt",
+                  "Pickled Vegetables",
+                  "Mustard Oil","Khar/ Tapigo",
                   "None",
                 ].map((item) => (
                   <div key={item} className="flex items-center">
