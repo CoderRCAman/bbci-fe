@@ -106,3 +106,20 @@ a {
 ion-content {
   padding-bottom: 60px !important;
 }
+
+/*
+ * This is the correct selector for the <a> tag in PrimeReact 10+
+ * It specifically targets the 'on-click' focus without breaking 
+ * keyboard navigation.
+*/
+
+.p-accordion-header-action:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* This styles the accessible keyboard-only focus */
+.p-accordion-header-action:focus-visible {
+  outline: none !important;
+  box-shadow: inset 0 0 0 2px var(--primary-color, #3B82F6) !important;
+}

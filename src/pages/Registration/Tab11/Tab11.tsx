@@ -1,4 +1,4 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import Header from "../../../components/Header";
 import SmokingTobacco from "./SmokingTobacco";
 import ChewingTobacco from "./ChewingTobacco";
@@ -18,6 +18,8 @@ import {
 import { useSQLite } from "../../../utils/Sqlite";
 import shortUUID from "short-uuid";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { set } from "date-fns";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 
 export default function Tab11() {
   const [alert, setAlert] = useState({
@@ -41,29 +43,39 @@ export default function Tab11() {
   const [dirtyValuesMaster, setDirtyValuesMaster] = useState<initialState[]>(
     []
   );
-  useEffect(() => {
-    async function fetchInitialData() {
-      const id = searchParams.get("id") || "";
-      try {
-        const res = await db?.query(`
+  const [isUnsaved, setIsUnsaved] = useState(false);
+  async function fetchInitialData() {
+    const id = searchParams.get("id") || "";
+    try {
+      const res = await db?.query(`
                         select * from TOBACCO_ALCOHOL_CONSUMPTION where user_id = '${id}'
                     `);
-        const res2 = await db?.query(`
+      const res2 = await db?.query(`
                        select * from TOBACCO_ALCOHOL_CONSUMPTION_MASTER where user_id = '${id}'
                     `);
-        const values = res?.values as TOBACCO_ALCOHOL_CONSUMPION[];
-        const masterValue = res2?.values as initialState[];
-        if (values?.length > 0 || masterValue?.length > 0) setAllowNext(true);
-        console.log(res);
-        const result = populateWithBackend(masterValue, values, id, tabId);
-        setData(result);
-      } catch (error) {
-        console.log(error);
-      }
+      const values = res?.values as TOBACCO_ALCOHOL_CONSUMPION[];
+      const masterValue = res2?.values as initialState[];
+      if (values?.length > 0 || masterValue?.length > 0) setAllowNext(true);
+      console.log(res);
+      const result = populateWithBackend(masterValue, values, id, tabId);
+      setData(result);
+    } catch (error) {
+      console.log(error);
     }
+  }
+  useEffect(() => {
+    if (isUnsaved) return;
     fetchInitialData();
   }, [db, location.pathname]);
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved Changes",
+      message: "You have unsaved changes. Are you sure you want to leave?",
+    })
+  })
   const handleChangeMaster = (id: string, field: string, value: any) => {
+    setIsUnsaved(true);
     setData((prevState) => {
       const updated = prevState.map((item) => {
         if (item.id === id) {
@@ -99,7 +111,7 @@ export default function Tab11() {
     field: string,
     value: any
   ) => {
-    console.log(type, id, field, value);
+    setIsUnsaved(true);
     setData((prev) => {
       const updatedStates = prev.map((stateItem) => {
         // ✅ only modify this state group if its product_type matches
@@ -152,6 +164,7 @@ export default function Tab11() {
       id: translator.generate(),
       is_other_product: 1,
     };
+    setIsUnsaved(true);
     setData((d) =>
       d.map((item) =>
         item.product_type === type
@@ -174,13 +187,14 @@ export default function Tab11() {
         ?.products.filter((x) => x.is_other_product).length === 1
     )
       return;
+    setIsUnsaved(true);
     setData((d) =>
       d.map((item) =>
         item.product_type === type
           ? {
-              ...item,
-              products: item.products.filter((x) => x.id !== id),
-            }
+            ...item,
+            products: item.products.filter((x) => x.id !== id),
+          }
           : item
       )
     );
@@ -189,7 +203,16 @@ export default function Tab11() {
   async function handleSave() {
     try {
       if (!db || !sqlite) return;
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (
+        db &&
+        !(await checkElibleToSave(
+          db,
+          id || "",
+          tabId,
+          "TOBACCO_ALCOHOL_CONSUMPTION_MASTER",
+          "user_id"
+        ))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -210,6 +233,7 @@ export default function Tab11() {
         show: true,
       });
       setAllowNext(true);
+      setIsUnsaved(false);
     } catch (error) {
       setAlert({
         header: "Error",
@@ -218,9 +242,11 @@ export default function Tab11() {
       });
     }
   }
-
-  console.log(dirtyValuesMaster, dirtyValuesProduct, data);
-
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await fetchInitialData();
+    setIsUnsaved(false);
+    event.detail.complete();
+  };
   return (
     <IonPage>
       <Header
@@ -231,9 +257,22 @@ export default function Tab11() {
         }
       />
       <IonContent class="" fullscreen>
-        <ShowRegisteredTab id={id || ""} />
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent
+            className="spinner-only"
+            refreshingSpinner="circles"
+          />
+        </IonRefresher>
+        <ShowRegisteredTab
+          id={id || ""}
+          table_name="TOBACCO_ALCOHOL_CONSUMPTION_MASTER"
+          field_name="user_id"
+        />
         <main ref={scrollRef} className="p-2 space-y-10">
-          <Accordion className="space-y-2 outline-none" activeIndex={0}>
+          <Accordion
+            className="space-y-2 outline-none"
+            activeIndex={0}
+          >
             <AccordionTab
               className="border-1 rounded  border-slate-200"
               header="Smoking tobacco"
@@ -299,7 +338,7 @@ export default function Tab11() {
           buttons={["OK"]}
         />
 
-        <div className="pt-10 pb-2 px-2 flex justify-end gap-2">
+        <div className="pt-10 pb-2 px-2 flex justify-between gap-2">
           <Link to={"/tab9?id=" + id}>
             <Button
               className="px-10 py-2 rounded"

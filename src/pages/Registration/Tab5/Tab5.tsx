@@ -29,36 +29,83 @@ export interface RESIDENTIAL_TYPE {
   user_id?: string;
 }
 
+import { differenceInYears, parseISO } from "date-fns";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+
+// Assuming RESIDENTIAL_TYPE is defined elsewhere
+
 function isResidentialDataValid(
   data: RESIDENTIAL_TYPE[],
   userData: any
 ): boolean {
+  // --- Start: Age Calculation with date-fns ---
+
+  // 1. Check if DOB exists
+  if (!userData.dob) {
+    console.error("Validation failed: userData.dob is missing.");
+    return false;
+  }
+
+  // 2. Parse the DOB string.
+  // We use parseISO as it's a standard format.
+  // If your DOB is not ISO (e.g., 'dd/MM/yyyy'), use parse() instead.
+  const birthDate = parseISO(userData.dob);
+
+  // 3. Check for invalid date
+  if (isNaN(birthDate.getTime())) {
+    console.error("Validation failed: userData.dob is an invalid date string.");
+    return false;
+  }
+
+  // 4. Calculate the age
+  const today = new Date();
+  const calculatedAge = differenceInYears(today, birthDate);
+
+  // 5. Handle invalid age (e.g., DOB is in the future)
+  if (calculatedAge < 0) {
+    console.error("Validation failed: DOB is in the future.");
+    return false;
+  }
+  // --- End: Age Calculation ---
+
   const allItemsValid = data.every((item) => {
     const hasRequiredFields =
       item.id?.trim() &&
       item.state?.trim() &&
       item.code > 0 &&
       (item.city?.trim() || item.village?.trim());
+
     const hasValidNumbers = item.from_age >= 0 && item.to_age > 0;
     const isRangeCorrect = item.from_age <= item.to_age;
+
+    // --- MODIFIED LINE ---
+    // Uses the `calculatedAge` from date-fns
     const isWithinUserAge =
-      item.to_age <= userData.age && item.from_age <= userData.age;
+      item.to_age <= calculatedAge && item.from_age <= calculatedAge;
+
     return (
       hasRequiredFields && hasValidNumbers && isRangeCorrect && isWithinUserAge
     );
   });
+
   if (!allItemsValid) {
     return false;
   }
+
+  // --- All checks below remain unchanged ---
+
   const zeroRecords = data.filter((item) => item.from_age === 0).length;
   if (zeroRecords > 1) {
     return false;
   }
+
   if (data.length > 1) {
     const sortedData = [...data].sort((a, b) => a.from_age - b.from_age);
+
     for (let i = 0; i < sortedData.length - 1; i++) {
       const currentItem = sortedData[i];
       const nextItem = sortedData[i + 1];
+
       if (
         currentItem.from_age === nextItem.from_age ||
         currentItem.to_age > nextItem.from_age
@@ -67,6 +114,7 @@ function isResidentialDataValid(
       }
     }
   }
+
   return true;
 }
 export default function Tab5() {
@@ -82,12 +130,13 @@ export default function Tab5() {
     header: "",
     message: "",
   });
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [allowNext, setAllowNext] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
   const [removedIds, setRemovedIds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const handleAddNewUi = () => {
-    console.log("hello");
+    setIsUnsaved(true);
     const translator = ShortUUID();
     const newResidential: RESIDENTIAL_TYPE = {
       id: translator.new(),
@@ -103,10 +152,10 @@ export default function Tab5() {
   };
   const handleRemoveUi = (id: string) => {
     if (residentialData.length === 1) return;
+    setIsUnsaved(true);
     setRemovedIds((prev) => [...prev, id]);
     setResidentialData((d) => d.filter((x) => x.id !== id));
   };
-  console.log(residentialData);
   const loadExisting = async (curId: string) => {
     try {
       const query = `
@@ -131,8 +180,24 @@ export default function Tab5() {
     setEditFlag(searchParams?.get("edit"));
     loadExisting(curId);
   }, [db, location.pathname]);
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved changes",
+      message: "You have unsaved changes. Are you sure you want to leave?",
+    })
+  })
   const handleSaveFresh = async () => {
-    if (db && !(await checkElibleToSave(db, id || "", tabId  ))) {
+    if (
+      db &&
+      !(await checkElibleToSave(
+        db,
+        id || "",
+        tabId,
+        "residential_history",
+        "user_id"
+      ))
+    ) {
       return setAlert({
         header: "Restricted access",
         message: "This user was registered with a different tab id.",
@@ -206,6 +271,7 @@ export default function Tab5() {
         message: "DATA SAVED SUCCESSFULLY!",
       });
       setAllowNext(true);
+      setIsUnsaved(false);
     } catch (error) {
       setAlert({
         show: true,
@@ -222,6 +288,7 @@ export default function Tab5() {
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
     await loadExisting(currentId);
+    setIsUnsaved(false);
     event.detail.complete();
   };
   return (
@@ -236,7 +303,11 @@ export default function Tab5() {
             ></IonRefresherContent>
           </IonRefresher>
 
-          <ShowRegisteredTab id={id || ""}  />
+          <ShowRegisteredTab
+            id={id || ""}
+            table_name="residential_history"
+            field_name="user_id"
+          />
 
           {/* Use slightly more padding and less aggressive vertical spacing */}
           <main className="mt-6 p-3 space-y-6">
@@ -246,6 +317,7 @@ export default function Tab5() {
                 key={item.id}
                 data={item}
                 setResidentialData={setResidentialData}
+                setIsUnsaved={setIsUnsaved}
               />
             ))}
           </main>
@@ -302,8 +374,8 @@ export default function Tab5() {
               <Button
                 label="NEXT"
                 icon="pi pi-arrow-right" // Added icon
-                iconPos="right" 
-                outlined 
+                iconPos="right"
+                outlined
                 severity="secondary"
               />
             </Link>

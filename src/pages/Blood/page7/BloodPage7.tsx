@@ -1,4 +1,11 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
 import { useEffect, useRef, useState } from "react";
@@ -19,6 +26,7 @@ import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../../Registration/Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Card } from "primereact/card";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 
 export default function BloodPage7() {
   const location = useLocation();
@@ -29,12 +37,34 @@ export default function BloodPage7() {
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [ttis, setTtis] = useState<RFTType[]>([]);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
     message: "",
   });
   const tableContainerRef = useRef(null);
+  async function fetchCurrentUser(curId: string, sampleId: string) {
+    try {
+      const query = `
+                                  select * from patients where id = '${curId}'
+                              `;
+      const query2 = `
+                                  select * from gtgh_blood_report  where sampleId = '${sampleId}' and test_type = 'ttis'
+                              `;
+      const res = await db?.query(query);
+      const res2 = await db?.query(query2);
+      console.log(res2);
+      setParticipants(res?.values?.[0]);
+      setTtis(
+        res2?.values?.length
+          ? (res2?.values as RFTType[])
+          : getInitialDataSet(sampleId)
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     const sampleId = searchParams.get("sampleId") || "";
@@ -45,29 +75,24 @@ export default function BloodPage7() {
     setTtis(getInitialDataSet(sampleId));
     // setBiochem(getInitialDataSet(sampleId));
     if (!db) return;
-    async function fetchCurrentUser() {
-      try {
-        const query = `
-                                  select * from patients where id = '${curId}'
-                              `;
-        const query2 = `
-                                  select * from gtgh_blood_report  where sampleId = '${sampleId}' and test_type = 'ttis'
-                              `;
-        const res = await db?.query(query);
-        const res2 = await db?.query(query2);
-        console.log(res2);
-        setParticipants(res?.values?.[0]);
-        setTtis(
-          res2?.values?.length
-            ? (res2?.values as RFTType[])
-            : getInitialDataSet(sampleId)
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    fetchCurrentUser();
+
+    fetchCurrentUser(curId, sampleId);
   }, [location.pathname, db]);
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved Changes",
+      message: "You have unsaved changes. Please save before navigating away.",
+    });
+  });
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const curId = searchParams.get("id") || "";
+    const sampleId = searchParams.get("sampleId") || "";
+    await fetchCurrentUser(curId, sampleId);
+    setIsUnsaved(false);
+    event.detail.complete();
+  };
+
   const handleSave = async () => {
     try {
       if (
@@ -115,7 +140,7 @@ export default function BloodPage7() {
         await db?.run(query, params);
       }
       await saveToStore(sqlite);
-      console.log(values);
+      setIsUnsaved(false);
       setAlert({
         show: true,
         header: "Success",
@@ -130,6 +155,12 @@ export default function BloodPage7() {
       <IonPage>
         <Header title={"Transfusion-Transmissible Infections (TTIs) & Sugar"} />
         <IonContent fullscreen>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only"
+              refreshingSpinner="circles"
+            />
+          </IonRefresher>
           <ShowRegisteredTab id={sampleId || ""} table_name="blood_sample" />
           <main className="p-2">
             <Card title="Participant's Details" className="shadow border">
@@ -170,7 +201,8 @@ export default function BloodPage7() {
                       keyfilter="int"
                       value={rowData.result}
                       className="border p-2 "
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setIsUnsaved(true);
                         setTtis((prev) =>
                           prev.map((item) =>
                             item.id === rowData.id
@@ -180,8 +212,8 @@ export default function BloodPage7() {
                                 }
                               : item
                           )
-                        )
-                      }
+                        );
+                      }}
                     />
                   )}
                 ></Column>
@@ -200,18 +232,18 @@ export default function BloodPage7() {
                 onClick={handleSave}
                 label="Save"
                 className="px-10 py-2 rounded"
-                severity="success" 
-                icon = "pi pi-check"
+                severity="success"
+                icon="pi pi-check"
               />
             </div>
 
-            <div className="flex gap-2 mt-5 justify-end ">
+            <div className="flex gap-2 mt-10 justify-end ">
               <Link
                 to={`/blood6?id=${id}&sampleId=${sampleId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
               >
-                <Button label="PREV" className="px-5 py-2 rounded" />
+                <Button label="PREV" className="px-5 py-2 rounded" outlined icon="pi pi-arrow-left" />
               </Link>
             </div>
           </main>

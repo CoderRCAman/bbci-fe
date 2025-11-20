@@ -1,4 +1,11 @@
-import { IonAlert, IonContent, IonPage } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import Header from "../../../components/Header";
 import { useLocation } from "react-router";
 import { useEffect, useState } from "react";
@@ -16,6 +23,7 @@ import { checkElibleToSave } from "../../Registration/Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { set } from "date-fns";
 import { Card } from "primereact/card";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 
 export default function BloodPage4() {
   const location = useLocation();
@@ -26,11 +34,34 @@ export default function BloodPage4() {
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
   const [lfts, setLfts] = useState<RFTType[]>([]);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
     message: "",
   });
+  async function fetchCurrentUser(curId: string, sampleId: string) {
+    try {
+      console.log(sampleId);
+      const query = `
+                          select * from patients where id = '${curId}'
+                        `;
+      const query2 = `
+                          select * from gtgh_blood_report  where sampleId = '${sampleId}' and test_type = 'LFT'
+                        `;
+      const res = await db?.query(query);
+      const res2 = await db?.query(query2);
+      console.log(res2);
+      setParticipants(res?.values?.[0]);
+      setLfts(
+        res2?.values?.length
+          ? (res2?.values as RFTType[])
+          : getInitialDataSet(sampleId)
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
   useEffect(() => {
     const curId = searchParams.get("id") || "";
     const sampleId = searchParams.get("sampleId") || "";
@@ -40,30 +71,15 @@ export default function BloodPage4() {
     setLfts(getInitialDataSet(sampleId));
     setEditFlag(edit === "yes");
     if (!db) return;
-    async function fetchCurrentUser() {
-      try {
-        console.log(sampleId);
-        const query = `
-                          select * from patients where id = '${curId}'
-                        `;
-        const query2 = `
-                          select * from gtgh_blood_report  where sampleId = '${sampleId}' and test_type = 'LFT'
-                        `;
-        const res = await db?.query(query);
-        const res2 = await db?.query(query2);
-        console.log(res2);
-        setParticipants(res?.values?.[0]);
-        setLfts(
-          res2?.values?.length
-            ? (res2?.values as RFTType[])
-            : getInitialDataSet(sampleId)
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    fetchCurrentUser();
+    fetchCurrentUser(curId, sampleId);
   }, [location.pathname, db]);
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved Changes",
+      message: "You have unsaved changes. Please save before leaving the page.",
+    });
+  });
   const handleSave = async () => {
     try {
       if (
@@ -112,7 +128,7 @@ export default function BloodPage4() {
         await db?.run(query, params);
       }
       await saveToStore(sqlite);
-      console.log(values);
+      setIsUnsaved(false);
       setAlert({
         show: true,
         header: "Success",
@@ -122,11 +138,24 @@ export default function BloodPage4() {
       console.log(error);
     }
   };
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    const curId = searchParams.get("id") || "";
+    const sampleId = searchParams.get("sampleId") || "";
+    await fetchCurrentUser(curId, sampleId);
+    setIsUnsaved(false);
+    event.detail.complete();
+  };
   return (
     <div>
       <IonPage>
         <Header title={"Liver Function test"} />
         <IonContent fullscreen>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent
+              className="spinner-only"
+              refreshingSpinner="circles"
+            />
+          </IonRefresher>
           <ShowRegisteredTab id={sampleId || ""} table_name="blood_sample" />
           <main className="p-2">
             <Card title="Participant's Details" className="shadow border">
@@ -168,7 +197,8 @@ export default function BloodPage4() {
                       value={rowData.result}
                       className="p-2 border"
                       id="result_blood"
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setIsUnsaved(true);
                         setLfts((prev) =>
                           prev.map((item) =>
                             item.id === rowData.id
@@ -178,8 +208,8 @@ export default function BloodPage4() {
                                 }
                               : item
                           )
-                        )
-                      }
+                        );
+                      }}
                     />
                   )}
                 ></Column>
@@ -198,24 +228,24 @@ export default function BloodPage4() {
                 label="Save"
                 className="px-10 py-2 rounded"
                 severity="success"
-                icon = "pi pi-check"
+                icon="pi pi-check"
               />
             </div>
 
-            <div className="flex gap-2 mt-5 justify-end ">
+            <div className="flex gap-2 mt-10 justify-between ">
               <Link
                 to={`/blood3?id=${id}&sampleId=${sampleId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
               >
-                <Button label="PREV" className="px-5 py-2 rounded" />
+                <Button label="PREV" className="px-5 py-2 rounded" outlined icon="pi pi-arrow-left"  />
               </Link>
               <Link
                 to={`/blood5?id=${id}&sampleId=${sampleId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
               >
-                <Button label="NEXT" className="px-5 py-2 rounded" />
+                <Button label="NEXT" className="px-5 py-2 rounded" outlined icon="pi pi-arrow-right" iconPos="right" />
               </Link>
             </div>
           </main>

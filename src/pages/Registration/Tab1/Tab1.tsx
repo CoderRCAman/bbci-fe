@@ -52,6 +52,7 @@ import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import SignaturePad, { roundPoint } from "./SignaturePad";
 import { PluginListenerHandle } from "@capacitor/core";
 import { Card } from "primereact/card";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 interface Patient {
   id?: string;
   name: string;
@@ -118,6 +119,7 @@ const Tab1: React.FC = () => {
   const location = useLocation();
   const { db, sqlite, tabId } = useSQLite();
   const listenerHandle = useRef<PluginListenerHandle | null>(null);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -161,7 +163,13 @@ const Tab1: React.FC = () => {
     // Call the async function to register the listener
     registerListener();
   });
-
+  useBlockNavigation(formState.isDirty || isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved changes",
+      message: "You have unsaved changes. Are you sure you want to leave?",
+    })
+  })
   // This hook fires EVERY time the user navigates AWAY from this tab
   useIonViewWillLeave(() => {
     // Remove the specific listener when the user leaves this tab
@@ -181,7 +189,7 @@ const Tab1: React.FC = () => {
         }
       }
       reset((res as any)?.values[0]);
-    } catch (error) {}
+    } catch (error) { }
   }
   useEffect(() => {
     const id = searchParams.get("id");
@@ -222,6 +230,15 @@ const Tab1: React.FC = () => {
       }));
       return;
     }
+    if (strokes.length === 0) {
+      setAlert((a) => ({
+        ...a,
+        show: true,
+        header: "Missing fields",
+        message: "Please draw signature",
+      }));
+      return;
+    }
 
     if (id) {
       // Update
@@ -232,8 +249,6 @@ const Tab1: React.FC = () => {
           show: true,
         });
       }
-
-      console.log(data);
       if (patient.tab_id !== tabId) {
         return setAlert({
           show: true,
@@ -243,13 +258,13 @@ const Tab1: React.FC = () => {
       }
 
       await db?.run(
-        `UPDATE patients SET name = ?, age = ?, gender = ? , i_name = ? , 
+        `UPDATE patients SET name = ?,  gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
          DOB = ? , updated_at = ? , signature = ?
          WHERE id = ?`,
         [
           data.name,
-          data.age,
+
           data.gender,
           data.i_name,
           data.i_emp_code,
@@ -272,15 +287,14 @@ const Tab1: React.FC = () => {
       // Insert
       const uniqueId = generateUniqueId(data.name);
       await db?.run(
-        `INSERT INTO patients (id, i_name, i_emp_code, name, age, gender,
+        `INSERT INTO patients (id, i_name, i_emp_code, name,  gender,
          lat, long, time, dob, date , created_at , updated_at , tab_id,signature )
-         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ? , ?)`,
+         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ? )`,
         [
           uniqueId,
           data.i_name,
           data.i_emp_code,
           data.name,
-          data.age,
           data.gender,
           patient.lat,
           patient.long,
@@ -294,11 +308,12 @@ const Tab1: React.FC = () => {
         ]
       );
       const params = new URLSearchParams(location.search);
-      params.set("id", uniqueId ); // add or update
+      params.set("id", uniqueId); // add or update
       history.replace({
         pathname: location.pathname,
         search: params.toString(),
       });
+      setIsUnsaved(false);
       await saveToStore(sqlite);
       setAlert((a) => ({
         ...a,
@@ -320,14 +335,18 @@ const Tab1: React.FC = () => {
       });
       console.log("Current position:", coordinates);
       const { latitude, longitude } = coordinates.coords;
-      setPatient((p) => ({ ...p, lat: latitude, long: longitude }));
+      if (latitude !== patient.lat || longitude !== patient.long) {
+        setPatient((p) => ({ ...p, lat: latitude, long: longitude }));
+        setIsUnsaved(true);
+      }
     } catch (error) {
       console.error("Error getting location:", error);
     }
   };
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
-    await fetchPatient(currentId);
+    await fetchPatient(currentId); 
+    setIsUnsaved(false);
     event.detail.complete();
   };
   const onSubmit = (data: any) => {
@@ -475,20 +494,6 @@ const Tab1: React.FC = () => {
                 )}
               />
 
-              {/* --- 6. Age --- */}
-              <ControlledFormField
-                name="age"
-                control={control}
-                errors={errors}
-                rules={{ required: "Age is required" }}
-                render={({ field }: any) => (
-                  <FloatLabel>
-                    <InputText {...field} keyfilter="int" className="w-full" />
-                    <label>Age</label>
-                  </FloatLabel>
-                )}
-              />
-
               {/* --- 7. Date of Birth --- */}
               <ControlledFormField
                 name="dob"
@@ -511,7 +516,7 @@ const Tab1: React.FC = () => {
               {/* --- 8. Signature Pad --- */}
               <div className="flex flex-col gap-2">
                 <label className="font-medium">Participant's Signature</label>
-                <SignaturePad strokes={strokes} setStrokes={setStrokes} />
+                <SignaturePad strokes={strokes} setStrokes={setStrokes} setIsUnsaved={setIsUnsaved} />
                 <div className="flex justify-end">
                   <Button
                     label="Clear"

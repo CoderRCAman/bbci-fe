@@ -27,6 +27,8 @@ import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { chevronDownCircleOutline } from "ionicons/icons";
+import { Card } from "primereact/card";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 export type FAMILY_HISTORY_OF_CANCER_MASTER = {
   id: string;
   user_id: string;
@@ -77,6 +79,7 @@ export default function Tab7() {
   const searchParams = new URLSearchParams(location.search);
   const [familyHistoryMaster, setfamilyHistoryMaster] = useState(initialState);
   const [removedIds, setRemovedIds] = useState<string[]>([]);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [familyHistoryRelatives, setfamilyHistoryRelatives] = useState(
     initialStateRelatives
   );
@@ -118,10 +121,17 @@ export default function Tab7() {
   }
   useEffect(() => {
     const currentId = searchParams?.get("id") || "";
-    setId(currentId);
-
+    setId(currentId); 
+    if(isUnsaved) return ;
     fetchInitialState(currentId);
   }, [location.pathname, db]);
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved changes",
+      message: "You have unsaved changes. Are you sure you want to leave?",
+    })
+  });
   const handleAddNewUi = () => {
     const translator = shortUUID();
     const newRelatives: FAMILY_HISTORY_OF_CANCER_RELATIVES = {
@@ -133,14 +143,17 @@ export default function Tab7() {
       treatment_received: 0,
       user_id: "",
     };
+    setIsUnsaved(true);
     setfamilyHistoryRelatives((d) => [...d, newRelatives]);
   };
   const handleRemoveUi = (id: string) => {
     if (familyHistoryRelatives.length === 1) return;
+    setIsUnsaved(true);
     setRemovedIds((prev) => [...prev, id]);
     setfamilyHistoryRelatives((d) => d.filter((x) => x.id !== id));
   };
   const handleChangeRelative = (id: string, field: string, value: any) => {
+    setIsUnsaved(true);
     setfamilyHistoryRelatives((d) =>
       d.map((item) => (item.id == id ? { ...item, [field]: value } : item))
     );
@@ -152,6 +165,7 @@ export default function Tab7() {
         message: "Value must be between 0 and 9",
         success: false,
       });
+    setIsUnsaved(true);
     setfamilyHistoryMaster((d) =>
       d.map((item) => (item.id == id ? { ...item, [field]: value } : item))
     );
@@ -159,7 +173,16 @@ export default function Tab7() {
 
   const handleSave = async () => {
     try {
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (
+        db &&
+        !(await checkElibleToSave(
+          db,
+          id || "",
+          tabId,
+          "FAMILY_HISTORY_OF_CANCER_MASTER",
+          "user_id"
+        ))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -176,8 +199,9 @@ export default function Tab7() {
                       sons,
                       daughters,
                       history_of_cancer,
-                      created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                      created_at , 
+                      tab_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)
                     ON CONFLICT(id) DO UPDATE SET
                       user_id = excluded.user_id,
                       brothers = excluded.brothers,
@@ -195,6 +219,7 @@ export default function Tab7() {
           familyHistoryMaster[0].sons,
           familyHistoryMaster[0].daughters,
           familyHistoryMaster[0].history_of_cancer,
+          tabId,
         ];
 
         await db?.run(query, values);
@@ -240,6 +265,7 @@ export default function Tab7() {
           }
         }
       }
+      setIsUnsaved(false);
       setAlert({
         show: true,
         header: "Success!",
@@ -258,9 +284,9 @@ export default function Tab7() {
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
     await fetchInitialState(currentId);
+    setIsUnsaved(false);
     event.detail.complete();
   };
-  console.log(familyHistoryMaster);
   return (
     <IonPage>
       <Header
@@ -271,43 +297,52 @@ export default function Tab7() {
           <IonRefresherContent
             className="spinner-only" // <-- Add this class
             refreshingSpinner="circles"
-            // You can remove the other text props
+          // You can remove the other text props
           ></IonRefresherContent>
         </IonRefresher>
-        <ShowRegisteredTab id={id || ""} />
+        <ShowRegisteredTab
+          id={id || ""}
+          table_name="family_history_of_cancer_master"
+          field_name="user_id"
+        />
         <main className="p-2 text-slate-600">
-          <DataTable
-            key={familyHistoryMaster?.[0]?.history_of_cancer}
-            value={familyHistoryMaster}
-            tableStyle={{ minWidth: "6rem" }}
-            rows={10}
-            showGridlines
-            size="normal"
-            className="border !border-b-0"
-            header={() => (
-              <div className="flex items-center ">
-                <h4 className="text-slate-500 font-semibold">
+          <Card
+            title={() => (
+              <div className="flex items-center">
+                <h4 className="text-slate-500 font-semibold mb-0">
+                  {" "}
+                  {/* mb-0 overrides card title default margin */}
                   How many first degree relatives?
-                  <span className="text-xs font-small italic">
-                    {"("}Excluding those who died within the first year of age
-                    {")"}
+                  <span className="text-xs font-normal italic ml-2">
+                    {" "}
+                    {/* Cleaner spacing and weight */}
+                    (Excluding those who died within the first year of age)
                   </span>
                 </h4>
               </div>
             )}
+            className="w-full shadow-md" // Adds a professional shadow
+            key={familyHistoryMaster[0]?.history_of_cancer} // Preserving your original key
           >
-            <Column
-              field="brothers"
-              header="Brothers"
-              body={(rowData) => (
+            {/* This is the 2x2 Grid you asked for, using WindiCSS */}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+              {/* Item 1: Brothers */}
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor="brothers"
+                  className="font-semibold text-gray-700 text-sm"
+                >
+                  Brothers
+                </label>
                 <InputText
+                  id="brothers"
                   keyfilter={"int"}
-                  placeholder="Brothers"
-                  className="border-1 p-2 "
-                  value={rowData.brothers}
+                  placeholder="0" // Placeholder "0" is clearer for number inputs
+                  className="p-inputtext-sm w-full" // PrimeReact's small size + full width
+                  value={familyHistoryMaster[0]?.brothers.toString()}
                   onChange={(e) =>
                     handleChangeMaster(
-                      rowData.id,
+                      familyHistoryMaster[0].id,
                       "brothers",
                       isNaN(parseInt(e.target.value))
                         ? 0
@@ -315,20 +350,25 @@ export default function Tab7() {
                     )
                   }
                 />
-              )}
-            ></Column>
-            <Column
-              field="sisters"
-              header="Sisters"
-              body={(rowData) => (
+              </div>
+
+              {/* Item 2: Sisters */}
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor="sisters"
+                  className="font-semibold text-gray-700 text-sm"
+                >
+                  Sisters
+                </label>
                 <InputText
+                  id="sisters"
                   keyfilter={"int"}
-                  placeholder="Sisters"
-                  className="border-1 p-2 "
-                  value={rowData.sisters}
+                  placeholder="0"
+                  className="p-inputtext-sm w-full"
+                  value={familyHistoryMaster[0]?.sisters.toString()}
                   onChange={(e) =>
                     handleChangeMaster(
-                      rowData.id,
+                      familyHistoryMaster[0].id,
                       "sisters",
                       isNaN(parseInt(e.target.value))
                         ? 0
@@ -336,20 +376,25 @@ export default function Tab7() {
                     )
                   }
                 />
-              )}
-            ></Column>
-            <Column
-              field="sons"
-              header="Sons"
-              body={(rowData) => (
+              </div>
+
+              {/* Item 3: Sons */}
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor="sons"
+                  className="font-semibold text-gray-700 text-sm"
+                >
+                  Sons
+                </label>
                 <InputText
+                  id="sons"
                   keyfilter={"int"}
-                  placeholder="Sons"
-                  className="border-1 p-2 "
-                  value={rowData.sons}
+                  placeholder="0"
+                  className="p-inputtext-sm w-full"
+                  value={familyHistoryMaster[0]?.sons.toString()}
                   onChange={(e) =>
                     handleChangeMaster(
-                      rowData.id,
+                      familyHistoryMaster[0].id,
                       "sons",
                       isNaN(parseInt(e.target.value))
                         ? 0
@@ -357,20 +402,25 @@ export default function Tab7() {
                     )
                   }
                 />
-              )}
-            ></Column>
-            <Column
-              field="daughters"
-              header="Daughters"
-              body={(rowData) => (
+              </div>
+
+              {/* Item 4: Daughters */}
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor="daughters"
+                  className="font-semibold text-gray-700 text-sm"
+                >
+                  Daughters
+                </label>
                 <InputText
+                  id="daughters"
                   keyfilter={"int"}
-                  placeholder="Daughters"
-                  className="border-1 p-2 "
-                  value={rowData.daughters}
+                  placeholder="0"
+                  className="p-inputtext-sm w-full"
+                  value={familyHistoryMaster[0]?.daughters.toString()}
                   onChange={(e) =>
                     handleChangeMaster(
-                      rowData.id,
+                      familyHistoryMaster[0].id,
                       "daughters",
                       isNaN(parseInt(e.target.value))
                         ? 0
@@ -378,9 +428,9 @@ export default function Tab7() {
                     )
                   }
                 />
-              )}
-            ></Column>
-          </DataTable>
+              </div>
+            </div>
+          </Card>
           <div className="mt-5 border rounded p-2">
             <p className="text-slate-500 text-sm font-semibold ">
               Has there been any history of cancer in any of your first degree

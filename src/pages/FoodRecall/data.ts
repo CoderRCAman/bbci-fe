@@ -72,7 +72,7 @@ export interface IFoodRecallIngredient {
 export const generateDefaultHabitState = (user_id: string, tab_id: string): { master: IFoodHabitMaster, fats: IFoodHabitFat[] } => {
     const translator = shortUUID();
     const masterId = translator.generate();
-    const now = new Date().toISOString();
+    const now = new Date().toLocaleString("SV-SE").replace("T", " ");
 
     return {
         master: {
@@ -110,13 +110,15 @@ export const generateDefaultHabitState = (user_id: string, tab_id: string): { ma
 export const checkHabitEditEligibility = async (
     db: SQLiteDBConnection,
     master_id: string,
-    current_tab_id: string
+    current_tab_id: string , 
+    table_name = "FOOD_HABITS_MASTER" , 
+    field_name = "id"
 ): Promise<boolean> => {
     try {
-        const res = await db.query(`SELECT tab_id FROM FOOD_HABITS_MASTER WHERE id = ?`, [master_id]);
+        const res = await db.query(`SELECT tab_id FROM ${table_name} WHERE ${field_name} = ?`, [master_id]);
         const record = res?.values?.[0];
         if (!record) {
-            return false; 
+            return true; 
         }
         if (record.tab_id !== current_tab_id) return false; // Tab ID mismatch
         return true;
@@ -134,10 +136,11 @@ export const saveHabitData = async (
     db: SQLiteDBConnection,
     sqlite: SQLiteConnection,
     master: IFoodHabitMaster,
-    fats: IFoodHabitFat[]
+    fats: IFoodHabitFat[] , 
+    tabId : string
 ) => {
     try {
-        const now = new Date().toISOString();
+        const now = new Date().toLocaleString("SV-SE").replace("T", " ");
         master.updated_at = now;
         master.synch_flag = 2; // Mark as updated
 
@@ -172,7 +175,7 @@ export const saveHabitData = async (
             master.method_shallow_frying, master.method_deep_frying, master.method_boiling,
             master.method_steaming, master.method_sauting, master.method_grill_bbq,
             master.family_sharing, master.meals_per_day, master.water_supply_json,
-            master.created_at || now, master.updated_at, master.tab_id, master.synch_flag
+            master.created_at || now, master.updated_at, tabId, master.synch_flag
         ]);
 
         // --- 2. Save Fat Usage (Section 7.5) ---

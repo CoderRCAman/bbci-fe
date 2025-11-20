@@ -20,6 +20,8 @@ import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Card } from "primereact/card";
 import { Calendar } from "primereact/calendar";
 import shortUUID from "short-uuid";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import { set } from "date-fns";
 
 export default function EndoPage4() {
   const location = useLocation();
@@ -32,6 +34,8 @@ export default function EndoPage4() {
   const [editFlag, setEditFlag] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
   const [participant, setParticipants] = useState<any | null>(null);
+  const [allowNext, setAllowNext] = useState(false);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [endoId, setEndoId] = useState(
     new Date().toLocaleString("sv-SE").replace("T", " ")
   );
@@ -53,6 +57,9 @@ export default function EndoPage4() {
       setParticipants(res?.values?.[0]);
       const val = res2?.values?.[0];
       console.log(val);
+      if (res2?.values?.length) {
+        setAllowNext(true);
+      }
       setVideoFileName(val?.endoscopy_video_filename || "");
       setPdfFileName(val?.endoscopy_pdf_filename || "");
       setEndoscopyDate(
@@ -114,6 +121,8 @@ export default function EndoPage4() {
         pathname: location.pathname,
         search: params.toString(),
       });
+      setIsUnsaved(false);
+      setAllowNext(true);
       setAlert({
         header: "Success",
         message: "Endoscopy report saved successfully!",
@@ -125,10 +134,18 @@ export default function EndoPage4() {
   };
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const curId = searchParams.get("id") || "";
-    const endoIdd = searchParams.get("endoId") || "";
+    const endoIdd = searchParams.get("endoId") || ""; 
+    setIsUnsaved(false);
     fetchCurrentUser(curId, endoIdd);
     event.detail.complete();
   };
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved Changes",
+      message: "You have unsaved changes. Please save before leaving.",
+    });
+  });
   return (
     <>
       <IonPage>
@@ -160,6 +177,7 @@ export default function EndoPage4() {
                   <Calendar
                     value={new Date(endoscopyDate)}
                     onChange={(e) => {
+                      setIsUnsaved(true);
                       setEndoscopyDate(
                         e.value?.toLocaleString("sv-SE").replace("T", " ") || ""
                       );
@@ -173,7 +191,10 @@ export default function EndoPage4() {
                   <InputText
                     value={videoFileName}
                     className="border-1 p-2 w-[400px]"
-                    onChange={(e) => setVideoFileName(e.target.value)}
+                    onChange={(e) => {
+                      setVideoFileName(e.target.value);
+                      setIsUnsaved(true);
+                    }}
                   />
                   <label>Endoscopy video footage filename</label>
                 </FloatLabel>
@@ -181,7 +202,10 @@ export default function EndoPage4() {
                   <InputText
                     value={pdfFileName}
                     className="border-1 p-2 w-[400px]"
-                    onChange={(e) => setPdfFileName(e.target.value)}
+                    onChange={(e) => {
+                      setPdfFileName(e.target.value);
+                      setIsUnsaved(true);
+                    }}
                   />
                   <label>Endoscopy pdf footage filename</label>
                 </FloatLabel>
@@ -200,6 +224,17 @@ export default function EndoPage4() {
                 to={`/endo1?id=${id}&endoId=${endoId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
+                onClick={(e) => {
+                  if (isUnsaved) {
+                    e.preventDefault();
+                    setAlert({
+                      show: true,
+                      header: "Unsaved Changes",
+                      message:
+                        "You have unsaved changes. Please save before proceeding to the previous page.",
+                    });
+                  }
+                }}
               >
                 <Button
                   label="PREV"
@@ -213,8 +248,21 @@ export default function EndoPage4() {
                 to={`/endo2?id=${id}&endoId=${endoId}&edit=${
                   editFlag ? "yes" : "no"
                 }`}
+                onClick={(e) => {
+                  if (isUnsaved) {
+                    e.preventDefault();
+                    setAlert({
+                      show: true,
+                      header: "Unsaved Changes",
+                      message:
+                        "You have unsaved changes. Please save before proceeding to the next page.",
+                    });
+                  }
+                  if (!allowNext) e.preventDefault();
+                }}
               >
                 <Button
+                  disabled={!allowNext}
                   label="NEXT"
                   className="px-10 py-2 rounded"
                   severity="secondary"

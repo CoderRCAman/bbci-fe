@@ -8,14 +8,17 @@ export default function AddIndoorAirPollution({
   handleRemoveUi,
   data,
   setIndoorAirData,
+  setIsUnsaved
 }: {
   handleRemoveUi: any;
   data: INDOOR_AIR_POLLUTION;
   setIndoorAirData: React.Dispatch<
     React.SetStateAction<INDOOR_AIR_POLLUTION[]>
   >;
+  setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>
 }) {
   const handleUpdate = (field: string, value: any) => {
+    setIsUnsaved(true);
     setIndoorAirData((d) =>
       d.map((item) => (item.id == data.id ? { ...item, [field]: value } : item))
     );

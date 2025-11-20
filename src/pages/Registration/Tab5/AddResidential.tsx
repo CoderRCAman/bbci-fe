@@ -9,12 +9,15 @@ export default function AddResidential({
   handleRemoveUi,
   data,
   setResidentialData,
+  setIsUnsaved
 }: {
   handleRemoveUi: any;
   data: RESIDENTIAL_TYPE;
   setResidentialData: React.Dispatch<React.SetStateAction<RESIDENTIAL_TYPE[]>>;
+  setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>
 }) {
   const handleUpdate = (field: string, value: any) => {
+    setIsUnsaved(true);
     setResidentialData((d) =>
       d.map((item) => (item.id == data.id ? { ...item, [field]: value } : item))
     );

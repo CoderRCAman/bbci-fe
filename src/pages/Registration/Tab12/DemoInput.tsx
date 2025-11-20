@@ -37,8 +37,8 @@ export default function DemoInput({
               !item?.data?.includes(
                 data?.[item.field as keyof DEMOGRAPHIC_INFO] || ""
               ) && (
-                // 5. Enhance the text input with <FloatLabel> and <InputText>
-                <div className="p-fluid mt-4"> {/* p-fluid for full width */}
+                // 5. Enhance the Ḍtext input with <FloatLabel> and <InputText>
+                <div className="p-fluid mt-6"> {/* p-fluid for full width */}
                   <FloatLabel>
                     <InputText
                       value={

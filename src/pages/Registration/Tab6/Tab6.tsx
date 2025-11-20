@@ -18,6 +18,7 @@ import ShortUUID from "short-uuid";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 const translator = ShortUUID();
 export interface PERSONAL_MEDICAL_HISTORY {
   diagnoss: string;
@@ -65,6 +66,7 @@ export default function Tab6() {
   const [allowNext, setAllowNext] = useState(false);
   const [dirtyIds, setDirtyIds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isUnsaved, setIsUnsaved] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -76,10 +78,17 @@ export default function Tab6() {
     setId(searchParams?.get("id"));
     fetchExistingData();
   }, [db, location.pathname]);
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({
+      show: true,
+      header: "Unsaved Changes",
+      message: "You have unsaved changes. Are you sure you want to leave?",
+    });
 
+  });
   const updateStateData = (id: string, field: string, value: any) => {
     setDirtyIds((prev) => (prev.some((x) => x === id) ? prev : [...prev, id]));
-
+    setIsUnsaved(true)
     setDataState((prevState) => {
       return prevState.map((item) => {
         if (item.id === id) {
@@ -162,7 +171,16 @@ export default function Tab6() {
   const handleSave = async () => {
     try {
       if (!id) return;
-      if (db && !(await checkElibleToSave(db, id || "", tabId))) {
+      if (
+        db &&
+        !(await checkElibleToSave(
+          db,
+          id || "",
+          tabId,
+          "personal_medical_history",
+          "user_id"
+        ))
+      ) {
         return setAlert({
           header: "Restricted access",
           message: "This user was registered with a different tab id.",
@@ -215,7 +233,8 @@ export default function Tab6() {
         await db?.run(query, values);
       }
       await saveToStore(sqlite);
-      setAllowNext(true);
+      setAllowNext(true); 
+      setIsUnsaved(false) ;
       setAlert({
         show: true,
         header: "Success",
@@ -231,7 +250,8 @@ export default function Tab6() {
     }
   };
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
-    await fetchExistingData();
+    await fetchExistingData(); 
+    setIsUnsaved(false) ;
     event.detail.complete();
   };
   return (
@@ -251,7 +271,11 @@ export default function Tab6() {
             ></IonRefresherContent>
           </IonRefresher>
 
-          <ShowRegisteredTab id={id || ""} />
+          <ShowRegisteredTab
+            id={id || ""}
+            table_name="personal_medical_history"
+            field_name="user_id"
+          />
 
           {/* Added more padding and vertical space */}
           <main ref={scrollRef} className="p-3 space-y-6">

@@ -4,18 +4,21 @@ import { InputText } from "primereact/inputtext";
 import { BLOOD_SAMPLE, BLOOD_SAMPLE_COLLECTION } from "./BloodPage2";
 import { produce } from "immer";
 import { FloatLabel } from "primereact/floatlabel";
+import { set } from "date-fns";
 export default function SampleCollectionType({
   data,
   addNewCollectionTube,
   removeCollectionTube,
   setBloodSample,
   isSampleCollected,
+  setIsUnsaved,
 }: {
   data: BLOOD_SAMPLE_COLLECTION;
   addNewCollectionTube: any;
   removeCollectionTube: any;
   setBloodSample: React.Dispatch<React.SetStateAction<BLOOD_SAMPLE>>;
   isSampleCollected?: boolean;
+  setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   console.log(isSampleCollected);
   return (
@@ -37,7 +40,8 @@ export default function SampleCollectionType({
             { name: "SST-With Gel", value: "SST-With Gel" },
             { name: "Other", value: "Other" },
           ]}
-          onChange={(e) =>
+          onChange={(e) => {
+            setIsUnsaved(true);
             setBloodSample((prev) =>
               produce(prev, (draft) => {
                 const index = draft?.collection_tubes?.findIndex(
@@ -47,8 +51,8 @@ export default function SampleCollectionType({
                 console.log(e.value);
                 draft.collection_tubes![index]!.blood_collection_tube = e.value;
               })
-            )
-          }
+            );
+          }}
         />
       </div>
       <div>
@@ -59,7 +63,8 @@ export default function SampleCollectionType({
               <InputText
                 className="border-1 w-[300px] p-2"
                 value={data["blood_collection_tube_other"]}
-                onChange={(e) =>
+                onChange={(e) => {
+                  setIsUnsaved(true);
                   setBloodSample((prev) =>
                     produce(prev, (draft) => {
                       const index = draft?.collection_tubes?.findIndex(
@@ -70,8 +75,8 @@ export default function SampleCollectionType({
                         index
                       ]!.blood_collection_tube_other = e.target.value;
                     })
-                  )
-                }
+                  );
+                }}
               />
               <label>Specify</label>
             </FloatLabel>
@@ -87,7 +92,8 @@ export default function SampleCollectionType({
           className="border-1 p-2"
           value={data?.identification_code_tube}
           disabled={!isSampleCollected}
-          onChange={(e) =>
+          onChange={(e) => {
+            setIsUnsaved(true);
             setBloodSample((prev) =>
               produce(prev, (draft) => {
                 const index = draft?.collection_tubes?.findIndex(
@@ -97,8 +103,8 @@ export default function SampleCollectionType({
                 draft.collection_tubes![index]!.identification_code_tube =
                   e.target.value;
               })
-            )
-          }
+            );
+          }}
         />
       </div>
 
@@ -109,7 +115,8 @@ export default function SampleCollectionType({
           keyfilter={"int"}
           value={data?.volume?.toString()}
           disabled={!isSampleCollected}
-          onChange={(e) =>
+          onChange={(e) => {
+            setIsUnsaved(true);
             setBloodSample((prev) =>
               produce(prev, (draft) => {
                 const index = draft?.collection_tubes?.findIndex(
@@ -119,8 +126,8 @@ export default function SampleCollectionType({
                 draft.collection_tubes![index]!.volume =
                   parseInt(e.target.value) || 0;
               })
-            )
-          }
+            );
+          }}
         />
       </div>
 
@@ -142,7 +149,8 @@ export default function SampleCollectionType({
             { name: "Clotted-5555", value: "Clotted-5555" },
           ]}
           value={data?.characteristic}
-          onChange={(e) =>
+          onChange={(e) => { 
+            setIsUnsaved(true);
             setBloodSample((prev) =>
               produce(prev, (draft) => {
                 const index = draft?.collection_tubes?.findIndex(
@@ -151,8 +159,8 @@ export default function SampleCollectionType({
                 if (index === -1) return;
                 draft.collection_tubes![index]!.characteristic = e.target.value;
               })
-            )
-          }
+            );
+          }}
         />
       </div>
       <div className="flex justify-end gap-3">
