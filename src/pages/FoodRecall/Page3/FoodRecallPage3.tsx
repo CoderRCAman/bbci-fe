@@ -373,7 +373,7 @@ export default function FoodRecallEntryPage() {
                           Regular
                         </IonSelectOption>
                         <IonSelectOption value="fasting">
-                          Fasting
+                          Ritual
                         </IonSelectOption>
                         <IonSelectOption value="festival">
                           Festival
