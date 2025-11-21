@@ -205,7 +205,7 @@ export default function SignaturePad({
   }
 
   function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
-    // if (e.pointerType !== 'pen') return;
+    if (e.pointerType !== 'pen') return;
     e.preventDefault();
     if (e.buttons !== 1) return;
 

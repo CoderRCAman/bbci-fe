@@ -14,6 +14,7 @@ import {
   populateWithBackend,
   saveToDBAlcohol,
   TOBACCO_ALCOHOL_CONSUMPION,
+  validateTobaccoAlcohol,
 } from "./data";
 import { useSQLite } from "../../../utils/Sqlite";
 import shortUUID from "short-uuid";
@@ -43,7 +44,8 @@ export default function Tab11() {
   const [dirtyValuesMaster, setDirtyValuesMaster] = useState<initialState[]>(
     []
   );
-  const [isUnsaved, setIsUnsaved] = useState(false);
+  const [isUnsaved, setIsUnsaved] = useState(false); 
+  
   async function fetchInitialData() {
     const id = searchParams.get("id") || "";
     try {
@@ -218,6 +220,18 @@ export default function Tab11() {
           message: "This user was registered with a different tab id.",
           show: true,
         });
+      }  
+      
+      try { 
+        const userRes = await db?.query(`SELECT * FROM PATIENTS WHERE id = ?`, [id]);
+        const userData = userRes?.values?.[0];
+        validateTobaccoAlcohol(dirtyValuesMaster , dirtyValuesProduct , userData.dob )
+      } catch (error:any) {
+         return setAlert({
+           show: true,
+           header: "Error",
+           message: error.message,
+         })
       }
       await saveToDBAlcohol(
         db,
@@ -362,7 +376,7 @@ export default function Tab11() {
           icon="pi pi-arrow-up"
           // WindiCSS classes for styling and position
           className={`
-                fixed bottom-6 right-6 
+                fixed bottom-20 right-6 
                 p-button-rounded p-button-secondary shadow-lg
                 transition-opacity duration-300
                 

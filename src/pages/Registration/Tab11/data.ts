@@ -416,3 +416,72 @@ export const saveToDBAlcohol = async (
     throw error;
   }
 };
+
+
+export function validateTobaccoAlcohol(
+  dirtyValuesMaster: initialState[],
+  dirtyValuesProduct: TOBACCO_ALCOHOL_CONSUMPION[],
+  userDob: string
+) {
+  const birthYear = new Date(userDob).getFullYear();
+  const currentYear = new Date().getFullYear();
+  const userAge = currentYear - birthYear;
+
+  // --------------------------
+  // 1️⃣ MASTER vs PRODUCT TYPE MATCH
+  // --------------------------
+  const masterTypes = new Set(
+    dirtyValuesMaster.map(m => m.product_type)
+  );
+
+  const productTypes = new Set(
+    dirtyValuesProduct.map(p => p.type)
+  );
+
+  for (const mt of masterTypes) {
+    if (!productTypes.has(mt)) {
+      throw new Error(
+        `Product details missing for type: ${mt}.`
+      );
+    }
+  }
+
+  // --------------------------
+  // 2️⃣ AGE VALIDATION
+  // --------------------------
+  for (const item of dirtyValuesProduct) {
+    const { from_age, to_age } = item;
+
+    if (from_age !== undefined) {
+      if (from_age < 0) {
+        throw new Error(`From age cannot be negative.`);
+      }
+      if (from_age > userAge) {
+        throw new Error(
+          `From age (${from_age}) cannot exceed patient's age (${userAge}).`
+        );
+      }
+    }
+
+    if (to_age !== undefined) {
+      if (to_age < 0) {
+        throw new Error(`To age cannot be negative.`);
+      }
+      if (to_age > userAge) {
+        throw new Error(
+          `To age (${to_age}) cannot exceed patient's age (${userAge}).`
+        );
+      }
+    }
+
+    if (
+      from_age !== undefined &&
+      to_age !== undefined &&
+      from_age > to_age
+    ) {
+      throw new Error(
+        `From age (${from_age}) cannot be greater than to age (${to_age}).`
+      );
+    }
+  }
+}
