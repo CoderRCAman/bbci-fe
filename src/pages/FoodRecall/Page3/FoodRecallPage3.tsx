@@ -356,7 +356,7 @@ export default function FoodRecallEntryPage() {
                                                 interface="popover" placeholder="Select"
                                             >
                                                 <IonSelectOption value="regular">Regular</IonSelectOption>
-                                                <IonSelectOption value="fasting">Fasting</IonSelectOption>
+                                                <IonSelectOption value="fasting">Ritual</IonSelectOption>
                                                 <IonSelectOption value="festival">Festival</IonSelectOption>
                                             </IonSelect>
                                         </div>
