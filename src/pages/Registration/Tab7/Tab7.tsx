@@ -219,6 +219,7 @@ export default function Tab7() {
           familyHistoryMaster[0].sons,
           familyHistoryMaster[0].daughters,
           familyHistoryMaster[0].history_of_cancer,
+          new Date().toLocaleString("sv-SE").replace("T", " "),
           tabId,
         ];
 

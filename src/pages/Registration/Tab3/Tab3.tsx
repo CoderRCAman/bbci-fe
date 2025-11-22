@@ -185,12 +185,12 @@ export default function Tab3() {
       });
       setPushing(false);
       await fetchUnsyncedRecords();
-    } catch (error) {
+    } catch (error:any) {
       console.log(error);
       setAlert({
         show: true,
         header: "Error",
-        message: "Something went wrong!",
+        message: error.toString(),
       });
     }
   };
@@ -268,8 +268,13 @@ export default function Tab3() {
         message: "Pulled Successfully",
       });
       console.log(pulled);
-    } catch (error) {
+    } catch (error:any) {
       console.log(error);
+      setAlert({
+        show: true,
+        header: "Error",
+        message: error,
+      })
     }
   };
   console.log(pullState)
