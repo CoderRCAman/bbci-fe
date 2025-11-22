@@ -353,3 +353,44 @@ export const loadRecallData = async (db: SQLiteDBConnection, master_id: string):
     }
 };
 
+// ----------------------------------------------------------------
+// 5. SECTION COMPLETENESS HELPERS
+// (Used by the Stepper to determine if a section is "complete")
+// ----------------------------------------------------------------
+
+/**
+ * Basic completion checks for the Habit sections.
+ * Tune rules as needed.
+ */
+export const isDietaryComplete = (master: IFoodHabitMaster | null): boolean => {
+    if (!master) return false;
+    // diet_type must be present, and diet_duration should not be empty (simple rule)
+    return !!master.diet_type && (master.diet_duration?.toString().trim().length ?? 0) > 0;
+};
+
+export const isCookingComplete = (master: IFoodHabitMaster | null, fats: IFoodHabitFat[] | null): boolean => {
+    if (!master) return false;
+    // At least one prep method should be non-zero OR at least one fat should be present with a name
+    const methodValues = [
+        master.method_shallow_frying,
+        master.method_deep_frying,
+        master.method_boiling,
+        master.method_steaming,
+        master.method_sauting,
+        master.method_grill_bbq,
+    ];
+    const hasMethod = methodValues.some(v => v && v !== '0');
+    const hasFat = (fats || []).some(f => f.name && f.name.trim().length > 0);
+    return hasMethod || hasFat;
+};
+
+export const isHouseholdComplete = (master: IFoodHabitMaster | null): boolean => {
+    if (!master) return false;
+    const familySharingOK = master.family_sharing !== undefined && master.family_sharing !== null && master.family_sharing.toString().trim() !== '';
+    const mealsOK = master.meals_per_day !== undefined && master.meals_per_day !== null && master.meals_per_day.toString().trim() !== '';
+    const water = JSON.parse(master.water_supply_json || '[]');
+    const waterOK = Array.isArray(water) && water.length > 0;
+    return familySharingOK && mealsOK && waterOK;
+};
+
+
