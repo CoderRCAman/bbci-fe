@@ -475,6 +475,7 @@ const handleNextClick = async () => {
 
           <ShowRegisteredTab id={master.id} table_name="FOOD_HABITS_MASTER" />
 
+<<<<<<< HEAD
           <main className="space-y-6">
             {currentStep === 0 && <DietaryPanel />}
             {currentStep === 1 && <CookingPanel />}

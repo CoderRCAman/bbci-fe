@@ -317,6 +317,7 @@ export default function FoodRecallEntryPage() {
                             </div>
                           </div>
 
+<<<<<<< HEAD
                           <div className="grid grid-cols-2 gap-4 mb-3">
                             <div>
                               <label className="block text-sm font-medium text-gray-700">Type of Diet for this Dish</label>
