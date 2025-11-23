@@ -197,7 +197,8 @@ export default function BloodPage5() {
                   body={(rowData) => (
                     <InputText
                       placeholder="Modify"
-                      value={rowData.result}
+                       value={parseFloat(rowData.result).toString()}
+                      type="number"
                       className="p-2 border"
                       id="result_blood"
                       onChange={(e) => {
@@ -207,7 +208,7 @@ export default function BloodPage5() {
                             item.id === rowData.id
                               ? {
                                   ...item,
-                                  result: parseInt(e.target.value) || 0,
+                                  result: parseFloat(e.target.value) || 0,
                                 }
                               : item
                           )

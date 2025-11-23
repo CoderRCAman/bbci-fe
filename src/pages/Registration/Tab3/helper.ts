@@ -9,7 +9,7 @@ import { set } from "date-fns";
 const queue = new PQueue({ concurrency: 1 });
 // Create an axios instance
 const api = axios.create({
-  baseURL: "http://localhost:11142/api",
+  baseURL: "http://14.139.205.198/api",
   timeout: 5000,
 });
 
@@ -28,7 +28,11 @@ const Tables = [
   "demographic_info",
   "FAMILY_HISTORY_OF_CANCER_MASTER",
   "FAMILY_HISTORY_OF_CANCER_RELATIVES", 
-  "deletedRecords"
+  "deletedRecords", 
+  "FOOD_HABITS_MASTER",
+  "FOOD_HABITS_FAT_USAGE",
+  "FOOD_RECALL_ENTRY",
+  "FOOD_RECALL_INGREDIENT"
 ];
 
 // Retry failed requests up to 3 times
@@ -53,9 +57,10 @@ export async function PUSH_TO_CLOUD(
             });
           } catch (error) {
             console.log(error);
-            throw new Error(
-              `Failed to push data to cloud for table : ${table_name}`
-            );
+            throw error ;
+            // throw new Error(
+            //   `Failed to push data to cloud for table : ${table_name}`
+            // );
           }
         });
       }
@@ -73,7 +78,8 @@ export async function PUSH_TO_CLOUD(
           });
         } catch (error) {
           console.log(error);
-          throw new Error(`Failed to push data to cloud for deleted records`);
+          throw error ; 
+          // throw new Error(`Failed to push data to cloud for deleted records`);
         }
       });
     }

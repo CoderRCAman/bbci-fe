@@ -8,7 +8,7 @@ import {
 } from "@ionic/react";
 import { useEffect, useState } from "react";
 import Header from "../../../components/Header";
-import { useLocation } from "react-router";
+import { useHistory, useLocation } from "react-router";
 import { useSQLite } from "../../../utils/Sqlite";
 import SampleCollectionType from "./SampleCollectionType";
 import { Calendar } from "primereact/calendar";
@@ -73,6 +73,7 @@ export default function BloodPage2() {
   const [participant, setParticipants] = useState<any | null>(null);
   const [editFlag, setEditFlag] = useState(false);
   const [isUnsaved, setIsUnsaved] = useState(false);
+  const [allowNext, setAllowNext] = useState(false);
   const [bloodSample, setBloodSample] = useState<BLOOD_SAMPLE>({
     id: shortUUID().generate(),
     user_id: id,
@@ -91,6 +92,7 @@ export default function BloodPage2() {
     header: "",
     message: "",
   });
+  const history = useHistory();
   async function fetchCurrentUser(curId: string, sampleId: string) {
     try {
       console.log(sampleId);
@@ -133,7 +135,7 @@ export default function BloodPage2() {
       }
       console.log(res1, res2);
       if (res1?.values?.length == 0) return;
-
+      setAllowNext(true);
       setBloodSample((prev) => ({
         ...prev,
         ...res1?.values?.[0],
@@ -141,16 +143,16 @@ export default function BloodPage2() {
         collection_tubes:
           res2?.values?.length == 0
             ? [
-                new BloodSample({
-                  blood_collection_tube: "",
-                  blood_collection_tube_other: "",
-                  identification_code_tube: "",
-                  volume: 0,
-                  characteristic: "",
-                  id: shortUUID().generate(),
-                  user_id: curId,
-                }),
-              ]
+              new BloodSample({
+                blood_collection_tube: "",
+                blood_collection_tube_other: "",
+                identification_code_tube: "",
+                volume: 0,
+                characteristic: "",
+                id: shortUUID().generate(),
+                user_id: curId,
+              }),
+            ]
             : res2?.values,
       }));
     } catch (error) {
@@ -169,6 +171,7 @@ export default function BloodPage2() {
 
     fetchCurrentUser(curId, sampleId);
   }, [location.pathname, db]);
+
   useBlockNavigation(isUnsaved, () => {
     setAlert({
       show: true,
@@ -184,6 +187,7 @@ export default function BloodPage2() {
     setIsUnsaved(false);
     event.detail.complete();
   };
+
 
   const handleSave = async () => {
     try {
@@ -214,14 +218,20 @@ export default function BloodPage2() {
           `delete from blood_tube_collection where id = '${removedId}'`
         );
       }
+      history.replace({
+        pathname: location.pathname,
+        search: `id=${id}&sampleId=${bloodSample.id}`,
+      });
       await saveToStore(sqlite);
       setSampleId(bloodSample.id);
+      setAllowNext(true);
       setIsUnsaved(false);
       setAlert({
         header: "Success",
         show: true,
         message: "Records saved!",
       });
+
     } catch (error) {
       console.log(error);
       setAlert({
@@ -233,7 +243,7 @@ export default function BloodPage2() {
   };
 
   const addNewCollectionTube = () => {
-    setIsUnsaved(true);
+    if (bloodSample.collection_tubes.length >= 1) setIsUnsaved(true);
     const translator = shortUUID();
     const newSample = new BloodSample({
       blood_collection_tube: "",
@@ -565,6 +575,7 @@ export default function BloodPage2() {
                     severity="success"
                     raised // Added emphasis
                     onClick={handleSave}
+                    type="button"
                   />
                 </div>
 
@@ -577,17 +588,19 @@ export default function BloodPage2() {
                       outlined
                     />
                   </Link>
-                  <Link
-                    to={`/blood3?id=${id}&sampleId=${bloodSample?.id}&edit=${
-                      editFlag ? "yes" : "no"
-                    }`}
-                  >
-                    <Button
-                      label="NEXT"
-                      icon="pi pi-arrow-right" // Added icon
-                      iconPos="right"
-                    />
-                  </Link>
+                  {
+                    allowNext &&
+                    <Link
+                      to={`/blood3?id=${id}&sampleId=${bloodSample?.id}&edit=${editFlag ? "yes" : "no"
+                        }`}
+                    >
+                      <Button
+                        label="NEXT"
+                        icon="pi pi-arrow-right" // Added icon
+                        iconPos="right"
+                      />
+                    </Link>
+                  }
                 </div>
               </div>
             </Card>

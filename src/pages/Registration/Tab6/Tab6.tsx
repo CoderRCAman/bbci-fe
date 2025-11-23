@@ -43,6 +43,38 @@ export interface PERSONAL_MEDICAL_HISTORY_DB {
   user_id?: string;
 }
 
+export function validateDiagnosisAge(
+  records: PERSONAL_MEDICAL_HISTORY_DB[],
+  userDob: string
+) {
+  const birthYear = new Date(userDob).getFullYear();
+  const currentYear = new Date().getFullYear();
+  const userAge = currentYear - birthYear;
+
+  for (const row of records) {
+    const age = row.age_first_diagnosis;
+    const year = row.year_of_first_diagnosis
+      ? Number(row.year_of_first_diagnosis)
+      : undefined;
+
+    // --- check age ---
+    if (age !== undefined && age > userAge) {
+      throw new Error("Age of first diagnosis cannot exceed patient's age.");
+    }
+
+    // --- check year ---
+    if (year !== undefined) {
+      if (year < birthYear) {
+        throw new Error("Year of diagnosis cannot be before patient's birth year.");
+      }
+      if (year > currentYear) {
+        throw new Error("Year of diagnosis cannot be in the future.");
+      }
+    }
+  }
+}
+
+
 function generateDefaultData(user_id: string): PERSONAL_MEDICAL_HISTORY_DB[] {
   return data.map((item) => ({
     id: translator.new(),
@@ -186,6 +218,17 @@ export default function Tab6() {
           message: "This user was registered with a different tab id.",
           show: true,
         });
+      } 
+      const ress = await db?.query(`SELECT * FROM patients WHERE id = ?`, [id]); 
+      const userData = ress?.values?.[0]; 
+      try {
+        validateDiagnosisAge(dataState, userData.dob);
+      } catch (error:any) {
+        return setAlert({
+          show: true,
+          header: "FAILED",
+          message: error.message,
+        })
       }
       for (const item of dataState) {
         if (!dirtyIds.includes(item.id)) continue;
@@ -240,12 +283,12 @@ export default function Tab6() {
         header: "Success",
         message: "Data saved successfully",
       });
-    } catch (error) {
+    } catch (error:any) {
       console.log(error);
       setAlert({
         show: true,
         header: "Error",
-        message: "Something went wrong",
+        message: error.message,
       });
     }
   };
@@ -336,7 +379,7 @@ export default function Tab6() {
             icon="pi pi-arrow-up"
             // WindiCSS classes for styling and position
             className={`
-                fixed bottom-6 right-6 
+                fixed bottom-20 right-6 
                 p-button-rounded p-button-secondary shadow-lg
                 transition-opacity duration-300
                 

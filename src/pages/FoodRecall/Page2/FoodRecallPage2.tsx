@@ -479,6 +479,53 @@ const handleNextClick = async () => {
             {currentStep === 0 && <DietaryPanel />}
             {currentStep === 1 && <CookingPanel />}
             {currentStep === 2 && <HouseholdPanel />}
+=======
+            {/* 7.4 Additives */}
+            <fieldset
+              className="border border-gray-200 p-4 rounded-md mb-4"
+              disabled={!isEditable}
+            >
+              <legend className="text-sm font-semibold text-gray-600 px-2">
+                7.4 Do you add following to cooked food? (Multiple Select)
+              </legend>
+              <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
+                {[
+                  "Salt",
+                  "Sugar",
+                  "Jaggery",
+                  "Ghee",
+                  "Pickled Vegetables",
+                  "Mustard Oil","Khar/ Tapigo",
+                  "None",
+                ].map((item) => (
+                  <div key={item} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`add-${item}`}
+                      checked={additives.includes(item)}
+                      disabled={!isEditable}
+                      onChange={(e) => {
+                        const newAdditives = e.target.checked
+                          ? [...additives, item]
+                          : additives.filter((a) => a !== item);
+                        handleMasterChange(
+                          "additives_json",
+                          JSON.stringify(newAdditives)
+                        );
+                      }}
+                      className="w-4 h-4 text-cyan-600 border-gray-300 focus:ring-cyan-500"
+                    />
+                    <label
+                      htmlFor={`add-${item}`}
+                      className="ml-2 text-sm font-medium text-gray-700"
+                    >
+                      {item}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </fieldset>
+>>>>>>> master
 
             <div className="flex justify-between items-center mt-6">
               <Link to={`/food1`} onClick={(e) => {

@@ -336,6 +336,66 @@ export default function FoodRecallEntryPage() {
                               </div>
                             )}
                           </div>
+=======
+                  {/* Row 2: Diet Context and Festival Name */}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Type of Diet for this Dish
+                      </label>
+                      <IonSelect
+                        value={entry.diet_context}
+                        disabled={!isEditable}
+                        onIonChange={(e) => {
+                          handleFoodEntryChange(
+                            entry.id,
+                            "diet_context",
+                            e.detail.value
+                          );
+                          if (e.detail.value !== "festival")
+                            handleFoodEntryChange(
+                              entry.id,
+                              "festival_name",
+                              ""
+                            );
+                        }}
+                        interface="popover"
+                        placeholder="Select"
+                      >
+                        <IonSelectOption value="regular">
+                          Regular
+                        </IonSelectOption>
+                        <IonSelectOption value="fasting">
+                          Ritual
+                        </IonSelectOption>
+                        <IonSelectOption value="festival">
+                          Festival
+                        </IonSelectOption>
+                      </IonSelect>
+                    </div>
+                    {entry.diet_context === "festival" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Festival Name
+                        </label>
+                        <input
+                          type="text"
+                          value={entry.festival_name}
+                          onChange={(e) =>
+                            handleFoodEntryChange(
+                              entry.id,
+                              "festival_name",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Name of Festival"
+                          disabled={!isEditable}
+                          className="w-full p-2 border rounded-md disabled:bg-gray-100"
+                        />
+                      </div>
+                    )}
+                  </div>
+>>>>>>> master
 
                           <div className="grid grid-cols-2 gap-4 mb-3">
                             <div>

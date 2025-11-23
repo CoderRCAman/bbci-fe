@@ -45,15 +45,16 @@ export default function Tab8() {
     message: "",
   });
   const [isDisabledReading2, setIsDisabledReading2] = useState(true);
-  const location = useLocation();
+  const location = useLocation(); 
+  console.log(id)
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    setId(searchParams?.get("id"));
-  }, []);
+    setId(searchParams?.get("id")); 
+  }, [location.pathname]);
   async function fetchExisting() {
     try {
       const searchParams = new URLSearchParams(location.search);
-      const id = searchParams?.get("id");
+      const id = searchParams?.get("id"); 
       const res = await db?.query(
         `select * from anthropometry where user_id = '${id}' order by date(date) asc`
       );
@@ -304,7 +305,7 @@ export default function Tab8() {
                 raised // Added for emphasis
               />
             </div>
-            <div className="pt-10 flex justify-end gap-2">
+            <div className="pt-10 flex justify-between gap-2">
               <Link to={"/tab7?id=" + id}>
                 <Button
                   className="px-10 py-2 rounded"
@@ -321,6 +322,7 @@ export default function Tab8() {
                   icon="pi pi-arrow-right" // Added icon
                   severity="secondary" // Use secondary style
                   outlined
+                  iconPos="right"
                 />
               </Link>
             </div>

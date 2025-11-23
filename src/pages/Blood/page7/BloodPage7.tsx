@@ -198,8 +198,8 @@ export default function BloodPage7() {
                   body={(rowData) => (
                     <InputText
                       placeholder="Modify"
-                      keyfilter="int"
-                      value={rowData.result}
+                      type="number"
+                       value={parseFloat(rowData.result).toString()}
                       className="border p-2 "
                       onChange={(e) => {
                         setIsUnsaved(true);
@@ -208,7 +208,7 @@ export default function BloodPage7() {
                             item.id === rowData.id
                               ? {
                                   ...item,
-                                  result: parseInt(e.target.value) || 0,
+                                  result: parseFloat(e.target.value) || 0,
                                 }
                               : item
                           )

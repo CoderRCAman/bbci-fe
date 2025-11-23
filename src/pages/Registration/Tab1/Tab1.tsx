@@ -4,21 +4,8 @@ import { App } from "@capacitor/app";
 import { InputText } from "primereact/inputtext";
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
-  IonInput,
-  IonItem,
-  IonLabel,
-  IonButton,
-  IonList,
   IonAlert,
-  IonSelect,
-  IonSelectOption,
-  IonMenuButton,
-  IonButtons,
-  IonFooter,
   useIonRouter,
   useIonViewWillEnter,
   useIonViewWillLeave,
@@ -26,7 +13,7 @@ import {
   IonRefresherContent,
   RefresherEventDetail,
 } from "@ionic/react";
-import { format, isValid, parse } from "date-fns";
+import { format, isValid, parse, set } from "date-fns";
 
 import "./Tab1.css";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
@@ -35,7 +22,6 @@ import { Geolocation } from "@capacitor/geolocation";
 import Header from "../../../components/Header";
 import { useSQLite } from "../../../utils/Sqlite";
 import {
-  fetchCurrentUserDetails,
   generateUniqueId,
   saveToStore,
 } from "../../../utils/helper";
@@ -53,6 +39,10 @@ import SignaturePad, { roundPoint } from "./SignaturePad";
 import { PluginListenerHandle } from "@capacitor/core";
 import { Card } from "primereact/card";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+
+import { card } from "ionicons/icons";
+import VerificationCard from "./UserVerificationCard";
+import LocationEditor from "./LocationEditor";
 interface Patient {
   id?: string;
   name: string;
@@ -66,12 +56,6 @@ interface Patient {
   dob: string;
   tab_id?: string;
 }
-
-const forcedStyle = {
-  label: { marginBottom: "10px" },
-  item: { margin: 0 },
-  btnPadd: { marginTop: "30px" },
-};
 
 const employeeNameOptions = [
   { name: "ITTEST1", value: "ITEST1" },
@@ -134,6 +118,7 @@ const Tab1: React.FC = () => {
     formState,
     watch,
     reset,
+    getValues
   } = useForm({
     values: {
       i_name: patient.i_name,
@@ -145,6 +130,8 @@ const Tab1: React.FC = () => {
     },
   });
   const [strokes, setStrokes] = useState<number[][][]>([]);
+  const [cardType, setCardType] = useState<string>('');
+  const [cardInput, setCardInput] = useState<string>('');
   const router = useIonRouter();
   const searchParams = new URLSearchParams(location.search);
   useIonViewWillEnter(() => {
@@ -176,16 +163,20 @@ const Tab1: React.FC = () => {
     if (listenerHandle.current) {
       listenerHandle.current.remove();
       listenerHandle.current = null;
+
     }
   });
   //below checks if this is for edit purpose
   async function fetchPatient(id: string) {
     try {
       const res = await db?.query("select * from patients where id = ?", [id]);
+      console.log("ARE U HAVING TRABALS", res)
       if ((res as any)?.values?.length > 0) {
         setPatient((res as any)?.values[0]);
         if (res?.values && res?.values[0]?.signature) {
           setStrokes(JSON.parse(res?.values[0]?.signature));
+          setCardInput(res?.values[0]?.card_no);
+          setCardType(res?.values[0]?.card_type);
         }
       }
       reset((res as any)?.values[0]);
@@ -212,6 +203,9 @@ const Tab1: React.FC = () => {
         i_name: "",
         dob: "",
       });
+      setStrokes([]);
+      setCardInput('');
+      setCardType('');
       return;
     }
     reset(patient);
@@ -239,7 +233,15 @@ const Tab1: React.FC = () => {
       }));
       return;
     }
-
+    if (!cardType || !cardInput) {
+      setAlert((a) => ({
+        ...a,
+        show: true,
+        header: "Missing fields",
+        message: "Please enter card details",
+      }));
+      return;
+    }
     if (id) {
       // Update
       if (db && !(await checkElibleToSave(db, id, tabId))) {
@@ -260,11 +262,10 @@ const Tab1: React.FC = () => {
       await db?.run(
         `UPDATE patients SET name = ?,  gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
-         DOB = ? , updated_at = ? , signature = ?
+         DOB = ? , updated_at = ? , signature = ? , card_type = ? , card_no = ?
          WHERE id = ?`,
         [
           data.name,
-
           data.gender,
           data.i_name,
           data.i_emp_code,
@@ -273,9 +274,13 @@ const Tab1: React.FC = () => {
           format(data.dob, "yyyy-MM-dd"),
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
           JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))),
+          cardType,
+          cardInput,
           id,
         ]
-      );
+      ); 
+      setIsUnsaved(false); 
+      reset(getValues(), { keepDirty: false });
       await saveToStore(sqlite);
       setAlert((a) => ({
         ...a,
@@ -288,8 +293,8 @@ const Tab1: React.FC = () => {
       const uniqueId = generateUniqueId(data.name);
       await db?.run(
         `INSERT INTO patients (id, i_name, i_emp_code, name,  gender,
-         lat, long, time, dob, date , created_at , updated_at , tab_id,signature )
-         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ? )`,
+         lat, long, time, dob, date , created_at , updated_at , tab_id,signature , card_type , card_no)
+         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ?,?,? )`,
         [
           uniqueId,
           data.i_name,
@@ -305,6 +310,8 @@ const Tab1: React.FC = () => {
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
           tabId,
           JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))),
+          cardType,
+          cardInput
         ]
       );
       const params = new URLSearchParams(location.search);
@@ -313,7 +320,8 @@ const Tab1: React.FC = () => {
         pathname: location.pathname,
         search: params.toString(),
       });
-      setIsUnsaved(false);
+      setIsUnsaved(false); 
+      reset(getValues(), { keepDirty: false });
       await saveToStore(sqlite);
       setAlert((a) => ({
         ...a,
@@ -322,7 +330,6 @@ const Tab1: React.FC = () => {
         message: "Added successfully",
       }));
       setId(uniqueId);
-      // history.push(`/tab5?id=${uniqueId}`);
     }
   };
 
@@ -345,15 +352,18 @@ const Tab1: React.FC = () => {
   };
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
-    await fetchPatient(currentId); 
+    await fetchPatient(currentId);
     setIsUnsaved(false);
+    setStrokes([]);
+    setCardType("");
+    setCardInput("");
     event.detail.complete();
   };
   const onSubmit = (data: any) => {
     console.log(data);
     savePatient(data);
   };
-  console.log(errors);
+  console.log(isUnsaved)
   return (
     <IonPage>
       <Header title={id ? "Edit participants" : "Register Participant"} />
@@ -420,32 +430,11 @@ const Tab1: React.FC = () => {
               />
 
               {/* --- 3. Coordinates Section --- */}
-              <div className="flex flex-col gap-3">
-                <Button
-                  label="Get Co-ordinates"
-                  type="button"
-                  onClick={getCurrentPosition}
-                  icon="pi pi-map-marker"
-                  outlined // A nicer 'outlined' style
-                />
-                {/* Only show the info box if we have data */}
-                {patient.lat != null || patient.long != null ? (
-                  <div className="flex justify-around border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
-                    <div className="text-center">
-                      <span className="text-sm text-gray-500">Latitude</span>
-                      <p className="font-bold">
-                        {patient.lat != null ? patient.lat : "N/A"}
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-sm text-gray-500">Longitude</span>
-                      <p className="font-bold">
-                        {patient.long != null ? patient.long : "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
+              <LocationEditor 
+               patient={patient}
+               setPatient={setPatient}
+               setIsUnsaved={setIsUnsaved}
+              />
 
               {/* --- 4. Participant Name --- */}
               <ControlledFormField
@@ -512,7 +501,14 @@ const Tab1: React.FC = () => {
                   </FloatLabel>
                 )}
               />
-
+              {/* choose id validation methods  */}
+              <VerificationCard
+                selectedInput={cardInput}
+                selectedType={cardType || ''}
+                setSelectedInput={setCardInput}
+                setSelectedType={setCardType}
+                setIsUnsave={setIsUnsaved}
+              />
               {/* --- 8. Signature Pad --- */}
               <div className="flex flex-col gap-2">
                 <label className="font-medium">Participant's Signature</label>

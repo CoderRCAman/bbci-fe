@@ -4,6 +4,13 @@ const config: CapacitorConfig = {
   appId: 'io.ionic.starter',
   appName: 'Ziro',
   webDir: 'dist',
+  server: {
+    androidScheme: 'http',
+    cleartext: true
+  },
+  android: {
+    allowMixedContent: true
+  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 3000,

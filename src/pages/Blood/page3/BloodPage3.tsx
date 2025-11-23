@@ -64,23 +64,23 @@ export default function BloodPage3() {
         res2?.values?.length
           ? (res2?.values as RFTType[])
           : [
-              {
-                test_name: "Serum Urea",
-                result: 0,
-                unit: "mg/dL",
-                id: shortUUID().generate(),
-                sampleId: sampleId,
-                test_type: "RFT",
-              },
-              {
-                test_name: "Serum Creatinine",
-                result: 0,
-                unit: "mg/dL",
-                id: shortUUID().generate(),
-                sampleId: sampleId,
-                test_type: "RFT",
-              },
-            ]
+            {
+              test_name: "Serum Urea",
+              result: 0,
+              unit: "mg/dL",
+              id: shortUUID().generate(),
+              sampleId: sampleId,
+              test_type: "RFT",
+            },
+            {
+              test_name: "Serum Creatinine",
+              result: 0,
+              unit: "mg/dL",
+              id: shortUUID().generate(),
+              sampleId: sampleId,
+              test_type: "RFT",
+            },
+          ]
       );
       console.log(res, curId);
     } catch (error) {
@@ -249,8 +249,8 @@ export default function BloodPage3() {
                   body={(rowData) => (
                     <InputText
                       placeholder="Modify"
-                      keyfilter={"num"}
-                      value={rowData.result}
+                      type="number"
+                      value={parseFloat(rowData.result).toString()}
                       className="p-2 border"
                       id="result_blood"
                       onChange={(e) => {
@@ -259,9 +259,9 @@ export default function BloodPage3() {
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                  ...item,
-                                  result: parseFloat(e.target.value) || 0,
-                                }
+                                ...item,
+                                result: parseFloat(e.target.value) || 0,
+                              }
                               : item
                           )
                         );
@@ -292,16 +292,14 @@ export default function BloodPage3() {
 
             <div className="flex gap-2 mt-5 justify-between mt-10 ">
               <Link
-                to={`/blood2?id=${id}&sampleId=${sampleId}&edit=${
-                  editFlag ? "yes" : "no"
-                }`}
+                to={`/blood2?id=${id}&sampleId=${sampleId}&edit=${editFlag ? "yes" : "no"
+                  }`}
               >
                 <Button label="PREV" className="px-5 py-2 rounded " outlined icon="pi pi-arrow-left" />
               </Link>
               <Link
-                to={`/blood4?id=${id}&sampleId=${sampleId}&edit=${
-                  editFlag ? "yes" : "no"
-                }`}
+                to={`/blood4?id=${id}&sampleId=${sampleId}&edit=${editFlag ? "yes" : "no"
+                  }`}
               >
                 <Button label="NEXT" className="px-5 py-2 rounded" icon="pi pi-arrow-right" iconPos="right" outlined />
               </Link>
