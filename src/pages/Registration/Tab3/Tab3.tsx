@@ -1,5 +1,5 @@
 import { IonAlert, IonContent, IonIcon, IonPage } from "@ionic/react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Header from "../../../components/Header";
 import { useSQLite } from "../../../utils/Sqlite";
 import { useLocation } from "react-router";
@@ -7,9 +7,13 @@ import { set } from "date-fns";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
-import { PULL_FROM_CLOUD, PUSH_TO_CLOUD } from "./helper";
+import { exportToCSV, PULL_FROM_CLOUD, PUSH_TO_CLOUD } from "./helper";
 import { saveToStore } from "../../../utils/helper";
-import { checkmarkCircleOutline, cloudDownloadOutline } from "ionicons/icons";
+import {
+  checkmarkCircleOutline,
+  closeCircleOutline,
+  cloudDownloadOutline,
+} from "ionicons/icons";
 export type UNSYNC_RECORD = {
   id: number;
   rowId: string;
@@ -25,63 +29,113 @@ const initialPullState = {
   applyingPatch: false,
   appliedPatch: false,
   data: [
-    { table_name: "patients", display_name: "Participants", status: false },
+    {
+      table_name: "patients",
+      display_name: "Participants",
+      status: false,
+      error: false,
+    },
     {
       table_name: "residential_history",
       display_name: "Residential History",
       status: false,
+      error: false,
     },
     {
       table_name: "personal_medical_history",
       display_name: "Personal Medical History",
       status: false,
+      error: false,
     },
     {
       table_name: "TOBACCO_ALCOHOL_CONSUMPTION",
       display_name: "Tobacco Alcohol Consumption",
       status: false,
+      error: false,
     },
-    { table_name: "ENDOSCOPY", display_name: "Endoscopy", status: false },
-    { table_name: "blood_sample", display_name: "Blood Sample", status: false },
+    {
+      table_name: "ENDOSCOPY",
+      display_name: "Endoscopy",
+      status: false,
+      error: false,
+    },
+    {
+      table_name: "blood_sample",
+      display_name: "Blood Sample",
+      status: false,
+      error: false,
+    },
     {
       table_name: "blood_tube_collection",
       display_name: "Blood Tube Collection",
       status: false,
+      error: false,
     },
     {
       table_name: "gtgh_blood_report",
       display_name: "Gtgh Blood Report",
       status: false,
+      error: false,
     },
     {
       table_name: "anthropometry",
       display_name: "Anthropometry",
       status: false,
+      error: false,
     },
     {
       table_name: "indoor_air_pollution",
       display_name: "Indoor Air Pollution",
       status: false,
+      error: false,
     },
     {
       table_name: "TOBACCO_ALCOHOL_CONSUMPTION_MASTER",
       display_name: "Tobacco Alcohol Consumption Master",
       status: false,
+      error: false,
     },
     {
       table_name: "demographic_info",
       display_name: "Demographic Info",
       status: false,
+      error: false,
     },
     {
       table_name: "FAMILY_HISTORY_OF_CANCER_MASTER",
       display_name: "Family History Of Cancer Master",
       status: false,
+      error: false,
     },
     {
       table_name: "FAMILY_HISTORY_OF_CANCER_RELATIVES",
       display_name: "Family History Of Cancer Relatives",
       status: false,
+      error: false,
+    },
+    {
+      table_name: "FOOD_HABITS_MASTER",
+      display_name: "Food Habits Master",
+      status: false,
+      error: false,
+    },
+    {
+      table_name: "FOOD_HABITS_FAT_USAGE",
+      display_name: "Food Habits Fat Usage",
+      status: false,
+      error: false,
+    },
+    {
+      table_name: "FOOD_RECALL_ENTRY",
+      display_name: "Food Recall Entry",
+      status: false,
+      error: false,
+    },
+    {
+      table_name: "FOOD_RECALL_INGREDIENT",
+      display_name: "Food Recall Ingredient",
+      status: false,
+      error: false,
     },
   ],
 };
@@ -185,7 +239,8 @@ export default function Tab3() {
       });
       setPushing(false);
       await fetchUnsyncedRecords();
-    } catch (error:any) {
+    } catch (error: any) {
+      setPushing(false);
       console.log(error);
       setAlert({
         show: true,
@@ -213,7 +268,8 @@ export default function Tab3() {
           //delete from db
           let deleteQueries = table_data
             .map(
-              (row) => `DELETE FROM ${row.table_name} WHERE id = '${row.rowId}';`
+              (row) =>
+                `DELETE FROM ${row.table_name} WHERE id = '${row.rowId}';`
             )
             .join(" ");
           await db?.execute(deleteQueries);
@@ -262,27 +318,50 @@ export default function Tab3() {
         );
       }
       await saveToStore(sqlite);
-      setAlert({
-        show: true,
-        header: "Success",
-        message: "Pulled Successfully",
-      });
-      console.log(pulled);
-    } catch (error:any) {
+      const data: any = getPullState().data;
+      if (data.every((table: any) => table.error)) {
+        setAlert({
+          show: true,
+          header: "Failed",
+          message: "None of the records pulled!",
+        });
+      } else if (data.some((table: any) => table.error)) {
+        setAlert({
+          show: true,
+          header: "Partial Success",
+          message: "Pulled Successfully",
+        });
+      } else {
+        setAlert({
+          show: true,
+          header: "Success",
+          message: "Pulled Successfully",
+        });
+      }
+    } catch (error: any) {
       console.log(error);
       setAlert({
         show: true,
         header: "Error",
         message: error,
-      })
+      });
     }
   };
-  console.log(pullState)
+
+  const pullStateRef = useRef(pullState);
+  useEffect(() => {
+    pullStateRef.current = pullState;
+  }, [pullState]);
+
+  function getPullState() {
+    return pullStateRef.current;
+  }
+
+  console.log(pullState);
   return (
     <IonPage>
       <Header title={"Sync Data"} />
       <IonContent class="" fullscreen>
-
         <main className="p-2 text-slate-600">
           <h1 className="text-xl font-semibold">Records to be synched!</h1>
           {insertOrUpdatedRecords.length == 0 && deletedRecords.length == 0 ? (
@@ -338,6 +417,27 @@ export default function Tab3() {
               onClick={handlePull}
               disabled={pullState.show || pushing}
             />
+            <Button
+              label="Export Excel"
+              severity="success" 
+              className="ml-2"
+              onClick={async () => {
+                try {
+                  await exportToCSV(db);
+                  setAlert({
+                    show: true,
+                    header: "Success",
+                    message: "Exported Successfully",
+                  });
+                } catch (error) {
+                  setAlert({
+                    show: true,
+                    header: "Error",
+                    message: "Failed to export data",
+                  });
+                }
+              }}
+            />
           </div>
           {pushing && (
             <div className="mt-10 p-2 border-2 rounded text-emerald-500 border-emerald-500 text-center">
@@ -346,36 +446,57 @@ export default function Tab3() {
           )}
           {pullState.show && (
             <div className="mt-10 border-2 p-2 rounded">
-              {pullState?.data?.map((table) => (
-                <div
-                  key={table.table_name}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  <IonIcon
-                    icon={
-                      table.status
-                        ? checkmarkCircleOutline
-                        : cloudDownloadOutline
-                    }
-                    color={table.status ? "success" : "primary"}
-                    style={{ fontSize: 24, marginRight: 10 }}
-                  />
-                  <span>
-                    {table.status
-                      ? `Pulled ${table.display_name} successfully!`
-                      : `Pulling ${table.display_name} ${"..."}`}
-                  </span>
-                </div>
-              ))}
+              {pullState?.data?.map((table) => {
+                let icon;
+                let color;
+                let text;
+
+                if (table.error) {
+                  // ❌ FAILED
+                  icon = closeCircleOutline;
+                  color = "danger";
+                  text = `Failed to pull ${table.display_name}!`;
+                } else if (table.status) {
+                  // ✅ SUCCESS
+                  icon = checkmarkCircleOutline;
+                  color = "success";
+                  text = `Pulled ${table.display_name} successfully!`;
+                } else {
+                  // ⏳ LOADING
+                  icon = cloudDownloadOutline;
+                  color = "primary";
+                  text = `Pulling ${table.display_name} ...`;
+                }
+
+                return (
+                  <div
+                    key={table.table_name}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: 10,
+                    }}
+                  >
+                    <IonIcon
+                      icon={icon}
+                      color={color}
+                      style={{ fontSize: 24, marginRight: 10 }}
+                    />
+                    <span
+                      className={table.error ? "text-red-600 font-bold" : ""}
+                    >
+                      {text}
+                    </span>
+                  </div>
+                );
+              })}
+
               {pullState.applyingPatch && (
                 <div className="border-t py-2 ">
-                  <p>Please wait while pulled data is being patched . . .</p>
+                  <p>Please wait while pulled data is being patched...</p>
                 </div>
               )}
+
               {pullState.appliedPatch && (
                 <div className="border-t py-2 ">
                   <p className="flex items-center font-bold">
@@ -400,7 +521,6 @@ export default function Tab3() {
         />
       </IonContent>
       <div className="pb-[250px]"></div>
-
     </IonPage>
   );
 }
