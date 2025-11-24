@@ -118,7 +118,7 @@ const Tab1: React.FC = () => {
     reset,
     getValues,
   } = useForm({
-    values: {
+    values: { 
       i_name: patient.i_name,
       i_emp_code: patient.i_emp_code,
       name: patient.name,
@@ -332,30 +332,12 @@ const Tab1: React.FC = () => {
     }
   };
 
-  const getCurrentPosition = async () => {
-    try {
-      const coordinates = await Geolocation.getCurrentPosition({
-        // enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 1000,
-      });
-      console.log("Current position:", coordinates);
-      const { latitude, longitude } = coordinates.coords;
-      if (latitude !== patient.lat || longitude !== patient.long) {
-        setPatient((p) => ({ ...p, lat: latitude, long: longitude }));
-        setIsUnsaved(true);
-      }
-    } catch (error) {
-      console.error("Error getting location:", error);
-    }
-  };
+
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
+    
     await fetchPatient(currentId);
     setIsUnsaved(false);
-    setStrokes([]);
-    setCardType("");
-    setCardInput("");
     event.detail.complete();
   };
   const onSubmit = (data: any) => {
