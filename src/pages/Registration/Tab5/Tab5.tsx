@@ -31,6 +31,7 @@ export interface RESIDENTIAL_TYPE {
 
 import { differenceInYears, parseISO } from "date-fns";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
 
 // Assuming RESIDENTIAL_TYPE is defined elsewhere
 
@@ -304,7 +305,9 @@ export default function Tab5() {
               refreshingSpinner="circles"
             ></IonRefresherContent>
           </IonRefresher>
-
+          <RegistrationCrumbs 
+            currentPageLabel="Residential History"
+          />
           <ShowRegisteredTab
             id={id || ""}
             table_name="residential_history"

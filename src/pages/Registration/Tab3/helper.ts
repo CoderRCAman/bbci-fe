@@ -3,14 +3,17 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import PQueue from "p-queue";
 import { TABLE_INFO, UNSYNC_RECORD } from "./Tab3";
-import { set } from "date-fns";
+import { format, set } from "date-fns";
 import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import ExcelJS from "exceljs";
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from "@capacitor/core";
 // Limit to 5 concurrent requests
 const queue = new PQueue({ concurrency: 1 });
 // Create an axios instance
 const api = axios.create({
   baseURL: "http://14.139.205.198/api",
+  // baseURL : "http://localhost:11142/api",
   timeout: 5000,
 });
 
@@ -91,17 +94,21 @@ export async function PUSH_TO_CLOUD(
   }
 }
 
-async function fetchTable(tableName: string ) {
+async function fetchTable(tableName: string, db: SQLiteDBConnection | null) {
   let offset = 0;
   let totalCount = 0;
   let allRows: any[] = [];
-  let LIMIT = 200;
-  
+  let LIMIT = 50;
+  let updatedat_ids: { id: string, updated_at: string }[] = [];
   console.log(`🔄 Syncing table: ${tableName}`);
+  if (tableName === 'patients') {
+    const res = await db?.query(`select id , updated_at from patients where updated_at is not null `);
+    updatedat_ids = res?.values as { id: string, updated_at: string }[];
+  }
   while (true) {
     try {
-      const res = await api.get(`/pull`, {
-        params: { table_name: tableName, limit: LIMIT, offset },
+      const res = await api.post(`/pull`, {
+        table_name: tableName, limit: LIMIT, offset, updatedat_ids
       });
 
       const { success, results, total_count } = res.data;
@@ -151,7 +158,9 @@ export async function PULL_FROM_CLOUD(
         error: boolean;
       }[];
     }>
-  >
+  >,
+  db: SQLiteDBConnection | null
+
 ) {
   try {
     const result: TABLE_INFO[] = [];
@@ -165,7 +174,7 @@ export async function PULL_FROM_CLOUD(
       }));
       await queue.add(async () => {
         try {
-          const tableData = await fetchTable(table_name);
+          const tableData = await fetchTable(table_name, db);
           result.push({ table_name, table_data: tableData });
           setPullState((prev) => ({
             ...prev,
@@ -228,19 +237,19 @@ async function opLoadCSV(
       sheet.addRow(headers);
 
       // Add each row
-      rows.forEach((row:any) => {
+      rows.forEach((row: any) => {
         sheet.addRow(headers.map((h) => row[h]));
       });
 
       // Style header row
-      sheet.getRow(1).eachCell((cell) => {
+      sheet.getRow(1).eachCell((cell: any) => {
         cell.font = { bold: true };
       });
 
       // Auto-fit columns (optional)
-      sheet.columns.forEach((col:any) => {
+      sheet.columns.forEach((col: any) => {
         let maxLength = 10;
-        col.eachCell({ includeEmpty: true }, (cell:any) => {
+        col.eachCell({ includeEmpty: true }, (cell: any) => {
           const cellValue = cell.value ? cell.value.toString() : "";
           maxLength = Math.max(maxLength, cellValue.length);
         });
@@ -250,7 +259,18 @@ async function opLoadCSV(
 
     // Generate buffer for download
     const buffer = await workbook.xlsx.writeBuffer();
-    downloadBlob(buffer, "PulledData.xlsx");
+    const platform = Capacitor.getPlatform();
+    const dateStr = format(new Date(), "dd-MM-yyyy_HH-mm-ss");
+    if (platform === "android") {
+      saveExcelAndroid(buffer, `PulledData_${dateStr}.xlsx`);
+    }
+    else if (platform === "web") {
+      downloadBlob(buffer, `PulledData_${dateStr}.xlsx`);
+    }
+    else {
+      console.log("Unknown platform:", platform);
+    }
+   
   } catch (error) {
     throw error;
   }
@@ -260,10 +280,10 @@ export async function exportToCSV(db: SQLiteDBConnection | null) {
     const result: { table_name: string; data: { [key: string]: any }[] }[] = [];
     for (const table of Tables) {
       // Your code to fetch and push table data here
-      if(table === "deletedRecords") continue ;
+      if (table === "deletedRecords") continue;
       const res = await db?.query(`SELECT * FROM ${table}`);
       result.push({ table_name: table, data: res?.values || [] });
-    } 
+    }
     await opLoadCSV(result);
   } catch (error) {
     console.log(error);
@@ -285,4 +305,26 @@ function downloadBlob(buffer: any, filename: string) {
   a.download = filename;
   a.click();
   window.URL.revokeObjectURL(url);
+}
+
+async function saveExcelAndroid(buffer: ArrayBuffer, filename: string) {
+  try {
+    // Convert ArrayBuffer → Base64
+    const uint8 = new Uint8Array(buffer);
+    let binary = "";
+    uint8.forEach((b) => (binary += String.fromCharCode(b)));
+    const base64 = btoa(binary);
+
+    await Filesystem.writeFile({
+      path: filename,
+      data: base64,
+      directory: Directory.Documents,
+      recursive: true,
+    });
+
+    console.log("Excel saved:", filename);
+  } catch (err) {
+    console.error("Error saving Excel on Android:", err);
+    throw err;
+  }
 }

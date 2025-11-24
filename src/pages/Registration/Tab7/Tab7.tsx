@@ -29,6 +29,7 @@ import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { chevronDownCircleOutline } from "ionicons/icons";
 import { Card } from "primereact/card";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
 export type FAMILY_HISTORY_OF_CANCER_MASTER = {
   id: string;
   user_id: string;
@@ -300,7 +301,10 @@ export default function Tab7() {
             refreshingSpinner="circles"
           // You can remove the other text props
           ></IonRefresherContent>
-        </IonRefresher>
+        </IonRefresher> 
+        <RegistrationCrumbs 
+         currentPageLabel="Family History"
+        /> 
         <ShowRegisteredTab
           id={id || ""}
           table_name="family_history_of_cancer_master"

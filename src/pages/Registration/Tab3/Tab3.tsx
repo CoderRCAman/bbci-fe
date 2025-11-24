@@ -260,7 +260,7 @@ export default function Tab3() {
             "You have made changes that needs to be synched to our cloud first!",
         });
 
-      const pulled: TABLE_INFO[] = await PULL_FROM_CLOUD(setPullState);
+      const pulled: TABLE_INFO[] = await PULL_FROM_CLOUD(setPullState , db );
       setPullState((prev) => ({ ...prev, applyingPatch: true }));
       for (const { table_name, table_data } of pulled) {
         console.log(`⬇️ Syncing table: ${table_name}`);
@@ -367,7 +367,7 @@ export default function Tab3() {
           {insertOrUpdatedRecords.length == 0 && deletedRecords.length == 0 ? (
             <div className=" rounded flex mt-10 justify-center ">
               <p className="border-1 p-2 rounded text-emerald-500 border-emerald-500">
-                No records to be synched
+                No records to be synced
               </p>
             </div>
           ) : (

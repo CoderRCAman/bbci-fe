@@ -20,6 +20,7 @@ import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
 
 // dont create seperate table for this one!
 export default function Tab8() {
@@ -45,16 +46,16 @@ export default function Tab8() {
     message: "",
   });
   const [isDisabledReading2, setIsDisabledReading2] = useState(true);
-  const location = useLocation(); 
+  const location = useLocation();
   console.log(id)
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    setId(searchParams?.get("id")); 
+    setId(searchParams?.get("id"));
   }, [location.pathname]);
   async function fetchExisting() {
     try {
       const searchParams = new URLSearchParams(location.search);
-      const id = searchParams?.get("id"); 
+      const id = searchParams?.get("id");
       const res = await db?.query(
         `select * from anthropometry where user_id = '${id}' order by date(date) asc`
       );
@@ -215,6 +216,9 @@ export default function Tab8() {
             // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
+          <RegistrationCrumbs
+            currentPageLabel="Anthropometry"
+          />
           <ShowRegisteredTab
             id={id || ""}
             table_name="anthropometry"

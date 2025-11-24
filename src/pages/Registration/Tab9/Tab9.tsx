@@ -32,6 +32,7 @@ export interface INDOOR_AIR_POLLUTION {
 }
 import { differenceInYears, parseISO } from "date-fns";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
 
 // Assuming INDOOR_AIR_POLLUTION type is defined elsewhere
 
@@ -169,7 +170,7 @@ export default function Tab9() {
   })
   const handleAddNewUi = (flag: boolean = false) => {
     const translator = shortUUID();
-    if(indoorAirData.length>1) setIsUnsaved(true);
+    if (indoorAirData.length > 1) setIsUnsaved(true);
     const newResidential: INDOOR_AIR_POLLUTION = {
       id: translator.new(),
       from_age: 0,
@@ -190,7 +191,7 @@ export default function Tab9() {
     setRemovedIds((prev) => [...prev, id]);
     setIndoorAirData((d) => d.filter((x) => x.id !== id));
   };
-  console.log(isUnsaved) ;
+  console.log(isUnsaved);
   const handleSaveFresh = async () => {
     //for fresh records
     if (
@@ -294,6 +295,9 @@ export default function Tab9() {
         title={0 ? "Edit Indoor Air Pollution" : "Indoor Air Pollution"}
       />
       <IonContent class="" fullscreen>
+        <RegistrationCrumbs
+          currentPageLabel="Indoor Air Pollution"
+        />
         <ShowRegisteredTab
           id={id || ""}
           table_name="indoor_air_pollution"

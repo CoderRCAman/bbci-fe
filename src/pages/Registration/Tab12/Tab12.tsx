@@ -13,6 +13,7 @@ import { saveToStore } from "../../../utils/helper";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Card } from "primereact/card";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
 export interface DEMOGRAPHIC_INFO {
   id: string;
   user_id: string;
@@ -231,6 +232,9 @@ export default function Tab12() {
             refreshingSpinner="circles"
           />
         </IonRefresher>
+        <RegistrationCrumbs
+          currentPageLabel="Demographic Info"
+        />
         <ShowRegisteredTab id={id || ""} table_name="demographic_info" field_name="user_id" />
 
         {/* Use a Card for a premium container. 'm-3' adds margin. */}
