@@ -40,6 +40,7 @@ import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 import { card } from "ionicons/icons";
 import VerificationCard from "./UserVerificationCard";
 import LocationEditor from "./LocationEditor";
+import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
 interface Patient {
   id?: string;
   name: string;
@@ -372,7 +373,9 @@ const Tab1: React.FC = () => {
             refreshingSpinner="circles"
           />
         </IonRefresher>
-
+        <RegistrationCrumbs 
+         currentPageLabel="Registration"
+        />
         <ShowRegisteredTab id={id || ""} />
 
         {/* Use a <form> tag for semantics, but let the <Card> do the styling.

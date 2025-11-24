@@ -21,6 +21,7 @@ import shortUUID from "short-uuid";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { set } from "date-fns";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
 
 export default function Tab11() {
   const [alert, setAlert] = useState({
@@ -276,7 +277,10 @@ export default function Tab11() {
             className="spinner-only"
             refreshingSpinner="circles"
           />
-        </IonRefresher>
+        </IonRefresher> 
+        <RegistrationCrumbs 
+         currentPageLabel="Tobacco and Alcohol"
+        />
         <ShowRegisteredTab
           id={id || ""}
           table_name="TOBACCO_ALCOHOL_CONSUMPTION_MASTER"

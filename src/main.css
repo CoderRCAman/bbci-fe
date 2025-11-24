@@ -102,6 +102,9 @@ a {
   padding: 6px;
 }
 
+.reg_link {
+  text-decoration: none !important;
+}
 
 ion-content {
   padding-bottom: 60px !important;

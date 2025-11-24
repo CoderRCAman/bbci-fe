@@ -19,6 +19,7 @@ import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
 const translator = ShortUUID();
 export interface PERSONAL_MEDICAL_HISTORY {
   diagnoss: string;
@@ -313,7 +314,9 @@ export default function Tab6() {
               refreshingSpinner="circles"
             ></IonRefresherContent>
           </IonRefresher>
-
+          <RegistrationCrumbs 
+           currentPageLabel="Personal Medical History"
+          />
           <ShowRegisteredTab
             id={id || ""}
             table_name="personal_medical_history"

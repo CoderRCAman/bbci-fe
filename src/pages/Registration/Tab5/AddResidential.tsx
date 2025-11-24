@@ -25,25 +25,24 @@ export default function AddResidential({
 
   return (
     /* Use a softer shadow, larger rounding, and better padding */
-    <div className="border border-gray-200 dark:border-gray-700 py-4 px-4 rounded-lg space-y-8 flex justify-between flex-row-reverse shadow-lg">
+    <div className="border border-gray-200 dark:border-gray-700 py-4 px-4 rounded-lg flex justify-between flex-row-reverse shadow-lg">
       <div className="-mt-3 -mr-1">
-        {/* Use an icon, make it fully rounded */}
+        {/* Delete Button */}
         <Button
-          icon="pi pi-trash" // Use icon instead of label='X'
+          icon="pi pi-trash"
           text
           severity="danger"
           onClick={() => handleRemoveUi(data.id)}
         />
       </div>
 
-      {/* Key Change: Added 'p-fluid' class. 
-        This makes all child PrimeReact inputs full-width.
-      */}
-      <div className="space-y-7 w-full p-fluid">
+      {/* Form Fields: Using Grid Layout for Two Columns */}
+      <div className="w-full p-4 p-fluid grid grid-cols-2 gap-x-4 gap-y-7">
+
+        {/* Row 1: Age Range */}
         <FloatLabel>
           <InputText
             keyfilter="int"
-            // Removed w-[50%], border-1, and p-2. 'p-fluid' handles it.
             value={data["from_age"].toString()}
             onChange={(e) =>
               handleUpdate(
@@ -58,7 +57,6 @@ export default function AddResidential({
         <FloatLabel>
           <InputText
             keyfilter="int"
-            // Removed w-[50%], border-1, and p-2.
             value={data["to_age"].toString()}
             onChange={(e) =>
               handleUpdate(
@@ -70,10 +68,10 @@ export default function AddResidential({
           <label>To Age</label>
         </FloatLabel>
 
+        {/* Row 2: Location (City/Village) */}
         <FloatLabel>
           <InputText
             name="city"
-            // Removed w-[50%], border-1, and p-2.
             value={data["city"]}
             disabled={data["village"] !== ""}
             onChange={(e) => handleUpdate("city", e.target.value)}
@@ -84,7 +82,6 @@ export default function AddResidential({
         <FloatLabel>
           <InputText
             name="village"
-            // Removed w-[50%], border-1, and p-2.
             value={data["village"]}
             disabled={data["city"] !== ""}
             onChange={(e) => handleUpdate("village", e.target.value)}
@@ -92,23 +89,21 @@ export default function AddResidential({
           <label>Village</label>
         </FloatLabel>
 
+        {/* Row 3: State / Code */}
         <FloatLabel>
           <InputText
             name="state"
-            // Removed w-[50%], border-1, and p-2.
             value={data["state"]}
             onChange={(e) => handleUpdate("state", e.target.value)}
           />
           <label>State</label>
         </FloatLabel>
 
-        {/* Wrapped Dropdown in FloatLabel for consistency */}
         <FloatLabel>
           <Dropdown
             optionLabel="name"
             optionValue="value"
-            // Removed border-1. 'p-fluid' makes it full-width.
-            placeholder="Code" // This will be replaced by the label
+            placeholder="Code"
             value={data["code"]}
             options={[
               { name: "Urban", value: 1 },
