@@ -69,6 +69,7 @@ export interface IFoodRecallIngredient {
 // (Creates a new, blank record for the UI)
 // ----------------------------------------------------------------
 
+// generateDefaultHabitState — change diet_type from 'O' to ''
 export const generateDefaultHabitState = (user_id: string, tab_id: string): { master: IFoodHabitMaster, fats: IFoodHabitFat[] } => {
     const translator = shortUUID();
     const masterId = translator.generate();
@@ -78,7 +79,7 @@ export const generateDefaultHabitState = (user_id: string, tab_id: string): { ma
         master: {
             id: masterId,
             user_id: user_id,
-            diet_type: 'O',
+            diet_type: '', // <-- changed from 'O' to '' so no radio selected by default
             diet_duration: '',
             additives_json: '[]',
             method_shallow_frying: '0',
@@ -98,6 +99,7 @@ export const generateDefaultHabitState = (user_id: string, tab_id: string): { ma
         fats: [] // Starts with no fats
     };
 };
+
 
 // ----------------------------------------------------------------
 // 3. DATABASE SAVE/LOAD LOGIC

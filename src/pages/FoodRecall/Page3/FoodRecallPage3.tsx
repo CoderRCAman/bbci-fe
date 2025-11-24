@@ -48,6 +48,54 @@ export default function FoodRecallEntryPage() {
     { label: "Household Habits" },
   ];
 
+  // -----------------------
+  // Date helpers (DB <-> input conversions)
+  // -----------------------
+
+  // DB-friendly timestamp: 'YYYY-MM-DD HH:MM:SS' (sv-SE locale produces this layout)
+  const formatDbNow = (): string => {
+    // Example: new Date().toLocaleString('sv-SE') -> '2025-11-24 19:05:30'
+    // replace('T',' ') is safe even if there's no 'T'
+    return new Date().toLocaleString("sv-SE").replace("T", " ");
+  };
+
+  // Convert DB string (e.g., '2025-11-24 19:05:30' or ISO) -> input[type=datetime-local] value 'YYYY-MM-DDTHH:MM'
+  const dbToInputDatetime = (dbDate?: string) => {
+    if (!dbDate) return "";
+    // Try parseable date
+    const tryParse = new Date(dbDate);
+    if (!isNaN(tryParse.getTime())) {
+      const yyyy = tryParse.getFullYear();
+      const mm = String(tryParse.getMonth() + 1).padStart(2, "0");
+      const dd = String(tryParse.getDate()).padStart(2, "0");
+      const hh = String(tryParse.getHours()).padStart(2, "0");
+      const min = String(tryParse.getMinutes()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+    }
+    // Fallback: if string is like 'YYYY-MM-DD HH:MM:SS' -> take first 16 chars and replace space with 'T'
+    const trimmed = dbDate.trim();
+    if (trimmed.length >= 16 && trimmed[10] === " ") {
+      return trimmed.substring(0, 16).replace(" ", "T");
+    }
+    // Last resort - empty
+    return "";
+  };
+
+  // Convert input[type=datetime-local] value 'YYYY-MM-DDTHH:MM' -> DB string 'YYYY-MM-DD HH:MM:00'
+  const inputToDbDatetime = (inputVal: string) => {
+    if (!inputVal) return "";
+    // inputVal like '2025-11-24T19:05'
+    const spacey = inputVal.replace("T", " ");
+    // append seconds if missing
+    if (spacey.length === 16) {
+      return `${spacey}:00`;
+    }
+    return spacey;
+  };
+
+  // -----------------------
+  // load data
+  // -----------------------
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -79,7 +127,6 @@ export default function FoodRecallEntryPage() {
   // Utilities: group by date (YYYY-MM-DD)
   const getDateKey = (dateTime: string) => {
     try {
-      // Try to parse ISO-ish or 'sv-SE' format; fallback to substring
       const d = new Date(dateTime);
       if (!isNaN(d.getTime())) {
         const yyyy = d.getFullYear();
@@ -87,7 +134,6 @@ export default function FoodRecallEntryPage() {
         const dd = String(d.getDate()).padStart(2, "0");
         return `${yyyy}-${mm}-${dd}`;
       }
-      // fallback: first 10 chars
       return dateTime.substring(0, 10);
     } catch {
       return dateTime.substring(0, 10);
@@ -102,13 +148,12 @@ export default function FoodRecallEntryPage() {
       groups[key].push(entry);
     });
 
-    // Sort dates descending (newest first), and entries in each group reverse chronological
     const sortedKeys = Object.keys(groups).sort((a, b) => (a < b ? 1 : -1));
     const ordered: [string, IFoodRecallEntry[]][] = sortedKeys.map(k => {
       const entries = groups[k].sort((e1, e2) => {
         const t1 = new Date(e1.date_time || e1.updated_at || e1.created_at || 0).getTime();
         const t2 = new Date(e2.date_time || e2.updated_at || e2.created_at || 0).getTime();
-        return t2 - t1; // newest first
+        return t2 - t1;
       });
       return [k, entries];
     });
@@ -116,7 +161,6 @@ export default function FoodRecallEntryPage() {
     return { ordered, keys: sortedKeys };
   }, [foodLog]);
 
-  // Expand default: latest date group
   useEffect(() => {
     if (groupedByDate.keys && groupedByDate.keys.length > 0) {
       setExpandedKey(groupedByDate.keys[0]);
@@ -125,39 +169,45 @@ export default function FoodRecallEntryPage() {
     }
   }, [groupedByDate.keys.length]);
 
-  // CRUD handlers for entries & ingredients
+  // -----------------------
+  // CRUD handlers (updated date handling here)
+  // -----------------------
+
+  // <-- UPDATED: create new entry with DB-friendly timestamps
   const handleAddFoodEntry = () => {
     if (!masterId) return;
     setIsUnsaved(true);
+    const nowDb = formatDbNow(); // DB-friendly 'YYYY-MM-DD HH:MM:SS'
     const newEntry: IFoodRecallEntry = {
       id: shortUUID.generate(),
       master_id: masterId,
       timing: "Breakfast",
       name_of_dish: "",
       quantity: "",
-      date_time: new Date().toISOString(),
+      date_time: nowDb, // store DB format
       ingredients: [],
       diet_context: "regular",
       festival_name: "",
       synch_flag: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: nowDb,
+      updated_at: nowDb,
       tab_id: tabId,
     };
     setFoodLog(prev => [...prev, newEntry]);
-    // Ensure the new date group becomes expanded
+
+    // Expand the newly created date group
     const newKey = getDateKey(newEntry.date_time);
     setExpandedKey(newKey);
   };
 
   const handleRemoveFoodEntry = (id: string) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.filter(e => e.id !== id));
+    setFoodLog(prev => prev.filter((entry) => entry.id !== id));
   };
 
   const handleFoodEntryChange = (id: string, field: keyof IFoodRecallEntry, value: any) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
+    setFoodLog(prev => prev.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)));
   };
 
   const handleAddIngredient = (foodId: string) => {
@@ -197,7 +247,9 @@ export default function FoodRecallEntryPage() {
     }));
   };
 
-  // Save recalls
+  // -----------------------
+  // Save recalls (unchanged except uses existing DB format)
+  // -----------------------
   const handleSave = async () => {
     if (!db || !sqlite || !masterId || !isEditable) {
       setAlert({ show: true, header: "Cannot Save", message: "The database is not ready, data is missing, or you do not have permission to edit." });
@@ -221,11 +273,9 @@ export default function FoodRecallEntryPage() {
     }
   };
 
-  // If the user clicks a step on the Steps (visible on Page 3), navigate back to Page 2 with ?step=index
+  // Steps in Page3 navigate back to Page2 (keep behavior)
   const handleStepClick = (e: any) => {
-    // The Steps onSelect passes e.index
     const stepIndex = e.index;
-    // navigate to page 2 and include step param
     const params = new URLSearchParams();
     if (masterId) params.set("master_id", masterId);
     if (userId) params.set("user_id", userId);
@@ -259,7 +309,6 @@ export default function FoodRecallEntryPage() {
         </IonRefresher>
 
         <div className="max-w-5xl mx-auto p-2">
-          {/* Steps visible for context when in edit mode */}
           {masterId && (
             <div className="mb-4">
               <Steps model={steps} onSelect={handleStepClick} readOnly={false} />
@@ -269,7 +318,6 @@ export default function FoodRecallEntryPage() {
 
           <ShowRegisteredTab id={masterId || ""} table_name="FOOD_RECALL_ENTRY" field_name="master_id" />
 
-          {/* Add Entry button moved to top */}
           <div className="flex justify-between items-center mb-4">
             <div />
             <div>
@@ -277,7 +325,6 @@ export default function FoodRecallEntryPage() {
             </div>
           </div>
 
-          {/* Accordion grouped by date */}
           <div className="bg-white p-4 rounded-lg shadow border">
             {groupedByDate.ordered.length === 0 && (
               <p className="text-sm text-gray-500 text-center italic py-6">No entries yet — use "Add Meal/Dish" to create the first entry.</p>
@@ -313,7 +360,13 @@ export default function FoodRecallEntryPage() {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700">Date/Time</label>
-                              <input type="datetime-local" value={entry.date_time} onChange={(e) => handleFoodEntryChange(entry.id, "date_time", e.target.value)} disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
+                              <input
+                                type="datetime-local"
+                                value={dbToInputDatetime(entry.date_time)}
+                                onChange={(e) => handleFoodEntryChange(entry.id, "date_time", inputToDbDatetime((e.target as HTMLInputElement).value))}
+                                disabled={!isEditable}
+                                className="w-full p-2 border rounded-md disabled:bg-gray-100"
+                              />
                             </div>
                           </div>
 
@@ -372,7 +425,6 @@ export default function FoodRecallEntryPage() {
             )}
           </div>
 
-          {/* Save and Back */}
           <div className="mt-6 flex justify-between items-center">
             <Button label="Save Recalls (7.3)" severity="success" className="px-10 py-2" onClick={handleSave} disabled={!isEditable || isLoading} />
             <Link to={`/food-recall/page2?master_id=${masterId}&user_id=${userId}`} onClick={(e) => {
