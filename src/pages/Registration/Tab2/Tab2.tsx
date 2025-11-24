@@ -9,6 +9,7 @@ import "primereact/resources/primereact.min.css";
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
+import { format } from 'date-fns';
 interface Patient {
   id?: string;
   name: string;
@@ -78,7 +79,11 @@ const Tab2: React.FC = () => {
               body={(rowData) => <Link to={`/tab1?id=${rowData.id}`}>{rowData.id}</Link>}
             ></Column>
             <Column field="name" sortable header="Name"></Column>
-            <Column field="place" sortable header="Place"></Column>
+            <Column field="dob" sortable header="Dob"
+              body={(rowData) => {
+                return format(new Date(rowData.dob), 'dd-MM-yyyy');
+              }}
+            ></Column>
             <Column field="gender" sortable header="Gender"></Column>
             <Column field="lat" header="Lat"></Column>
             <Column field="long" header="Long"></Column>

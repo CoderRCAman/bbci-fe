@@ -21,10 +21,7 @@ import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { Geolocation } from "@capacitor/geolocation";
 import Header from "../../../components/Header";
 import { useSQLite } from "../../../utils/Sqlite";
-import {
-  generateUniqueId,
-  saveToStore,
-} from "../../../utils/helper";
+import { generateUniqueId, saveToStore } from "../../../utils/helper";
 import { useHistory, useLocation } from "react-router";
 import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from "primereact/dropdown";
@@ -118,7 +115,7 @@ const Tab1: React.FC = () => {
     formState,
     watch,
     reset,
-    getValues
+    getValues,
   } = useForm({
     values: {
       i_name: patient.i_name,
@@ -130,8 +127,9 @@ const Tab1: React.FC = () => {
     },
   });
   const [strokes, setStrokes] = useState<number[][][]>([]);
-  const [cardType, setCardType] = useState<string>('');
-  const [cardInput, setCardInput] = useState<string>('');
+  const [cardType, setCardType] = useState<string>("");
+  const [cardInput, setCardInput] = useState<string>("");
+  const [showConfirm, setShowConfirm] = useState(false);
   const router = useIonRouter();
   const searchParams = new URLSearchParams(location.search);
   useIonViewWillEnter(() => {
@@ -155,22 +153,21 @@ const Tab1: React.FC = () => {
       show: true,
       header: "Unsaved changes",
       message: "You have unsaved changes. Are you sure you want to leave?",
-    })
-  })
+    });
+  });
   // This hook fires EVERY time the user navigates AWAY from this tab
   useIonViewWillLeave(() => {
     // Remove the specific listener when the user leaves this tab
     if (listenerHandle.current) {
       listenerHandle.current.remove();
       listenerHandle.current = null;
-
     }
   });
   //below checks if this is for edit purpose
   async function fetchPatient(id: string) {
     try {
       const res = await db?.query("select * from patients where id = ?", [id]);
-      console.log("ARE U HAVING TRABALS", res)
+      console.log("ARE U HAVING TRABALS", res);
       if ((res as any)?.values?.length > 0) {
         setPatient((res as any)?.values[0]);
         if (res?.values && res?.values[0]?.signature) {
@@ -180,7 +177,7 @@ const Tab1: React.FC = () => {
         }
       }
       reset((res as any)?.values[0]);
-    } catch (error) { }
+    } catch (error) {}
   }
   useEffect(() => {
     const id = searchParams.get("id");
@@ -204,8 +201,8 @@ const Tab1: React.FC = () => {
         dob: "",
       });
       setStrokes([]);
-      setCardInput('');
-      setCardType('');
+      setCardInput("");
+      setCardType("");
       return;
     }
     reset(patient);
@@ -262,7 +259,7 @@ const Tab1: React.FC = () => {
       await db?.run(
         `UPDATE patients SET name = ?,  gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
-         DOB = ? , updated_at = ? , signature = ? , card_type = ? , card_no = ?
+         DOB = ? , updated_at = ? , signature = ? , card_type = ? , card_no = ? , updated_at = ?
          WHERE id = ?`,
         [
           data.name,
@@ -276,10 +273,11 @@ const Tab1: React.FC = () => {
           JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))),
           cardType,
           cardInput,
+          format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
           id,
         ]
-      ); 
-      setIsUnsaved(false); 
+      );
+      setIsUnsaved(false);
       reset(getValues(), { keepDirty: false });
       await saveToStore(sqlite);
       setAlert((a) => ({
@@ -311,7 +309,7 @@ const Tab1: React.FC = () => {
           tabId,
           JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))),
           cardType,
-          cardInput
+          cardInput,
         ]
       );
       const params = new URLSearchParams(location.search);
@@ -320,7 +318,7 @@ const Tab1: React.FC = () => {
         pathname: location.pathname,
         search: params.toString(),
       });
-      setIsUnsaved(false); 
+      setIsUnsaved(false);
       reset(getValues(), { keepDirty: false });
       await saveToStore(sqlite);
       setAlert((a) => ({
@@ -363,7 +361,7 @@ const Tab1: React.FC = () => {
     console.log(data);
     savePatient(data);
   };
-  console.log(isUnsaved)
+  console.log(isUnsaved);
   return (
     <IonPage>
       <Header title={id ? "Edit participants" : "Register Participant"} />
@@ -430,10 +428,10 @@ const Tab1: React.FC = () => {
               />
 
               {/* --- 3. Coordinates Section --- */}
-              <LocationEditor 
-               patient={patient}
-               setPatient={setPatient}
-               setIsUnsaved={setIsUnsaved}
+              <LocationEditor
+                patient={patient}
+                setPatient={setPatient}
+                setIsUnsaved={setIsUnsaved}
               />
 
               {/* --- 4. Participant Name --- */}
@@ -504,7 +502,7 @@ const Tab1: React.FC = () => {
               {/* choose id validation methods  */}
               <VerificationCard
                 selectedInput={cardInput}
-                selectedType={cardType || ''}
+                selectedType={cardType || ""}
                 setSelectedInput={setCardInput}
                 setSelectedType={setCardType}
                 setIsUnsave={setIsUnsaved}
@@ -512,13 +510,22 @@ const Tab1: React.FC = () => {
               {/* --- 8. Signature Pad --- */}
               <div className="flex flex-col gap-2">
                 <label className="font-medium">Participant's Signature</label>
-                <SignaturePad strokes={strokes} setStrokes={setStrokes} setIsUnsaved={setIsUnsaved} />
+                <SignaturePad
+                  strokes={strokes}
+                  setStrokes={setStrokes}
+                  setIsUnsaved={setIsUnsaved}
+                />
                 <div className="flex justify-end">
                   <Button
                     label="Clear"
                     severity="warning"
                     type="button"
-                    onClick={() => setStrokes([])}
+                    onClick={() => {
+                      if(strokes.length===0){
+                        return;
+                      } 
+                      setShowConfirm(true);
+                    }}
                     text // Use a 'text' button for a cleaner look
                     raised
                   />
@@ -558,7 +565,25 @@ const Tab1: React.FC = () => {
           message={alert.message}
           buttons={["OK"]}
         />
-
+        <IonAlert
+          isOpen={showConfirm}
+          onDidDismiss={() => setShowConfirm(false)}
+          header="Confirm"
+          message="Are you sure you want to clear signature?"
+          buttons={[
+            {
+              text: "Cancel",
+              role: "cancel",
+            },
+            {
+              text: "Yes",
+              handler: () => {
+                setStrokes([]);
+                // your logic here
+              },
+            },
+          ]}
+        />
         {/* Spacer at the bottom */}
         <div className="pb-[250px]"></div>
       </IonContent>
