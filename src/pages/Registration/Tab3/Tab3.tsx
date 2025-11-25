@@ -364,7 +364,7 @@ export default function Tab3() {
       <Header title={"Sync Data"} />
       <IonContent class="" fullscreen>
         <main className="p-2 text-slate-600">
-          <h1 className="text-xl font-semibold">Records to be synched!</h1>
+          <h1 className="text-xl font-semibold">Records to be synced!</h1>
           {insertOrUpdatedRecords.length == 0 && deletedRecords.length == 0 ? (
             <div className=" rounded flex mt-10 justify-center ">
               <p className="border-1 p-2 rounded text-emerald-500 border-emerald-500">

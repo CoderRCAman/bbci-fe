@@ -357,7 +357,7 @@ export default function FoodRecallEntryPage() {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700">Quantity Consumed</label>
-                              <input type="text" value={entry.quantity} onChange={(e) => handleFoodEntryChange(entry.id, "quantity", e.target.value)} placeholder="e.g., 2 cups" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
+                              <input type="text" value={entry.quantity} onChange={(e) => handleFoodEntryChange(entry.id, "quantity", e.target.value)} placeholder="e.g., 2 gm" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
                             </div>
                           </div>
 
@@ -370,7 +370,7 @@ export default function FoodRecallEntryPage() {
                             {(entry.ingredients || []).map((ing) => (
                               <div key={ing.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 border-t pt-2 mt-2 items-end">
                                 <input type="text" value={ing.name} onChange={(e) => handleIngredientChange(entry.id, ing.id, "name", e.target.value)} placeholder="Ingredient Name" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
-                                <input type="text" value={ing.quantity} onChange={(e) => handleIngredientChange(entry.id, ing.id, "quantity", e.target.value)} placeholder="Qty" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
+                                <input type="text" value={ing.quantity} onChange={(e) => handleIngredientChange(entry.id, ing.id, "quantity", e.target.value)} placeholder="Gram" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
                                 <input type="text" value={ing.prep_method} onChange={(e) => handleIngredientChange(entry.id, ing.id, "prep_method", e.target.value)} placeholder="Prep Method" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
                                 <Button icon="pi pi-times" severity="danger" className="p-button-sm p-button-text" onClick={() => handleRemoveIngredient(entry.id, ing.id)} disabled={!isEditable} />
                               </div>
@@ -397,7 +397,7 @@ export default function FoodRecallEntryPage() {
             </Link> */}
           </div>
         </div>
-
+        <div className="pb-[250px]"></div>
         <IonAlert isOpen={alert.show} onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))} header={alert.header} message={alert.message} buttons={["OK"]} />
       </IonContent>
     </IonPage>

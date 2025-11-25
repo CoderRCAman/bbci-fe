@@ -559,7 +559,7 @@ export default function FoodHabitPage() {
 
           </main>
         </div>
-
+               <div className="pb-[250px]"></div>
         <IonAlert isOpen={alert.show} onDidDismiss={() => setAlert({ show: false, header: "", message: "" })} header={alert.header} message={alert.message} buttons={["OK"]} />
       </IonContent>
     </IonPage>
