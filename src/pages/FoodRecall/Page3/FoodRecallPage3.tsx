@@ -41,6 +41,7 @@ export default function FoodRecallEntryPage() {
   const userId = searchParams.get("user_id") || "";
   const masterId = searchParams.get("master_id") || null;
 
+  // Steps include Food Recall as a final constant step here
   const steps = [
     { label: "Dietary Profile", path: "/food-recall/page2?step=0", order: 1 },
     { label: "Cooking Habits", path: "/food-recall/page2?step=1", order: 2 },
@@ -48,7 +49,7 @@ export default function FoodRecallEntryPage() {
     { label: "Food Recall", path: "/food-recall/page3", order: 4 },
   ];
 
-  // helpers
+  // helpers for datetime conversion
   const formatDbNow = (): string => new Date().toLocaleString("sv-SE").replace("T", " ");
   const dbToInputDatetime = (dbDate?: string) => {
     if (!dbDate) return "";
@@ -78,7 +79,7 @@ export default function FoodRecallEntryPage() {
     setIsLoading(true);
     try {
       if (!masterId) {
-        setAlert({ show: true, header: "Error", message: "No Master Survey ID provided. Save the Habits page first." });
+        setAlert({ show: true, header: "Error", message: "No Master Survey ID was provided. Please go back and save the Food Habit page first." });
         setIsEditable(false);
         setIsLoading(false);
         return;
@@ -86,7 +87,7 @@ export default function FoodRecallEntryPage() {
       const entries = await loadRecallData(db!!, masterId);
       setFoodLog(entries || []);
     } catch (e: any) {
-      setAlert({ show: true, header: "Load Error", message: `Failed to load: ${e.message}` });
+      setAlert({ show: true, header: "Load Error", message: `Failed to load data: ${e.message}` });
       setIsEditable(false);
     }
     setIsLoading(false);
@@ -146,7 +147,7 @@ export default function FoodRecallEntryPage() {
     }
   }, [groupedByDate.keys.length]);
 
-  // CRUD
+  // CRUD handlers
   const handleAddFoodEntry = () => {
     if (!masterId) return;
     setIsUnsaved(true);
@@ -167,64 +168,96 @@ export default function FoodRecallEntryPage() {
       tab_id: tabId,
     };
     setFoodLog(prev => [...prev, newEntry]);
-    setExpandedKey(getDateKey(newEntry.date_time));
+
+    // Expand the new date group
+    const newKey = getDateKey(newEntry.date_time);
+    setExpandedKey(newKey);
   };
 
   const handleRemoveFoodEntry = (id: string) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.filter(e => e.id !== id));
+    setFoodLog(prev => prev.filter((entry) => entry.id !== id));
   };
 
   const handleFoodEntryChange = (id: string, field: keyof IFoodRecallEntry, value: any) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.map(e => e.id === id ? { ...e, [field]: value } : e));
+    setFoodLog(prev => prev.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)));
   };
 
   const handleAddIngredient = (foodId: string) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.map(f => {
-      if (f.id !== foodId) return f;
-      const newIng: IFoodRecallIngredient = { id: shortUUID.generate(), entry_id: foodId, name: "", quantity: "", prep_method: "" };
-      return { ...f, ingredients: [...(f.ingredients || []), newIng] };
+    setFoodLog(prev => prev.map(food => {
+      if (food.id === foodId) {
+        const newIng: IFoodRecallIngredient = {
+          id: shortUUID.generate(),
+          entry_id: foodId,
+          name: "",
+          quantity: "",
+          prep_method: "",
+        };
+        return { ...food, ingredients: [...food.ingredients, newIng] };
+      }
+      return food;
     }));
   };
 
   const handleIngredientChange = (foodId: string, ingId: string, field: keyof IFoodRecallIngredient, value: any) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.map(f => {
-      if (f.id !== foodId) return f;
-      return { ...f, ingredients: f.ingredients.map(i => i.id === ingId ? { ...i, [field]: value } : i) };
+    setFoodLog(prev => prev.map(food => {
+      if (food.id === foodId) {
+        return { ...food, ingredients: food.ingredients.map(ing => ing.id === ingId ? { ...ing, [field]: value } : ing) };
+      }
+      return food;
     }));
   };
 
   const handleRemoveIngredient = (foodId: string, ingId: string) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.map(f => f.id === foodId ? { ...f, ingredients: f.ingredients.filter(i => i.id !== ingId) } : f));
+    setFoodLog(prev => prev.map(food => {
+      if (food.id === foodId) {
+        return { ...food, ingredients: food.ingredients.filter(ing => ing.id !== ingId) };
+      }
+      return food;
+    }));
   };
 
+  // Save recalls
   const handleSave = async () => {
     if (!db || !sqlite || !masterId || !isEditable) {
-      setAlert({ show: true, header: "Cannot Save", message: "DB not ready or missing data." });
+      setAlert({ show: true, header: "Cannot Save", message: "The database is not ready, data is missing, or you do not have permission to edit." });
       return;
     }
 
     if (db && !(await checkHabitEditEligibility(db, masterId, tabId, "FOOD_RECALL_ENTRY", "master_id"))) {
-      setAlert({ show: true, header: "Restricted access", message: "This record belongs to another tab." });
+      setAlert({ show: true, header: "Restricted access", message: "This record was registered with a different tab id." });
       return;
     }
 
     setIsLoading(true);
     try {
       await saveRecallData(db, sqlite, foodLog, masterId, tabId);
+
+      // --- NEW: set sessionStorage flag so Page2 can detect a recent save and update its steps ---
+      try {
+        sessionStorage.setItem(`foodrecall_saved_${masterId}`, String(Date.now()));
+      } catch (e) {
+        // ignore storage failures
+      }
+
       setIsLoading(false);
+      setAlert({ show: true, header: "Success", message: "Food Recall (7.3) data has been saved." });
       setIsUnsaved(false);
-      setAlert({ show: true, header: "Saved", message: "Food Recall data saved." });
+
+      // Reload entries from DB (ensure consistent view)
+      const latest = await loadRecallData(db, masterId);
+      setFoodLog(latest || []);
     } catch (e: any) {
       setIsLoading(false);
-      setAlert({ show: true, header: "Save Error", message: `Failed to save: ${e.message}` });
+      setAlert({ show: true, header: "Save Error", message: `Failed to save data: ${e.message}` });
     }
   };
 
+  // When user clicks a Step in the crumb, FlowCrumbs will produce a URL including master_id
   const handleStepClick = (e: any) => {
     const stepIndex = e.index;
     const params = new URLSearchParams();
@@ -260,6 +293,7 @@ export default function FoodRecallEntryPage() {
         </IonRefresher>
 
         <div className="max-w-5xl mx-auto p-2">
+          {/* FlowCrumbs always includes the Food Recall final step on Page3 */}
           <FlowCrumbs steps={steps} currentPageLabel="Food Recall" idQueryParam={"master_id"} />
 
           <ShowRegisteredTab id={masterId || ""} table_name="FOOD_RECALL_ENTRY" field_name="master_id" />
@@ -273,7 +307,7 @@ export default function FoodRecallEntryPage() {
 
           <div className="bg-white p-4 rounded-lg shadow border">
             {groupedByDate.ordered.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center italic py-6">No entries — click "Add Meal/Dish" to create one.</p>
+              <p className="text-sm text-gray-500 text-center italic py-6">No entries yet — use "Add Meal/Dish" to create the first entry.</p>
             ) : (
               <Accordion activeIndex={expandedKey ? groupedByDate.keys.indexOf(expandedKey) : -1} onTabChange={(e) => {
                 const idx = e.index;
@@ -332,7 +366,7 @@ export default function FoodRecallEntryPage() {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700">Quantity Consumed</label>
-                              <input type="text" value={entry.quantity} onChange={(e) => handleFoodEntryChange(entry.id, "quantity", e.target.value)} placeholder="e.g., 100 gm" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
+                              <input type="text" value={entry.quantity} onChange={(e) => handleFoodEntryChange(entry.id, "quantity", e.target.value)} placeholder="e.g., 2 cups" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
                             </div>
                           </div>
 
@@ -345,7 +379,7 @@ export default function FoodRecallEntryPage() {
                             {(entry.ingredients || []).map((ing) => (
                               <div key={ing.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 border-t pt-2 mt-2 items-end">
                                 <input type="text" value={ing.name} onChange={(e) => handleIngredientChange(entry.id, ing.id, "name", e.target.value)} placeholder="Ingredient Name" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
-                                <input type="text" value={ing.quantity} onChange={(e) => handleIngredientChange(entry.id, ing.id, "quantity", e.target.value)} placeholder="Quantity(gm)" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
+                                <input type="text" value={ing.quantity} onChange={(e) => handleIngredientChange(entry.id, ing.id, "quantity", e.target.value)} placeholder="Qty" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
                                 <input type="text" value={ing.prep_method} onChange={(e) => handleIngredientChange(entry.id, ing.id, "prep_method", e.target.value)} placeholder="Prep Method" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
                                 <Button icon="pi pi-times" severity="danger" className="p-button-sm p-button-text" onClick={() => handleRemoveIngredient(entry.id, ing.id)} disabled={!isEditable} />
                               </div>
@@ -365,7 +399,7 @@ export default function FoodRecallEntryPage() {
             <Link to={`/food-recall/page2?master_id=${masterId}&user_id=${userId}`} onClick={(e) => {
               if (isUnsaved) {
                 e.preventDefault();
-                setAlert({ show: true, header: "Unsaved Changes", message: "Please save before navigating away." });
+                setAlert({ show: true, header: "Unsaved Changes", message: "You have unsaved changes. Please save before navigating away." });
               }
             }}>
               <Button label="Back to Habits (Module 1)" className="px-5 py-2 rounded" />
@@ -373,7 +407,7 @@ export default function FoodRecallEntryPage() {
           </div>
         </div>
 
-        <IonAlert isOpen={alert.show} onDidDismiss={() => setAlert({ show: false, header: "", message: "" })} header={alert.header} message={alert.message} buttons={["OK"]} />
+        <IonAlert isOpen={alert.show} onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))} header={alert.header} message={alert.message} buttons={["OK"]} />
       </IonContent>
     </IonPage>
   );

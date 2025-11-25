@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useLocation, Link, useHistory } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
 import {
@@ -69,7 +69,10 @@ const CustomRadio = ({
       disabled={disabled}
       className="w-4 h-4 text-cyan-600 border-gray-300 focus:ring-cyan-500"
     />
-    <label htmlFor={id} className={`ml-2 text-sm font-medium ${disabled ? "text-gray-400" : "text-gray-700 cursor-pointer"}`}>
+    <label
+      htmlFor={id}
+      className={`ml-2 text-sm font-medium ${disabled ? "text-gray-400" : "text-gray-700 cursor-pointer"}`}
+    >
       {label}
     </label>
   </div>
@@ -84,46 +87,65 @@ export default function FoodHabitPage() {
   const [isUnsaved, setIsUnsaved] = useState(false);
   const [saveInProgress, setSaveInProgress] = useState(false);
 
-  const steps = [
+  // base steps (Food Recall appended dynamically if needed)
+  const baseSteps = [
     { label: "Dietary Profile", path: "/food-recall/page2?step=0", order: 1 },
     { label: "Cooking Habits", path: "/food-recall/page2?step=1", order: 2 },
     { label: "Household Habits", path: "/food-recall/page2?step=2", order: 3 },
   ];
 
-  const query = new URLSearchParams(location.search);
-  const initialStepParam = query.get("step");
-  const initialStepIndex = initialStepParam ? Math.max(0, Math.min(2, parseInt(initialStepParam, 10) || 0)) : 0;
+  // read URL step param and sync UI
+  const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const urlStepParam = qs.get("step");
+  const initialStepIndex = urlStepParam ? Math.max(0, Math.min(3, parseInt(urlStepParam, 10) || 0)) : 0;
   const [currentStep, setCurrentStep] = useState<number>(initialStepIndex);
 
-  // Data state
+  // data
   const [master, setMaster] = useState<IFoodHabitMaster | null>(null);
   const [fats, setFats] = useState<IFoodHabitFat[]>([]);
   const [alert, setAlert] = useState({ show: false, header: "", message: "" });
 
-  const userId = query.get("user_id") || "";
-  const masterId = query.get("master_id") || null;
+  // IDs from URL (user_id for create)
+  const searchParams = new URLSearchParams(location.search);
+  const userId = searchParams.get("user_id") || "";
+  const masterIdFromUrl = searchParams.get("master_id") || null;
 
   useBlockNavigation(isUnsaved, () => {
     setAlert({ show: true, header: "Unsaved Changes", message: "You have unsaved changes. Please save before leaving the page." });
   });
 
+  // track whether recalls exist for current master (so we can append "Food Recall" step permanently)
+  const [hasRecalls, setHasRecalls] = useState(false);
+
+  const loadRecallsFlag = async (masterId: string) => {
+    try {
+      const res = await db!.query(`SELECT COUNT(1) AS cnt FROM FOOD_RECALL_ENTRY WHERE master_id = ?`, [masterId]);
+      const cnt = res?.values?.[0]?.cnt ?? 0;
+      setHasRecalls(Number(cnt) > 0);
+    } catch (e) {
+      setHasRecalls(false);
+    }
+  };
+
   const loadOrCreateData = async () => {
     setIsLoading(true);
     try {
-      const loaded = await loadHabitData(db!!, userId, masterId);
-      if (loaded) {
-        setMaster(loaded.master);
-        setFats(loaded.fats || []);
+      const existing = await loadHabitData(db!!, userId, masterIdFromUrl);
+      if (existing) {
+        setMaster(existing.master);
+        setFats(existing.fats || []);
+        if (existing.master?.id) await loadRecallsFlag(existing.master.id);
       } else if (userId) {
         const { master: m, fats: f } = generateDefaultHabitState(userId, tabId);
         setMaster(m);
         setFats(f);
+        setHasRecalls(false);
       } else {
-        setAlert({ show: true, header: "Error", message: "No patient ID provided. Please select a patient from Page 1." });
+        setAlert({ show: true, header: "Error", message: "Could not load or create habit record. Please go back to Page 1 and select a patient." });
         setIsEditable(false);
       }
     } catch (e: any) {
-      setAlert({ show: true, header: "Load Error", message: `Failed to load: ${e.message}` });
+      setAlert({ show: true, header: "Load Error", message: `Failed to load data: ${e.message}` });
       setIsEditable(false);
     }
     setIsLoading(false);
@@ -133,9 +155,33 @@ export default function FoodHabitPage() {
     if (!db || !sqlite || !tabId) return;
     loadOrCreateData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [db, sqlite, userId, masterId, tabId]);
+  }, [db, sqlite, userId, masterIdFromUrl, tabId]);
 
-  // change helpers
+  // sync step when URL changes (fixes: clicking crumb changes URL but UI didn't update)
+  useEffect(() => {
+    const qs2 = new URLSearchParams(location.search);
+    const s = qs2.get("step");
+    const stepIdx = s ? Math.max(0, Math.min(3, parseInt(s, 10) || 0)) : 0;
+    if (stepIdx !== currentStep) {
+      setCurrentStep(stepIdx);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  // dynamic steps: append Food Recall step if hasRecalls or if master exists and we want to show it
+  const steps = useMemo(() => {
+    const arr = [...baseSteps];
+    if (master && master.id && hasRecalls) {
+      // always add a "Food Recall" last step (path goes to page3)
+      arr.push({ label: "Food Recall", path: "/food-recall/page3", order: 4 });
+    }
+    return arr;
+  }, [baseSteps, master, hasRecalls]);
+
+  // choose idQueryParam dynamically: when master exists use master_id; else use user_id (create mode)
+  const idQueryParam = master && master.id ? "master_id" : "user_id";
+
+  // ---------- handlers / CRUD ----------
   const handleMasterChange = (field: keyof IFoodHabitMaster, value: any) => {
     if (!master) return;
     setIsUnsaved(true);
@@ -166,31 +212,15 @@ export default function FoodHabitPage() {
     setFats((prev) => prev.filter((f) => f.id !== id));
   };
 
-  // validation for completeness (simple 80/20 checks)
-  const checkDietaryComplete = (m: IFoodHabitMaster | null) => {
-    if (!m) return false;
-    return !!m.diet_type && m.diet_type.length > 0;
-  };
-  const checkCookingComplete = (m: IFoodHabitMaster | null, f: IFoodHabitFat[]) => {
-    if (!m) return false;
-    // consider at least one fat entry present or any prep method set to non-zero
-    const anyPrep = ["method_shallow_frying", "method_deep_frying", "method_boiling", "method_steaming", "method_sauting", "method_grill_bbq"].some(k => (m as any)[k] !== '0');
-    return anyPrep || f.length > 0;
-  };
-  const checkHouseholdComplete = (m: IFoodHabitMaster | null) => {
-    if (!m) return false;
-    return !!m.meals_per_day || !!m.family_sharing;
-  };
-
-  // Save
+  // Save habit data
   const handleSave = async (): Promise<boolean> => {
     if (!db || !sqlite || !master || !isEditable) {
-      setAlert({ show: true, header: "Cannot Save", message: "DB not ready or missing data." });
+      setAlert({ show: true, header: "Cannot Save", message: "The database is not ready, data is missing, or you do not have permission to edit." });
       return false;
     }
 
-    if (db && !(await checkHabitEditEligibility(db, masterId || "", tabId))) {
-      setAlert({ show: true, header: "Restricted access", message: "This record belongs to another tab." });
+    if (db && !(await checkHabitEditEligibility(db, masterIdFromUrl || "", tabId))) {
+      setAlert({ show: true, header: "Restricted access", message: "This record was registered with a different tab id." });
       return false;
     }
 
@@ -198,57 +228,83 @@ export default function FoodHabitPage() {
     try {
       await saveHabitData(db, sqlite, master, fats, tabId);
       setIsUnsaved(false);
-      setSaveInProgress(false);
+
+      // after save, update master from DB (to ensure id exists) and check recalls
+      const reload = await loadHabitData(db!!, userId, master.id);
+      if (reload) {
+        setMaster(reload.master);
+        setFats(reload.fats || []);
+        if (reload.master.id) await loadRecallsFlag(reload.master.id);
+      }
+
       setAlert({ show: true, header: "Saved", message: "Food Habit data saved." });
+      setSaveInProgress(false);
       return true;
     } catch (e: any) {
       setSaveInProgress(false);
-      setAlert({ show: true, header: "Save Error", message: `Failed to save: ${e.message}` });
+      setAlert({ show: true, header: "Save Error", message: `Failed to save data: ${e.message}` });
       return false;
     }
   };
 
-  // Next button behaviour
+  // Next/Previous behavior: update URL & UI in sync
+  const goToStep = (index: number) => {
+    // clamp index
+    const idx = Math.max(0, Math.min(index, steps.length - 1));
+    setCurrentStep(idx);
+    // update URL's step param while preserving existing query (user_id/master_id)
+    const p = new URLSearchParams(location.search);
+    p.set("step", String(idx));
+    // ensure we keep either user_id or master_id in query
+    if (master && master.id) p.set("master_id", master.id);
+    else if (userId) p.set("user_id", userId);
+    history.replace({ pathname: location.pathname, search: p.toString() });
+  };
+
   const handleNextClick = async () => {
-    // Always save any unsaved changes first
     if (isUnsaved) {
       const ok = await handleSave();
       if (!ok) return;
     }
 
-    // if not last step: switch step
+    // if next exists and it is a local step (page2), navigate UI only
     if (currentStep < steps.length - 1) {
-      const next = currentStep + 1;
-      setCurrentStep(next);
-      const params = new URLSearchParams(location.search);
-      params.set("step", String(next));
-      history.replace({ pathname: location.pathname, search: params.toString() });
+      goToStep(currentStep + 1);
       return;
     }
 
-    // final-step: validate completeness
-    const okDiet = checkDietaryComplete(master);
-    const okCook = checkCookingComplete(master, fats);
-    const okHouse = checkHouseholdComplete(master);
-    if (!(okDiet && okCook && okHouse)) {
+    // final step -> if last step is Food Recall (path page3), validate minimal completeness and redirect
+    const dietaryOk = !!master?.diet_type;
+    const cookingOk = !!master && (fats.length > 0 || Object.values(master).some(v => typeof v === "string" && String(v).length > 0));
+    const householdOk = !!master?.meals_per_day || !!master?.family_sharing;
+    if (!(dietaryOk && cookingOk && householdOk)) {
       setAlert({ show: true, header: "Incomplete", message: "Please complete all sections before proceeding to Food Recall." });
       return;
     }
 
-    const finalOk = await handleSave();
-    if (!finalOk) return;
+    const ok = await handleSave();
+    if (!ok) return;
 
-    // redirect to Page 3
+    // redirect to Page3 for recalls
     history.push(`/food-recall/page3?master_id=${master!.id}&user_id=${master!.user_id}`);
   };
 
-  // Refresh handler
+  const handlePrevClick = async () => {
+    if (isUnsaved) {
+      const ok = await handleSave();
+      if (!ok) return;
+    }
+    if (currentStep > 0) goToStep(currentStep - 1);
+  };
+
+  // refresh
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await loadOrCreateData();
     setIsUnsaved(false);
     event.detail.complete();
   };
 
+  // Loading UI
   if (isLoading) {
     return (
       <IonPage>
@@ -283,7 +339,8 @@ export default function FoodHabitPage() {
         </IonRefresher>
 
         <div className="max-w-5xl mx-auto p-2">
-          <FlowCrumbs steps={steps} currentPageLabel={steps[currentStep].label} idQueryParam={"master_id"} />
+          {/* FlowCrumbs with dynamic idQueryParam */}
+          <FlowCrumbs steps={steps} currentPageLabel={steps[currentStep]?.label || "Dietary Profile"} idQueryParam={idQueryParam} />
 
           <div className="flex items-center gap-4 mt-2 text-sm">
             {saveInProgress ? <div className="text-xs text-gray-500">Saving...</div> : isUnsaved ? <div className="text-xs text-orange-500">Unsaved changes</div> : <div className="text-xs text-green-600">All changes saved</div>}
@@ -293,7 +350,7 @@ export default function FoodHabitPage() {
           <ShowRegisteredTab id={master.id} table_name="FOOD_HABITS_MASTER" />
 
           <main className="space-y-6">
-            {/* ---------- Step panels ---------- */}
+            {/* Step 0: Dietary */}
             {currentStep === 0 && (
               <div className="bg-white p-6 rounded-lg shadow border">
                 <h2 className="text-xl font-semibold">1. Dietary Profile</h2>
@@ -313,10 +370,10 @@ export default function FoodHabitPage() {
               </div>
             )}
 
+            {/* Step 1: Cooking */}
             {currentStep === 1 && (
               <div className="bg-white p-6 rounded-lg shadow border">
                 <h2 className="text-xl font-semibold">2. Cooking Habits</h2>
-
                 <fieldset className="border p-3 rounded mt-3" disabled={!isEditable}>
                   <legend className="px-1 text-sm text-gray-600">7.4 Do you add following to cooked food? (Multiple Select)</legend>
                   <div className="flex flex-wrap gap-3 mt-2">
@@ -333,6 +390,7 @@ export default function FoodHabitPage() {
                       );
                     })}
                   </div>
+
                 </fieldset>
 
                 <div className="mt-4 border p-3 rounded">
@@ -354,6 +412,7 @@ export default function FoodHabitPage() {
                             <option value="yes">Yes</option>
                             <option value="no">No</option>
                             <option value="dont know">Don't Know</option>
+                            <option value="refused">Refused</option>
                           </select>
                           <input value={fat.family_consumption} onChange={(e) => handleFatChange(fat.id, "family_consumption", e.target.value)} placeholder="Consumption (Lt/Kg/M)" className="p-2 border rounded" disabled={!isEditable} />
                           <input value={fat.years_used} onChange={(e) => handleFatChange(fat.id, "years_used", e.target.value)} placeholder="Years Used" className="p-2 border rounded" disabled={!isEditable} />
@@ -388,6 +447,7 @@ export default function FoodHabitPage() {
               </div>
             )}
 
+            {/* Step 2: Household */}
             {currentStep === 2 && (
               <div className="bg-white p-6 rounded-lg shadow border">
                 <h2 className="text-xl font-semibold">3. Household Habits</h2>
@@ -414,9 +474,9 @@ export default function FoodHabitPage() {
               </div>
             )}
 
-            {/* navigation */}
+            {/* Step navigation */}
             <div className="flex justify-between items-center mt-6">
-              <Link to="/food1" onClick={(e) => {
+              <Link to="/food-recall/page1" onClick={(e) => {
                 if (isUnsaved) {
                   setAlert({ show: true, header: "Unsaved Changes", message: "Please save before leaving." });
                   e.preventDefault();
@@ -426,14 +486,7 @@ export default function FoodHabitPage() {
               </Link>
 
               <div className="flex gap-3 items-center">
-                {currentStep > 0 && <Button label="Previous" onClick={async () => {
-                  if (isUnsaved) {
-                    const ok = await handleSave();
-                    if (!ok) return;
-                  }
-                  setCurrentStep(currentStep - 1);
-                }} outlined />}
-
+                {currentStep > 0 && <Button label="Previous" onClick={handlePrevClick} outlined />}
                 <Button label={currentStep < steps.length - 1 ? "Next Section" : "Next (to Recall)"} onClick={handleNextClick} severity="success" />
               </div>
             </div>

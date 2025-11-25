@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useState, useEffect } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 type StepDef = { label: string; path: string; order?: number };
@@ -6,7 +6,7 @@ type StepDef = { label: string; path: string; order?: number };
 interface FlowCrumbsProps {
   steps: StepDef[];
   currentPageLabel: string;
-  idQueryParam?: string; // query param name to include (default: 'master_id')
+  idQueryParam?: string; // e.g. "master_id" or "user_id"
 }
 
 const FlowCrumbs: FC<FlowCrumbsProps> = ({ steps, currentPageLabel, idQueryParam = "master_id" }) => {
@@ -18,9 +18,14 @@ const FlowCrumbs: FC<FlowCrumbsProps> = ({ steps, currentPageLabel, idQueryParam
     setId(qs.get(idQueryParam) || "");
   }, [location.search, idQueryParam]);
 
-  const currentStepOrder = useMemo(() => {
-    return steps.find((s) => s.label === currentPageLabel)?.order || 0;
-  }, [steps, currentPageLabel]);
+  const buildStepPath = (stepPath: string) => {
+    // Split into base and existing query. Use URLSearchParams to merge safely.
+    const [base, existingQuery] = stepPath.split("?");
+    const params = new URLSearchParams(existingQuery || "");
+    if (id) params.set(idQueryParam, id);
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+  };
 
   return (
     <nav className="p-2 mx-2 bg-white rounded-md shadow mt-2 mb-6 max-w-6xl border border-gray-100" aria-label="Breadcrumb">
@@ -36,7 +41,7 @@ const FlowCrumbs: FC<FlowCrumbsProps> = ({ steps, currentPageLabel, idQueryParam
             ? "text-blue-600 hover:text-blue-800 transition duration-150"
             : "text-gray-500 cursor-default";
 
-          const stepPath = `${step.path}${id ? `?${idQueryParam}=${id}` : ""}`;
+          const stepPath = buildStepPath(step.path);
 
           return (
             <React.Fragment key={step.label}>
@@ -51,11 +56,7 @@ const FlowCrumbs: FC<FlowCrumbsProps> = ({ steps, currentPageLabel, idQueryParam
                     {step.label}
                   </span>
                 ) : (
-                  <Link
-                    to={stepPath}
-                    className={`text-sm font-medium reg_link no-underline hover:underline truncate ${textColor}`}
-                    aria-label={`Go to ${step.label}`}
-                  >
+                  <Link to={stepPath} className={`text-sm font-medium reg_link no-underline hover:underline truncate ${textColor}`} aria-label={`Go to ${step.label}`}>
                     {step.label}
                   </Link>
                 )}
