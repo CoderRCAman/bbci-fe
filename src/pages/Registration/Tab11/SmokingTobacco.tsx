@@ -16,7 +16,7 @@ export default function SmokingTobacco({
   data,
   handleChangeMaster,
   handleChangeProds,
-}: {
+}: { 
   data: initialState;
   handleChangeMaster: (id: string, field: string, value: any) => void;
   handleChangeProds: (
@@ -26,7 +26,8 @@ export default function SmokingTobacco({
     value: any
   ) => void;
 }) {
-  // Helper array for the master radio buttons
+  // Helper array for the master radio buttons 
+  console.log(data)
   const masterOptions = [
     { name: "YES", value: 1 },
     { name: "NO", value: 2 },

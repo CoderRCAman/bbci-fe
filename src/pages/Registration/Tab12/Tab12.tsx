@@ -140,7 +140,6 @@ export default function Tab12() {
     if (db === null) return;
     const id = searchParams?.get("id") || "";
     setId(id);
-    if (isUnsaved) return;
     fetchExisting();
   }, [db, location.pathname]);
   useBlockNavigation(isUnsaved, () => {

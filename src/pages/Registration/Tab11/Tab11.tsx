@@ -27,7 +27,6 @@ import {
 import { useSQLite } from "../../../utils/Sqlite";
 import shortUUID from "short-uuid";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
-import { set } from "date-fns";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
 

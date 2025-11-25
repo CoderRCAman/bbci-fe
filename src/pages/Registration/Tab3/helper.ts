@@ -81,7 +81,7 @@ export async function PUSH_TO_CLOUD(
             operation: "DELETE",
           });
         } catch (error) {
-          console.log(error);
+          console.log(JSON.stringify(error));
           throw error;
           // throw new Error(`Failed to push data to cloud for deleted records`);
         }
@@ -114,7 +114,7 @@ async function fetchTable(tableName: string, db: SQLiteDBConnection | null) {
       const { success, results, total_count } = res.data;
 
       if (!success) {
-        console.error(`❌ Failed to fetch ${tableName}`, res.data);
+        console.error(`❌ Failed to fetch ${tableName}`, JSON.stringify(res.data));
         break;
       }
 
@@ -138,7 +138,7 @@ async function fetchTable(tableName: string, db: SQLiteDBConnection | null) {
         break;
       }
     } catch (err) {
-      console.error(`⚠️ Error fetching ${tableName} at offset ${offset}:`, err);
+      console.error(`⚠️ Error fetching ${tableName} at offset ${offset}:`, JSON.stringify(err));
       throw err;
     }
   }
@@ -185,7 +185,7 @@ export async function PULL_FROM_CLOUD(
             ),
           }));
         } catch (err) {
-          console.error("Error in table:", table_name, err);
+          console.error("Error in table:", table_name, JSON.stringify(err));
           setPullState((prev) => ({
             ...prev,
             data: prev.data.map((item) =>
@@ -206,7 +206,7 @@ export async function PULL_FROM_CLOUD(
     await queue.onIdle();
     return result;
   } catch (error) {
-    console.log(error);
+    console.log(JSON.stringify(error));
     throw error;
   }
 }

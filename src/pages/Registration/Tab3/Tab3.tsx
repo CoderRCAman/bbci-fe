@@ -200,7 +200,7 @@ export default function Tab3() {
         .map((id) => `'${id}'`)
         .join(",")})`;
       const res2 = await db?.query(q);
-      console.log(res2, q);
+      console.log(res, res2, q, existing);
       setUserInfos(res2?.values as any[]);
     } catch (error) {
       console.log(error);
@@ -260,7 +260,7 @@ export default function Tab3() {
             "You have made changes that needs to be synched to our cloud first!",
         });
 
-      const pulled: TABLE_INFO[] = await PULL_FROM_CLOUD(setPullState , db );
+      const pulled: TABLE_INFO[] = await PULL_FROM_CLOUD(setPullState, db);
       setPullState((prev) => ({ ...prev, applyingPatch: true }));
       for (const { table_name, table_data } of pulled) {
         console.log(`⬇️ Syncing table: ${table_name}`);
@@ -338,6 +338,7 @@ export default function Tab3() {
           message: "Pulled Successfully",
         });
       }
+      setPullState(ps => ({ ...ps, show: false }))
     } catch (error: any) {
       console.log(error);
       setAlert({
@@ -373,33 +374,12 @@ export default function Tab3() {
           ) : (
             <>
               <div className="mt-5 space-y-2">
-                <DataTable
-                  paginator
-                  rows={10}
-                  value={userInfos}
-                  className="border"
-                >
-                  <Column
-                    field="id"
-                    header="ID"
-                    bodyClassName="border-y border-gray-300 "
-                  />
-                  <Column
-                    field="name"
-                    header="Name"
-                    bodyClassName="border-y border-gray-300 "
-                  />
-                  <Column
-                    bodyClassName="border-y border-gray-300 "
-                    field="status"
-                    header="Status"
-                    body={() => (
-                      <span style={{ color: "red", fontWeight: 500 }}>
-                        Sync Required
-                      </span>
-                    )}
-                  ></Column>
-                </DataTable>
+                <div className="p-4 border border-orange-500 rounded-lg text-left shadow-sm">
+                  <p className="text-base text-orange-700 font-semibold flex items-center gap-3">
+                    <i className="pi pi-exclamation-triangle text-xl"></i>
+                    <span>Data Status: **Sync Required** — Unsaved changes detected.</span>
+                  </p>
+                </div>
                 <div>
                   <Button
                     label="Synch"
@@ -419,7 +399,7 @@ export default function Tab3() {
             />
             <Button
               label="Export Excel"
-              severity="success" 
+              severity="success"
               className="ml-2"
               onClick={async () => {
                 try {

@@ -8,10 +8,10 @@ export interface TOBACCO_ALCOHOL_CONSUMPION {
   id: string;
   user_id: string;
   type:
-    | "smoking_tobacco"
-    | "chewing_tobacco"
-    | "chewing_without_tobacco"
-    | "alcohol";
+  | "smoking_tobacco"
+  | "chewing_tobacco"
+  | "chewing_without_tobacco"
+  | "alcohol";
   product?: string;
   consumes?: number;
   from_age?: number;
@@ -34,10 +34,10 @@ export interface TOBACCO_ALCOHOL_CONSUMPION {
 
 export interface initialState {
   product_type:
-    | "smoking_tobacco"
-    | "chewing_tobacco"
-    | "chewing_without_tobacco"
-    | "alcohol";
+  | "smoking_tobacco"
+  | "chewing_tobacco"
+  | "chewing_without_tobacco"
+  | "alcohol";
   consumed: number;
   products: TOBACCO_ALCOHOL_CONSUMPION[];
   id: string;
@@ -221,7 +221,7 @@ export const populateWithBackend = (
     const type = defaultGroup.product_type;
     const backendProducts = backendByType[type] || [];
 
-    const mergedProducts: TOBACCO_ALCOHOL_CONSUMPION[] = [];
+    let mergedProducts: TOBACCO_ALCOHOL_CONSUMPION[] = [];
 
     const defaultProducts = defaultGroup.products.filter(
       (p) => !p.is_other_product
@@ -248,8 +248,9 @@ export const populateWithBackend = (
 
       // Handle other product
       if (hasBackendOther) {
-        const other = backendProducts.find((p) => p.is_other_product === 1);
-        if (other) mergedProducts.push(other);
+        const other = backendProducts.filter((p) => p.is_other_product === 1);
+        console.log(other)
+        if (other.length > 0) mergedProducts = [...mergedProducts, ...other]
       } else {
         mergedProducts.push(
           new TobaccoAlcoholConsumption({
@@ -318,7 +319,7 @@ export const saveToDBAlcohol = async (
   sqlite: SQLiteConnection,
   dirtyMaster: initialState[],
   dirtyProds: TOBACCO_ALCOHOL_CONSUMPION[],
-  deletedIds : string[],
+  deletedIds: string[],
   user_id: string,
   tab_id: string
 ) => {
@@ -410,7 +411,7 @@ export const saveToDBAlcohol = async (
       ];
 
       await db.run(query, values);
-    } 
+    }
     await db?.run(`delete from TOBACCO_ALCOHOL_CONSUMPTION where id in ('${deletedIds.join("','")}')`);
     await saveToStore(sqlite);
   } catch (error) {

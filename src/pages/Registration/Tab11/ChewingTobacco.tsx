@@ -39,7 +39,7 @@ export default function ChewingTobacco({
       | "chewing_without_tobacco"
       | "alcohol"
   ) => void;
-}) {
+}) { 
   // Helper array for the master radio buttons
   const masterOptions = [
     { name: "YES", value: 1 },
@@ -47,7 +47,7 @@ export default function ChewingTobacco({
     { name: "DON'T KNOW", value: 8 },
     { name: "Refused to answer", value: 9 },
   ];
-
+console.log(data)
   // Helper array for Site of Placement checkboxes
   const siteOptions = [
     { label: "L", key: "site_of_placement_L" },

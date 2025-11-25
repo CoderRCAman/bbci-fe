@@ -59,7 +59,7 @@ export default function ChewingWithoutTobacco({
     { label: "F", key: "site_of_placement_F" },
     { label: "n/a", key: "site_of_placement_NA" },
   ];
-
+console.log(data)
   return (
     // 1. Use <Card> and remove the 'title' prop
     <Card className="shadow-lg ">

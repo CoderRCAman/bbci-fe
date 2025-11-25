@@ -51,7 +51,7 @@ export default function Alcohol({
     { name: "DON'T KNOW", value: 8 },
     { name: "Refused to answer", value: 9 },
   ];
-
+console.log(data)
   return (
     // 1. Replaced main div with Card, removed title prop
     <Card className="shadow-lg ">
