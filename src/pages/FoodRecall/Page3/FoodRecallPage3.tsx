@@ -17,14 +17,15 @@ import {
   IFoodRecallEntry,
   IFoodRecallIngredient,
   loadRecallData,
+  loadHabitData,
   saveRecallData,
   checkHabitEditEligibility,
 } from "../data";
 import shortUUID from "short-uuid";
 import { Button } from "primereact/button";
-import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
-import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import { Tag } from "primereact/tag";
 import { Accordion, AccordionTab } from "primereact/accordion";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 import FlowCrumbs from "../../../components/FlowCrumbs";
 
 export default function FoodRecallEntryPage() {
@@ -37,6 +38,9 @@ export default function FoodRecallEntryPage() {
   const [alert, setAlert] = useState({ show: false, header: "", message: "" });
   const [isUnsaved, setIsUnsaved] = useState(false);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [readOnlyNotice, setReadOnlyNotice] = useState<string>("");
+  const [patientName, setPatientName] = useState<string>("");
+  const [masterTabId, setMasterTabId] = useState<string>("");
 
   const searchParams = new URLSearchParams(location.search);
   const userId = searchParams.get("user_id") || "";
@@ -74,8 +78,50 @@ export default function FoodRecallEntryPage() {
     return spacey;
   };
 
+  // ---------- Helpers ----------
+  const fetchMasterMeta = async (dbConn: any, mId: string | null) => {
+    if (!dbConn || !mId) return null;
+    try {
+      // reuse loadHabitData: pass empty user_id and master_id present
+      const res = await loadHabitData(dbConn, "", mId);
+      return res?.master || null;
+    } catch (err) {
+      console.warn("fetchMasterMeta failed", err);
+      return null;
+    }
+  };
+
+  const fetchPatientName = async (dbConn: any, uId: string) => {
+    if (!dbConn || !uId) return "";
+    try {
+      const tryQuery = async (q: string) => {
+        try {
+          const res = await dbConn.query(q, [uId]);
+          if (res?.values && res.values[0]) {
+            const val = res.values[0];
+            for (const k of Object.keys(val)) {
+              if (typeof val[k] === "string" && val[k].trim().length > 0) return val[k];
+            }
+          }
+          return "";
+        } catch {
+          return "";
+        }
+      };
+      let name = await tryQuery(`SELECT name FROM patients WHERE id = ?`);
+      if (!name) name = await tryQuery(`SELECT full_name FROM patients WHERE id = ?`);
+      if (!name) name = await tryQuery(`SELECT patient_name FROM patients WHERE id = ?`);
+      return name || "";
+    } catch (err) {
+      console.warn("fetchPatientName failed", err);
+      return "";
+    }
+  };
+
+  // ---------- Load data and meta ----------
   const loadData = async () => {
     setIsLoading(true);
+    setReadOnlyNotice("");
     try {
       if (!masterId) {
         setAlert({ show: true, header: "Error", message: "No Master Survey ID was provided. Please go back and save the Food Habit page first." });
@@ -83,13 +129,48 @@ export default function FoodRecallEntryPage() {
         setIsLoading(false);
         return;
       }
+
+      // fetch master metadata (to show tab_id and patient)
+      const masterMeta = await fetchMasterMeta(db!!, masterId);
+      if (masterMeta) {
+        setMasterTabId(masterMeta.tab_id || "");
+        // try patient name if user_id present on master
+        if (masterMeta.user_id) {
+          const name = await fetchPatientName(db!!, masterMeta.user_id);
+          setPatientName(name);
+        }
+      } else {
+        // fallback: try fetch patientName from url userId
+        if (userId) {
+          const name = await fetchPatientName(db!!, userId);
+          setPatientName(name);
+        }
+      }
+
+      // permission check using same pattern (table_name and field_name)
+      try {
+        const allowed = await checkHabitEditEligibility(db!!, masterId, tabId, "FOOD_RECALL_ENTRY", "master_id");
+        setIsEditable(!!allowed);
+        if (!allowed) {
+          setReadOnlyNotice("Read-only (created by another tab)");
+        } else {
+          setReadOnlyNotice("");
+        }
+      } catch (err) {
+        console.warn("eligibility check failed", err);
+        setIsEditable(false);
+        setReadOnlyNotice("Read-only (permission check failed)");
+      }
+
+      // load entries
       const entries = await loadRecallData(db!!, masterId);
       setFoodLog(entries || []);
     } catch (e: any) {
       setAlert({ show: true, header: "Load Error", message: `Failed to load data: ${e.message}` });
       setIsEditable(false);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -102,6 +183,7 @@ export default function FoodRecallEntryPage() {
     setAlert({ show: true, header: "Unsaved Changes", message: "You have unsaved changes. Please save before navigating away." });
   });
 
+  // grouping logic
   const getDateKey = (dateTime: string) => {
     try {
       const d = new Date(dateTime);
@@ -146,9 +228,13 @@ export default function FoodRecallEntryPage() {
     }
   }, [groupedByDate.keys.length]);
 
-  // CRUD handlers (unchanged)
+  // CRUD handlers
   const handleAddFoodEntry = () => {
     if (!masterId) return;
+    if (!isEditable) {
+      setAlert({ show: true, header: "Read-only", message: "You do not have permission to add entries for this record." });
+      return;
+    }
     setIsUnsaved(true);
     const nowDb = formatDbNow();
     const newEntry: IFoodRecallEntry = {
@@ -182,6 +268,10 @@ export default function FoodRecallEntryPage() {
   };
 
   const handleAddIngredient = (foodId: string) => {
+    if (!isEditable) {
+      setAlert({ show: true, header: "Read-only", message: "You do not have permission to add ingredients for this record." });
+      return;
+    }
     setIsUnsaved(true);
     setFoodLog(prev => prev.map(food => {
       if (food.id === foodId) {
@@ -219,24 +309,36 @@ export default function FoodRecallEntryPage() {
   };
 
   const handleSave = async () => {
-    if (!db || !sqlite || !masterId || !isEditable) {
-      setAlert({ show: true, header: "Cannot Save", message: "The database is not ready, data is missing, or you do not have permission to edit." });
+    if (!db || !sqlite || !masterId) {
+      setAlert({ show: true, header: "Cannot Save", message: "The database is not ready or data is missing." });
+      return;
+    }
+    if (!isEditable) {
+      setAlert({ show: true, header: "Read-only", message: "You do not have permission to save changes." });
       return;
     }
 
-    if (db && !(await checkHabitEditEligibility(db, masterId, tabId, "FOOD_RECALL_ENTRY", "master_id"))) {
-      setAlert({ show: true, header: "Restricted access", message: "This record was registered with a different tab id." });
+    // permission check (defensive)
+    try {
+      const allowed = await checkHabitEditEligibility(db, masterId, tabId, "FOOD_RECALL_ENTRY", "master_id");
+      if (!allowed) {
+        setAlert({ show: true, header: "Restricted access", message: "This record was registered with a different tab id." });
+        setIsEditable(false);
+        setReadOnlyNotice("Read-only (created by another tab)");
+        return;
+      }
+    } catch (err) {
+      console.warn("checkHabitEditEligibility error:", err);
+      setAlert({ show: true, header: "Save Blocked", message: "Could not verify permissions to save this record." });
       return;
     }
 
     setIsLoading(true);
     try {
       await saveRecallData(db, sqlite, foodLog, masterId, tabId);
-
       try {
         sessionStorage.setItem(`foodrecall_saved_${masterId}`, String(Date.now()));
-      } catch (e) { /* ignore */ }
-
+      } catch {}
       setIsLoading(false);
       setAlert({ show: true, header: "Success", message: "Food Recall (7.3) data has been saved." });
       setIsUnsaved(false);
@@ -249,13 +351,17 @@ export default function FoodRecallEntryPage() {
     }
   };
 
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await loadData();
+    setIsUnsaved(false);
+    event.detail.complete();
+  };
+
   // FlowCrumbs step click -> go to Page2 with master_id
   const handleStepClick = (e: any) => {
-    const stepIndex = e.index;
     const params = new URLSearchParams();
     if (masterId) params.set("master_id", masterId);
     if (userId) params.set("user_id", userId);
-    // step param not needed since Page2 is single merged page
     history.push(`/food-recall/page2?${params.toString()}`);
   };
 
@@ -270,12 +376,6 @@ export default function FoodRecallEntryPage() {
     );
   }
 
-  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
-    await loadData();
-    setIsUnsaved(false);
-    event.detail.complete();
-  };
-
   return (
     <IonPage>
       <Header title="24-Hours Food Recall Entry" />
@@ -285,9 +385,33 @@ export default function FoodRecallEntryPage() {
         </IonRefresher>
 
         <div className="max-w-5xl mx-auto p-2">
-          <FlowCrumbs steps={steps} currentPageLabel={steps[1].label} idQueryParam={"master_id"} />
+          {/* Stepper + right-justified tab-id + read-only badge */}
+          <div className="flex items-start gap-3 mb-2">
+            <div className="flex-1">
+              <FlowCrumbs steps={steps} currentPageLabel={steps[1].label} idQueryParam={"master_id"} />
+              {/* patient name shown under stepper */}
+              {patientName ? (
+                <div className="mt-2 text-sm font-medium text-gray-700">Patient: <span className="font-semibold">{patientName}</span></div>
+              ) : (
+                <div className="mt-2 text-sm text-gray-500">Patient: <span className="italic">Unknown</span></div>
+              )}
+            </div>
 
-          <ShowRegisteredTab id={masterId || ""} table_name="FOOD_RECALL_ENTRY" field_name="master_id" />
+            <div className="flex flex-col items-end ml-4">
+              <div className="text-xs text-gray-600">Recorded with tab id :</div>
+              <div className="mt-1">
+                <Tag value={masterTabId || tabId || "—"} severity="info" rounded className="text-sm px-3 py-1" />
+              </div>
+
+              {readOnlyNotice ? (
+                <div className="mt-2">
+                  <Tag value={readOnlyNotice} severity="warning" rounded className="text-xs px-2 py-1" />
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* replace ShowRegisteredTab with the lightweight header info (kept removed per your earlier request) */}
 
           <div className="flex justify-between items-center mb-4">
             <div />
@@ -374,30 +498,40 @@ export default function FoodRecallEntryPage() {
                                 <input type="text" value={ing.prep_method} onChange={(e) => handleIngredientChange(entry.id, ing.id, "prep_method", e.target.value)} placeholder="Prep Method" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
                                 <Button icon="pi pi-times" severity="danger" className="p-button-sm p-button-text" onClick={() => handleRemoveIngredient(entry.id, ing.id)} disabled={!isEditable} />
                               </div>
-                            ))}
+                            ))} 
                           </div>
                         </div>
                       ))}
                     </div>
                   </AccordionTab>
-                ))}
+                ))} 
               </Accordion>
             )}
           </div>
 
           <div className="mt-6 flex justify-between items-center">
             <Button label="Save Recalls" severity="success" className="px-10 py-2" onClick={handleSave} disabled={!isEditable || isLoading} />
-            {/* <Link to={`/food-recall/page2?master_id=${masterId}&user_id=${userId}`} onClick={(e) => {
-              if (isUnsaved) {
-                e.preventDefault();
-                setAlert({ show: true, header: "Unsaved Changes", message: "You have unsaved changes. Please save before navigating away." });
-              }
-            }}>
-              <Button label="Back to Habits (Module 1)" className="px-5 py-2 rounded" />
-            </Link> */}
           </div>
         </div>
+
+        {/* Persistent bottom-center status toast (does not auto-hide) */}
+        <div className="fixed left-1/2 transform -translate-x-1/2 bottom-6 z-50">
+          <div className={`px-4 py-2 rounded-full shadow-md text-sm flex items-center gap-3 ${isLoading ? "bg-blue-600 text-white" : isUnsaved ? "bg-orange-500 text-white" : "bg-green-600 text-white"}`}>
+            {isLoading ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 01-8 8z"></path></svg>
+                <span>Loading...</span>
+              </>
+            ) : isUnsaved ? (
+              <span>Unsaved changes</span>
+            ) : (
+              <span>All changes saved</span>
+            )}
+          </div>
+        </div>
+
         <div className="pb-[250px]"></div>
+
         <IonAlert isOpen={alert.show} onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))} header={alert.header} message={alert.message} buttons={["OK"]} />
       </IonContent>
     </IonPage>

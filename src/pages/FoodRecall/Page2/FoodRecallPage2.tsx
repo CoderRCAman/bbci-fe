@@ -16,16 +16,16 @@ import {
   IFoodHabitFat,
   generateDefaultHabitState,
   loadHabitData,
+  loadRecallData,
   saveHabitData,
   checkHabitEditEligibility,
 } from "../data";
 import shortUUID from "short-uuid";
 import { Button } from "primereact/button";
+import { Tag } from "primereact/tag";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 import FlowCrumbs from "../../../components/FlowCrumbs";
-
-
 
 const PREP_METHODS = [
   "Shallow Frying",
@@ -86,6 +86,10 @@ export default function FoodHabitPage() {
   const [fats, setFats] = useState<IFoodHabitFat[]>([]);
   const [alert, setAlert] = useState({ show: false, header: "", message: "" });
 
+  // UI-only states
+  const [patientName, setPatientName] = useState<string>("");
+  const [readOnlyNotice, setReadOnlyNotice] = useState<string>(""); // subtle inline read-only badge text
+
   // water supply tags local state + add input toggle
   const [waterSupplyTags, setWaterSupplyTags] = useState<string[]>([]);
   const [showAddWater, setShowAddWater] = useState(false);
@@ -107,16 +111,110 @@ export default function FoodHabitPage() {
   ];
   const idQueryParam = master && master.id ? "master_id" : "user_id";
 
+  // ---------- Helper: try finding existing master for user ----------
+  const fetchExistingMasterByUser = async (dbConn: any, uId: string) => {
+    if (!dbConn || !uId) return null;
+    try {
+      const existing = await loadHabitData(dbConn, uId, null);
+      return existing || null;
+    } catch (err) {
+      console.warn("fetchExistingMasterByUser failed", err);
+      return null;
+    }
+  };
+
+  // ---------- Helper: fetch patient name (best-effort) ----------
+  const fetchPatientName = async (dbConn: any, uId: string) => {
+    if (!dbConn || !uId) return "";
+    try {
+      // try common fields; adapt if your patients table uses different column names
+      let name = "";
+      const tryQuery = async (q: string) => {
+        try {
+          const res = await dbConn.query(q, [uId]);
+          if (res?.values && res.values[0]) {
+            const val = res.values[0];
+            // pick first string-like property
+            for (const k of Object.keys(val)) {
+              if (typeof val[k] === "string" && val[k].trim().length > 0) return val[k];
+            }
+          }
+          return "";
+        } catch {
+          return "";
+        }
+      };
+
+      name = await tryQuery(`SELECT name FROM patients WHERE id = ?`);
+      if (!name) name = await tryQuery(`SELECT full_name FROM patients WHERE id = ?`);
+      if (!name) name = await tryQuery(`SELECT patient_name FROM patients WHERE id = ?`);
+      return name || "";
+    } catch (err) {
+      console.warn("fetchPatientName failed", err);
+      return "";
+    }
+  };
+
+  // ---------- Load or create with the new rules ----------
   const loadOrCreateData = async () => {
     setIsLoading(true);
+    setReadOnlyNotice("");
     try {
-      const existing = await loadHabitData(db!!, userId, masterIdFromUrl);
+      // Fetch patient name (best-effort) early so we can show under stepper
+      if (db && userId) {
+        const name = await fetchPatientName(db, userId);
+        setPatientName(name);
+      } else {
+        setPatientName("");
+      }
+
+      // 1) If explicit master_id passed via URL, prefer that
+      let existing: any = null;
+      if (masterIdFromUrl) {
+        existing = await loadHabitData(db!!, userId, masterIdFromUrl);
+      }
+
+      // 2) If no masterIdFromUrl or nothing found, try find by userId (reuse existing record)
+      if (!existing && userId) {
+        existing = await loadHabitData(db!!, userId, null); // assume loadHabitData can search by userId if masterId null
+      }
+
       if (existing) {
+        // Use canonical master (edit-only)
         setMaster(existing.master);
         setFats(existing.fats || []);
-        const ws = JSON.parse(existing.master.water_supply_json || "[]");
-        setWaterSupplyTags(Array.isArray(ws) ? ws : []);
+
+        try {
+          const ws = JSON.parse(existing.master.water_supply_json || "[]");
+          setWaterSupplyTags(Array.isArray(ws) ? ws : []);
+        } catch {
+          setWaterSupplyTags([]);
+        }
+
+        // Load recall presence (non-blocking)
+        try {
+          await loadRecallData(db!!, existing.master.id);
+        } catch {
+          // intentionally ignored
+        }
+
+        // Permission check: editing allowed only for the tab that created this record
+        try {
+          const allowed = await checkHabitEditEligibility(db!!, existing.master.id, tabId);
+          setIsEditable(!!allowed);
+          if (!allowed) {
+            // don't show alert popup — show inline subtle badge instead
+            setReadOnlyNotice(`Read-only (created by another tab)`);
+          } else {
+            setReadOnlyNotice("");
+          }
+        } catch (e: any) {
+          setIsEditable(false);
+          setReadOnlyNotice(`Read-only (permission check failed)`);
+          console.warn("Eligibility check failed:", e);
+        }
       } else if (userId) {
+        // No existing master: create default master for this tab
         const { master: m, fats: f } = generateDefaultHabitState(userId, tabId);
         setMaster(m);
         setFats(f);
@@ -126,6 +224,8 @@ export default function FoodHabitPage() {
         } catch {
           setWaterSupplyTags([]);
         }
+        // new record created by this tab => editable
+        setIsEditable(true);
       } else {
         setAlert({ show: true, header: "Error", message: "Could not load or create habit record. Please go back to Page 1 and select a patient." });
         setIsEditable(false);
@@ -133,8 +233,9 @@ export default function FoodHabitPage() {
     } catch (e: any) {
       setAlert({ show: true, header: "Load Error", message: `Failed to load data: ${e.message}` });
       setIsEditable(false);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -143,7 +244,7 @@ export default function FoodHabitPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [db, sqlite, userId, masterIdFromUrl, tabId]);
 
-  // handlers
+  // ---------- handlers ----------
   const handleMasterChange = (field: keyof IFoodHabitMaster, value: any) => {
     if (!master) return;
     setIsUnsaved(true);
@@ -185,7 +286,6 @@ export default function FoodHabitPage() {
     "Other (input)",
   ];
 
-
   // selected option from dropdown (one of WATER_OPTIONS)
   const [selectedWaterOption, setSelectedWaterOption] = useState<string>(WATER_OPTIONS[0]);
   // free-text value used only when selectedWaterOption === "Other (input)"
@@ -196,27 +296,24 @@ export default function FoodHabitPage() {
     if (selectedWaterOption === "Other (input)") {
       val = otherWaterValue?.trim();
       if (!val) return; // nothing to add
-      val = `Other: ${val}`; // store with prefix per your instruction (Option B)
+      val = `Other: ${val}`; // store with prefix per your instruction
     } else {
       val = selectedWaterOption;
     }
 
     // prevent duplicates
     if (waterSupplyTags.includes(val)) {
-      // reset UI
       setOtherWaterValue("");
       setShowAddWater(false);
       return;
     }
 
     setWaterSupplyTags(prev => [...prev, val]);
-    // reset inputs
     setOtherWaterValue("");
     setSelectedWaterOption(WATER_OPTIONS[0]);
     setShowAddWater(false);
     setIsUnsaved(true);
   };
-
 
   const removeWaterTag = (tag: string) => {
     setWaterSupplyTags(prev => prev.filter(t => t !== tag));
@@ -225,14 +322,51 @@ export default function FoodHabitPage() {
 
   // save flow - ensure waterSupply JSON and master values synced before save
   const handleSave = async (): Promise<boolean> => {
-    if (!db || !sqlite || !master || !isEditable) {
-      setAlert({ show: true, header: "Cannot Save", message: "The database is not ready, data is missing, or you do not have permission to edit." });
+    if (!db || !sqlite || !master) {
+      setAlert({ show: true, header: "Cannot Save", message: "The database is not ready or data is missing." });
       return false;
     }
 
-    if (db && !(await checkHabitEditEligibility(db, masterIdFromUrl || master.id || "", tabId))) {
-      setAlert({ show: true, header: "Restricted access", message: "This record was registered with a different tab id." });
+    // If the record is read-only for this tab, prevent saving
+    if (!isEditable) {
+      setAlert({ show: true, header: "Read-only", message: "You do not have permission to edit this record." });
       return false;
+    }
+
+    // double-check eligibility on the current master id (defensive)
+    const effectiveMasterId = masterIdFromUrl || master.id || "";
+    try {
+      const allowed = await checkHabitEditEligibility(db, effectiveMasterId, tabId);
+      if (!allowed) {
+        setAlert({ show: true, header: "Restricted access", message: "This record was registered with a different tab id." });
+        setIsEditable(false);
+        setReadOnlyNotice(`Read-only (created by another tab)`);
+        return false;
+      }
+    } catch (e: any) {
+      // if the check fails unexpectedly, block save (conservative)
+      setAlert({ show: true, header: "Save Blocked", message: "Could not verify permissions to save this record." });
+      console.warn("checkHabitEditEligibility error:", e);
+      return false;
+    }
+
+    // Attach existing master id if a master for this user already exists (prevent duplicates)
+    if (userId && (!master.id || master.id === "")) {
+      try {
+        const existing = await fetchExistingMasterByUser(db, userId);
+        if (existing && existing.master && existing.master.id) {
+          // attach canonical id: keep existing tab_id as-is (do not overwrite)
+          const patched: IFoodHabitMaster = {
+            ...master,
+            id: existing.master.id,
+            tab_id: existing.master.tab_id || master.tab_id,
+          };
+          setMaster(patched);
+        }
+      } catch (err) {
+        // ignore; we will still attempt to save the current master (it may create a new one)
+        console.warn("fetchExistingMasterByUser during save failed", err);
+      }
     }
 
     // sync waterSupplyTags into master before save
@@ -251,6 +385,15 @@ export default function FoodHabitPage() {
         setFats(reload.fats || []);
         const ws = JSON.parse(reload.master.water_supply_json || "[]");
         setWaterSupplyTags(Array.isArray(ws) ? ws : []);
+        // ensure editability recomputed after save (creator tab preserved)
+        try {
+          const allowedAfter = await checkHabitEditEligibility(db, reload.master.id, tabId);
+          setIsEditable(!!allowedAfter);
+          if (!allowedAfter) setReadOnlyNotice("Read-only (created by another tab)");
+          else setReadOnlyNotice("");
+        } catch {
+          // keep previous isEditable/readOnlyNotice
+        }
       }
 
       setAlert({ show: true, header: "Saved", message: "Food Habit data saved." });
@@ -266,8 +409,14 @@ export default function FoodHabitPage() {
   const handleSaveAndGotoRecall = async () => {
     const ok = await handleSave();
     if (!ok) return;
-    // ensure we have master.id and user_id
-    const mId = master?.id;
+
+    // After save, ensure we have canonical master id to navigate
+    let mId = master?.id;
+    if (!mId && userId && db) {
+      const existing = await fetchExistingMasterByUser(db, userId);
+      mId = existing?.master?.id || "";
+    }
+
     const uId = master?.user_id || userId;
     if (!mId) {
       setAlert({ show: true, header: "Missing ID", message: "Could not determine master_id after save." });
@@ -282,6 +431,7 @@ export default function FoodHabitPage() {
     event.detail.complete();
   };
 
+  // ----------------- RENDER -----------------
   if (isLoading) {
     return (
       <IonPage>
@@ -315,14 +465,39 @@ export default function FoodHabitPage() {
         </IonRefresher>
 
         <div className="max-w-5xl mx-auto p-2">
-          <FlowCrumbs steps={steps} currentPageLabel={steps[0].label} idQueryParam={idQueryParam} />
+          {/* Stepper + right-justified tab-id + read-only badge */}
+          <div className="flex items-start gap-3 mb-2">
+            <div className="flex-1">
+              <FlowCrumbs steps={steps} currentPageLabel={steps[0].label} idQueryParam={idQueryParam} />
+              {/* patient name shown under stepper */}
+              {patientName ? (
+                <div className="mt-2 text-sm font-medium text-gray-700">Patient: <span className="font-semibold">{patientName}</span></div>
+              ) : (
+                <div className="mt-2 text-sm text-gray-500">Patient: <span className="italic">Unknown</span></div>
+              )}
+            </div>
 
-          <div className="flex items-center gap-4 mt-2 text-sm">
-            {saveInProgress ? <div className="text-xs text-gray-500">Saving...</div> : isUnsaved ? <div className="text-xs text-orange-500">Unsaved changes</div> : <div className="text-xs text-green-600">All changes saved</div>}
-            <div className="ml-auto text-xs">Module: Food Habits</div>
+            <div className="flex flex-col items-end ml-4">
+              <div className="text-xs text-gray-600">Recorded with tab id :</div>
+              <div className="mt-1">
+                <Tag value={master.tab_id || tabId || "—"} severity="info" rounded className="text-sm px-3 py-1" />
+              </div>
+
+              {readOnlyNotice ? (
+                <div className="mt-2">
+                  <Tag value={readOnlyNotice} severity="warning" rounded className="text-xs px-2 py-1" />
+                </div>
+              ) : null}
+            </div>
           </div>
 
-          <ShowRegisteredTab id={master.id} table_name="FOOD_HABITS_MASTER" />
+          {/* STATUS line removed 'Module: Food Habits' per request */}
+          <div className="mb-2">
+            {/* left intentionally minimal */}
+          </div>
+
+          {/* show registered tab component removed from top (we replaced with stepper tab text) */}
+          {/* If you still want the old ShowRegisteredTab somewhere, you can re-enable it. */}
 
           <main className="bg-white p-4 rounded shadow space-y-4">
             {/* Dietary Profile */}
@@ -542,24 +717,36 @@ export default function FoodHabitPage() {
             </section>
 
             <div className="flex justify-between items-center mt-4">
-              {/* <Link to="/food-recall/page1" onClick={(e) => {
-                if (isUnsaved) {
-                  setAlert({ show: true, header: "Unsaved Changes", message: "Please save before leaving." });
-                  e.preventDefault();
-                }
-              }}>
-                <Button label="Back to Patient List" icon="pi pi-arrow-left" outlined />
-              </Link> */}
-
               <div className="flex gap-2">
-                <Button label="Save Habits" onClick={handleSave} disabled={!isEditable} />
+                <Button label="Save Habits" onClick={handleSave} disabled={!isEditable || saveInProgress} />
                 <Button label="Save & Go to 24-Hr Recall" severity="success" onClick={handleSaveAndGotoRecall} disabled={!isEditable || saveInProgress} />
               </div>
             </div>
-
           </main>
         </div>
-               <div className="pb-[250px]"></div>
+
+        {/* Persistent bottom-center status toast (does not auto-hide) */}
+        <div className="fixed left-1/2 transform -translate-x-1/2 bottom-6 z-50">
+          <div className={`px-4 py-2 rounded-full shadow-md text-sm flex items-center gap-3 ${saveInProgress ? "bg-blue-600 text-white" : isUnsaved ? "bg-orange-500 text-white" : "bg-green-600 text-white"}`}>
+            {saveInProgress ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 01-8 8z"></path></svg>
+                <span>Saving...</span>
+              </>
+            ) : isUnsaved ? (
+              <>
+                <span>Unsaved changes</span>
+              </>
+            ) : (
+              <>
+                <span>All changes saved</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="pb-[250px]"></div>
+
         <IonAlert isOpen={alert.show} onDidDismiss={() => setAlert({ show: false, header: "", message: "" })} header={alert.header} message={alert.message} buttons={["OK"]} />
       </IonContent>
     </IonPage>
