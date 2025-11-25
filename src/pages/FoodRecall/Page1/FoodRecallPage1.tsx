@@ -13,7 +13,7 @@ export default function FoodRecallPage1() {
     const [globalFilterValue, setGlobalFilterValue] = useState('');
     const [globalFilterValue1, setGlobalFilterValue1] = useState('');
     const [participants, setParticipants] = useState<any[]>([]);
-    const [previousRecalls, setPreviousRecalls] = useState<any[]>([]); // Renamed from bloodSample
+    const [previousRecalls, setPreviousRecalls] = useState<any[]>([]);
     const location = useLocation();
 
     useEffect(() => {
@@ -21,9 +21,7 @@ export default function FoodRecallPage1() {
             if (!db) return;
             try {
                 // Query 1: Get all patients (for starting a NEW survey)
-                const query1 = `
-                    SELECT * FROM patients; 
-                `;
+                const query1 = `SELECT * FROM patients;`;
                 const res1 = await db.query(query1);
                 setParticipants(res1?.values || []);
 
@@ -41,9 +39,8 @@ export default function FoodRecallPage1() {
                 `;
                 const res2 = await db.query(query2);
                 setPreviousRecalls(res2?.values || []);
-
             } catch (error) {
-                console.log(error)
+                console.log(error);
             }
         }
         fetchUsersAndRecalls();
@@ -55,7 +52,7 @@ export default function FoodRecallPage1() {
             <span className="p-input-icon-left">
                 <InputText
                     value={globalFilterValue}
-                    onInput={(e) => setGlobalFilterValue(e.currentTarget.value)}
+                    onInput={(e) => setGlobalFilterValue((e.currentTarget as HTMLInputElement).value)}
                     placeholder="Search Patients..."
                     className="border p-2"
                 />
@@ -69,7 +66,7 @@ export default function FoodRecallPage1() {
             <span className="p-input-icon-left">
                 <InputText
                     value={globalFilterValue1}
-                    onInput={(e) => setGlobalFilterValue1(e.currentTarget.value)}
+                    onInput={(e) => setGlobalFilterValue1((e.currentTarget as HTMLInputElement).value)}
                     placeholder="Search Recalls..."
                     className="border p-2"
                 />
@@ -81,14 +78,19 @@ export default function FoodRecallPage1() {
     const newRecallLinkBody = (rowData: any) => {
         // This link goes to the FoodHabitPage (Page 2) and passes the PATIENT ID (user_id)
         // This will trigger "create" mode in the habit page
-        return <Link to={`/food-recall/page2?user_id=${rowData.id}`}>{rowData.id}</Link>
+        return <Link to={`/food-recall/page2?user_id=${rowData.id}`}>{rowData.id}</Link>;
     };
 
     // Body template for the "View/Edit" table link
+    // Clicking "Edit" on Page 1 will now open Food Recall Page 3 directly in edit mode.
     const previousRecallLinkBody = (rowData: any) => {
-        // This link goes to the FoodHabitPage (Page 2) and passes the MASTER HABIT ID
-        // This will trigger "edit" mode in the habit page
-        return <Link to={`/food-recall/page2?master_id=${rowData.master_id}&user_id=${rowData.user_id}`}>{rowData.master_id}</Link>
+        // route directly to FoodRecallEntryPage (page3) for editing the existing survey
+        // keep user_id for context/compatibility
+        return (
+            <Link to={`/food-recall/page3?master_id=${rowData.master_id}&user_id=${rowData.user_id}`}>
+                {rowData.master_id}
+            </Link>
+        );
     };
 
     return (
@@ -98,14 +100,16 @@ export default function FoodRecallPage1() {
                 <main className="p-2">
                     <div className="mt-5 border rounded">
                         <div className="pl-5 py-2">
-                            <h2 className="text-slate-600 font-semibold">Process a new Food Recall (Select Patient)</h2>
+                            <h2 className="text-slate-600 font-semibold">New Food Habit Record (Select Patient)</h2>
                         </div>
-                        <DataTable 
+                        <DataTable
                             value={participants}
                             globalFilter={globalFilterValue}
                             header={renderHeaderNew}
-                            paginator rows={10}
-                            showGridlines size='normal'
+                            paginator
+                            rows={10}
+                            showGridlines
+                            size='normal'
                             tableStyle={{ minWidth: '6rem' }}
                         >
                             <Column field="id" sortable header="Patient Id" body={newRecallLinkBody}></Column>
@@ -116,14 +120,16 @@ export default function FoodRecallPage1() {
 
                     <div className="mt-10 border rounded">
                         <div className="pl-5 py-2">
-                            <h2 className="text-slate-500 font-semibold">View/Edit Previous Food Recalls</h2>
+                            <h2 className="text-slate-500 font-semibold">Add Food Recall for Patient (View/Edit Habit Record)</h2>
                         </div>
-                        <DataTable 
+                        <DataTable
                             value={previousRecalls}
                             globalFilter={globalFilterValue1}
                             header={renderHeaderPrevious}
-                            paginator rows={10}
-                            showGridlines size='normal'
+                            paginator
+                            rows={10}
+                            showGridlines
+                            size='normal'
                             tableStyle={{ minWidth: '6rem' }}
                         >
                             <Column field="master_id" sortable header="Recall Survey ID" body={previousRecallLinkBody}></Column>
@@ -137,4 +143,3 @@ export default function FoodRecallPage1() {
         </IonPage>
     );
 }
-
