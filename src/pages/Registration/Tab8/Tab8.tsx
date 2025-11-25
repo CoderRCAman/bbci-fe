@@ -28,13 +28,23 @@ export default function Tab8() {
   const [id, setId] = useState<string | null>("");
   const [allowNext, setAllowNext] = useState(false);
   const [isUnsaved, setIsUnsaved] = useState(false);
-  const [reading1, setReading1] = useState({
+  const [reading1, setReading1] = useState<{
+    height: number | "";
+    weight: number | "";
+    id: string;
+    date: string;
+  }>({
     height: 0,
     weight: 0,
     id: shortUUID().generate(),
     date: new Date().toLocaleString("sv-SE").replace("T", " "),
   });
-  const [reading2, setReading2] = useState({
+  const [reading2, setReading2] = useState<{
+    height: number | "";
+    weight: number | "";
+    id: string;
+    date: string;
+  }>({
     height: 0,
     weight: 0,
     id: shortUUID().generate(),
@@ -47,7 +57,7 @@ export default function Tab8() {
   });
   const [isDisabledReading2, setIsDisabledReading2] = useState(true);
   const location = useLocation();
-  console.log(id)
+  console.log(id);
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     setId(searchParams?.get("id"));
@@ -110,9 +120,9 @@ export default function Tab8() {
     setAlert({
       show: true,
       header: "Unsaved Changes",
-      message: "You have unsaved changes. Are you sure you want to leave?"
-    })
-  })
+      message: "You have unsaved changes. Are you sure you want to leave?",
+    });
+  });
   const handleSave = async () => {
     try {
       if (
@@ -189,7 +199,7 @@ export default function Tab8() {
         header: "Success",
         message: "Anthropometry data saved successfully.",
       });
-      setIsUnsaved(false)
+      setIsUnsaved(false);
     } catch (error) {
       console.log(error);
       setAlert({
@@ -213,12 +223,10 @@ export default function Tab8() {
             <IonRefresherContent
               className="spinner-only" // <-- Add this class
               refreshingSpinner="circles"
-            // You can remove the other text props
+              // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
-          <RegistrationCrumbs
-            currentPageLabel="Anthropometry"
-          />
+          <RegistrationCrumbs currentPageLabel="Anthropometry" />
           <ShowRegisteredTab
             id={id || ""}
             table_name="anthropometry"
@@ -231,17 +239,17 @@ export default function Tab8() {
                 <label className="text-slate-500">Height (in cm)</label>
 
                 <InputText
-                  keyfilter={"int"}
+                  type="number"
+                  keyfilter={"num"}
                   id="result_blood"
                   className="p-2 border"
                   onChange={(e) => {
                     setIsUnsaved(true);
                     setReading1((prev) => ({
                       ...prev,
-                      height: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  }
+                      height: e.target.value ? parseFloat(e.target.value) : "",
+                    }));
+                  }}
                   value={reading1.height.toString()}
                 />
               </div>
@@ -249,14 +257,15 @@ export default function Tab8() {
                 <label className=" text-slate-500 ">Weight (in kg)</label>
                 <InputText
                   id="result_blood"
+                  type="number"
+                  keyfilter={"num"}
                   onChange={(e) => {
                     setIsUnsaved(true);
                     setReading1((prev) => ({
                       ...prev,
-                      weight: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  }
+                      weight: e.target.value ? parseFloat(e.target.value) : "",
+                    }));
+                  }}
                   value={reading1.weight.toString()}
                   className="p-2 border"
                 />
@@ -268,6 +277,8 @@ export default function Tab8() {
                 <label className="text-slate-500">Height (in cm)</label>
 
                 <InputText
+                  type="number"
+                  keyfilter={"num"}
                   disabled={isDisabledReading2}
                   id="result_blood"
                   className="p-2 border"
@@ -275,26 +286,26 @@ export default function Tab8() {
                     setIsUnsaved(true);
                     setReading2((prev) => ({
                       ...prev,
-                      height: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  }
+                      height: e.target.value ? parseFloat(e.target.value) : "",
+                    }));
+                  }}
                   value={reading2.height.toString()}
                 />
               </div>
               <div className="mt-3 gap-2 flex items-start flex-col ">
                 <label className=" text-slate-500 ">Weight (in kg)</label>
                 <InputText
+                  type="number"
+                  keyfilter={"num"}
                   disabled={isDisabledReading2}
                   id="result_blood"
                   onChange={(e) => {
                     setIsUnsaved(true);
                     setReading2((prev) => ({
                       ...prev,
-                      weight: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  }
+                      weight: e.target.value ? parseFloat(e.target.value) : "",
+                    }));
+                  }}
                   value={reading2.weight.toString()}
                   className="p-2 border"
                 />

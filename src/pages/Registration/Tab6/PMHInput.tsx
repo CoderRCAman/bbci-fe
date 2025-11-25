@@ -90,14 +90,15 @@ export default function PMHInput({
         <FloatLabel>
           <InputText
             disabled={data?.diagnosed !== 1}
-            keyfilter="int"
+            keyfilter="int" 
+            type="number"
             value={data?.age_first_diagnosis?.toString() || ""}
             // Removed custom classes
             onChange={(e) =>
               updateStateData(
                 data.id,
                 "age_first_diagnosis",
-                parseInt(e.target.value) || 0
+                e.target.value === "" ? "" : parseInt(e.target.value)
               )
             }
           />

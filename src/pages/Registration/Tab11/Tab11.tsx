@@ -1,4 +1,11 @@
-import { IonAlert, IonContent, IonPage, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
+import {
+  IonAlert,
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+  RefresherEventDetail,
+} from "@ionic/react";
 import Header from "../../../components/Header";
 import SmokingTobacco from "./SmokingTobacco";
 import ChewingTobacco from "./ChewingTobacco";
@@ -14,6 +21,7 @@ import {
   populateWithBackend,
   saveToDBAlcohol,
   TOBACCO_ALCOHOL_CONSUMPION,
+  TobaccoAlcoholConsumption,
   validateTobaccoAlcohol,
 } from "./data";
 import { useSQLite } from "../../../utils/Sqlite";
@@ -45,8 +53,27 @@ export default function Tab11() {
   const [dirtyValuesMaster, setDirtyValuesMaster] = useState<initialState[]>(
     []
   );
-  const [isUnsaved, setIsUnsaved] = useState(false); 
-  
+  const [isUnsaved, setIsUnsaved] = useState(false);
+  const resetProduct = (
+    p: TOBACCO_ALCOHOL_CONSUMPION
+  ): TOBACCO_ALCOHOL_CONSUMPION => ({
+    ...p,
+    consumes: 2,
+    from_age: 0,
+    to_age: 0,
+    number_per_day: 0,
+    days_in_week: 0,
+    duration_placement_hr: 0,
+    duration_placement_min: 0,
+    site_of_placement_L: 0,
+    site_of_placement_R: 0,
+    site_of_placement_F: 0,
+    site_of_placement_NA: 0,
+    without_tobacco: 0,
+    consumption_unit_per_day: 0,
+    days_in_month: 0,
+  });
+
   async function fetchInitialData() {
     const id = searchParams.get("id") || "";
     try {
@@ -75,35 +102,53 @@ export default function Tab11() {
       show: true,
       header: "Unsaved Changes",
       message: "You have unsaved changes. Are you sure you want to leave?",
-    })
-  })
+    });
+  });
   const handleChangeMaster = (id: string, field: string, value: any) => {
     setIsUnsaved(true);
+
     setData((prevState) => {
       const updated = prevState.map((item) => {
-        if (item.id === id) {
-          return { ...item, [field]: value };
+        if (item.id !== id) return item;
+
+        let updatedItem = { ...item, [field]: value };
+
+        if (field === "consumed" && value !== 1) {
+          const resetProducts = updatedItem.products.map((p) =>
+            resetProduct(p)
+          );
+
+          updatedItem = {
+            ...updatedItem,
+            products: resetProducts,
+          };
+
+          // ⭐ ALSO UPDATE DIRTY LIST FOR ALL RESET PRODUCTS
+          setDirtyValuesProduct((prevDirty) => {
+            const cleared = prevDirty.filter(
+              (d) => d.type !== item.product_type
+            );
+            return [...cleared, ...resetProducts];
+          });
         }
-        return item;
+
+        return updatedItem;
       });
+
+      // master dirty unchanged
       const updatedItem = updated.find((item) => item.id === id);
       setDirtyValuesMaster((prev) => {
         const exists = prev.some((x) => x.id === id);
-
         if (exists) {
-          // Update the field in the existing object
           return prev.map((item) =>
             item.id === id ? { ...item, [field]: value } : item
           );
         }
-
-        // Find the full updated item from your main data source
-        const updatedItem = data.find((item) => item.id === id);
-        if (!updatedItem) return prev; // Fallback: shouldn't happen, but safe to handle
-
-        // Add new entry to dirty state, with updated field
-        return [...prev, { ...updatedItem, [field]: value }];
+        const original = data.find((item) => item.id === id);
+        if (!original) return prev;
+        return [...prev, { ...original, [field]: value }];
       });
+
       return updated;
     });
   };
@@ -115,41 +160,49 @@ export default function Tab11() {
     value: any
   ) => {
     setIsUnsaved(true);
-    setData((prev) => {
-      const updatedStates = prev.map((stateItem) => {
-        // ✅ only modify this state group if its product_type matches
-        if (stateItem.product_type !== type) {
-          return stateItem;
-        }
+
+    setData((prev) =>
+      prev.map((stateItem) => {
+        if (stateItem.product_type !== type) return stateItem;
 
         const updatedProducts = stateItem.products.map((prod) => {
-          if (prod.id === id) {
-            const updated = { ...prod, [field]: value };
+          if (prod.id !== id) return prod;
 
-            // ✅ Track this in dirty list
+          let updated = { ...prod, [field]: value };
+
+          // 1️⃣ RESET CASE
+          if (field === "consumes" && value !== 1) {
+            updated = resetProduct(updated);
+
+            // dirty update for RESET
             setDirtyValuesProduct((prevDirty) => {
-              const exists = prevDirty.find((p) => p.id === id);
+              const exists = prevDirty.some((p) => p.id === id);
               if (exists) {
-                // update existing
                 return prevDirty.map((p) =>
                   p.id === id && p.type === type ? updated : p
                 );
-              } else {
-                // insert new
-                return [...prevDirty, updated];
               }
+              return [...prevDirty, updated];
             });
-
-            return updated;
+          } else {
+            // 2️⃣ NORMAL DIRTY UPDATE (when NOT resetting)
+            setDirtyValuesProduct((prevDirty) => {
+              const exists = prevDirty.some((p) => p.id === id);
+              if (exists) {
+                return prevDirty.map((p) =>
+                  p.id === id && p.type === type ? updated : p
+                );
+              }
+              return [...prevDirty, updated];
+            });
           }
-          return prod;
+
+          return updated;
         });
 
         return { ...stateItem, products: updatedProducts };
-      });
-
-      return updatedStates;
-    });
+      })
+    );
   };
 
   const addNewOtherUi = (
@@ -195,9 +248,9 @@ export default function Tab11() {
       d.map((item) =>
         item.product_type === type
           ? {
-            ...item,
-            products: item.products.filter((x) => x.id !== id),
-          }
+              ...item,
+              products: item.products.filter((x) => x.id !== id),
+            }
           : item
       )
     );
@@ -221,18 +274,24 @@ export default function Tab11() {
           message: "This user was registered with a different tab id.",
           show: true,
         });
-      }  
-      
-      try { 
-        const userRes = await db?.query(`SELECT * FROM PATIENTS WHERE id = ?`, [id]);
+      }
+
+      try {
+        const userRes = await db?.query(`SELECT * FROM PATIENTS WHERE id = ?`, [
+          id,
+        ]);
         const userData = userRes?.values?.[0];
-        validateTobaccoAlcohol(dirtyValuesMaster , dirtyValuesProduct , userData.dob )
-      } catch (error:any) {
-         return setAlert({
-           show: true,
-           header: "Error",
-           message: error.message,
-         })
+        validateTobaccoAlcohol(
+          dirtyValuesMaster,
+          dirtyValuesProduct,
+          userData.dob
+        );
+      } catch (error: any) {
+        return setAlert({
+          show: true,
+          header: "Error",
+          message: error.message,
+        });
       }
       await saveToDBAlcohol(
         db,
@@ -277,20 +336,15 @@ export default function Tab11() {
             className="spinner-only"
             refreshingSpinner="circles"
           />
-        </IonRefresher> 
-        <RegistrationCrumbs 
-         currentPageLabel="Tobacco and Alcohol"
-        />
+        </IonRefresher>
+        <RegistrationCrumbs currentPageLabel="Tobacco and Alcohol" />
         <ShowRegisteredTab
           id={id || ""}
           table_name="TOBACCO_ALCOHOL_CONSUMPTION_MASTER"
           field_name="user_id"
         />
         <main ref={scrollRef} className="p-2 space-y-10">
-          <Accordion
-            className="space-y-2 outline-none"
-            activeIndex={0}
-          >
+          <Accordion className="space-y-2 outline-none" activeIndex={0}>
             <AccordionTab
               className="border-1 rounded  border-slate-200"
               header="Smoking tobacco"
