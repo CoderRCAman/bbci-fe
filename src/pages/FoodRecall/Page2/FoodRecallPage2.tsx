@@ -1,15 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, Link, useHistory } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
 import {
   IonContent,
   IonPage,
   IonAlert,
-  IonSelect,
-  IonSelectOption,
-  RefresherEventDetail,
   IonRefresher,
   IonRefresherContent,
+  RefresherEventDetail,
 } from "@ionic/react";
 import Header from "../../../components/Header";
 import {
@@ -19,23 +17,12 @@ import {
   loadHabitData,
   saveHabitData,
   checkHabitEditEligibility,
-  isDietaryComplete,
-  isCookingComplete,
-  isHouseholdComplete,
 } from "../data";
 import shortUUID from "short-uuid";
 import { Button } from "primereact/button";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
-import { Steps } from "primereact/steps";
-
-/**
- * FoodHabitPage (updated)
- * - Stepper shows sections as 7.1 / 7.2 / 7.3 / ... and final "7.n" which links to the Food Recall page.
- * - Clicking a step auto-saves (if unsaved), then scrolls to section on the same page.
- * - Final step navigates to Page 3 (Food Recall).
- * - Default radio values are not selected (generateDefaultHabitState sets diet_type = '')
- */
+import FlowCrumbs from "../../../components/FlowCrumbs";
 
 const PREP_METHODS = [
   "Shallow Frying",
@@ -82,10 +69,7 @@ const CustomRadio = ({
       disabled={disabled}
       className="w-4 h-4 text-cyan-600 border-gray-300 focus:ring-cyan-500"
     />
-    <label
-      htmlFor={id}
-      className={`ml-2 text-sm font-medium ${disabled ? "text-gray-400" : "text-gray-700 cursor-pointer"}`}
-    >
+    <label htmlFor={id} className={`ml-2 text-sm font-medium ${disabled ? "text-gray-400" : "text-gray-700 cursor-pointer"}`}>
       {label}
     </label>
   </div>
@@ -100,58 +84,46 @@ export default function FoodHabitPage() {
   const [isUnsaved, setIsUnsaved] = useState(false);
   const [saveInProgress, setSaveInProgress] = useState(false);
 
-  // STEP definitions (7.1 .. 7.n)
-  // The last item (key: 'recall') is special and navigates to Page 3
   const steps = [
-    { label: "7.1", key: "7.1", title: "Dietary Profile" },
-    { label: "7.2", key: "7.2", title: "Diet Duration" },
-    { label: "7.3", key: "7.3", title: "Cooking Habits" },
-    { label: "7.4", key: "7.4", title: "Fats/Oils & Prep" },
-    { label: "7.5", key: "7.5", title: "Preparation Frequency" },
-    { label: "7.6", key: "7.6", title: "Household Habits" },
-    { label: "7.n", key: "recall", title: "Food Recall (7.3)" }, // final navigates to recall page
+    { label: "Dietary Profile", path: "/food-recall/page2?step=0", order: 1 },
+    { label: "Cooking Habits", path: "/food-recall/page2?step=1", order: 2 },
+    { label: "Household Habits", path: "/food-recall/page2?step=2", order: 3 },
   ];
 
-  // Refs for sections — clicking step scrolls to these refs
-  const ref71 = useRef<HTMLDivElement | null>(null);
-  const ref72 = useRef<HTMLDivElement | null>(null);
-  const ref73 = useRef<HTMLDivElement | null>(null);
-  const ref74 = useRef<HTMLDivElement | null>(null);
-  const ref75 = useRef<HTMLDivElement | null>(null);
-  const ref76 = useRef<HTMLDivElement | null>(null);
+  const query = new URLSearchParams(location.search);
+  const initialStepParam = query.get("step");
+  const initialStepIndex = initialStepParam ? Math.max(0, Math.min(2, parseInt(initialStepParam, 10) || 0)) : 0;
+  const [currentStep, setCurrentStep] = useState<number>(initialStepIndex);
 
   // Data state
-  const searchParams = new URLSearchParams(location.search);
-  const userId = searchParams.get("user_id") || "";
-  const masterId = searchParams.get("master_id") || null;
   const [master, setMaster] = useState<IFoodHabitMaster | null>(null);
   const [fats, setFats] = useState<IFoodHabitFat[]>([]);
   const [alert, setAlert] = useState({ show: false, header: "", message: "" });
-  const [allowNext, setAllowNext] = useState(false);
 
-  // Load or create
+  const userId = query.get("user_id") || "";
+  const masterId = query.get("master_id") || null;
+
+  useBlockNavigation(isUnsaved, () => {
+    setAlert({ show: true, header: "Unsaved Changes", message: "You have unsaved changes. Please save before leaving the page." });
+  });
+
   const loadOrCreateData = async () => {
     setIsLoading(true);
     try {
-      const existingData = await loadHabitData(db!!, userId, masterId);
-      if (existingData) {
-        setMaster(existingData.master);
-        setFats(existingData.fats);
-        setAllowNext(
-          isDietaryComplete(existingData.master) &&
-            isCookingComplete(existingData.master, existingData.fats) &&
-            isHouseholdComplete(existingData.master)
-        );
+      const loaded = await loadHabitData(db!!, userId, masterId);
+      if (loaded) {
+        setMaster(loaded.master);
+        setFats(loaded.fats || []);
       } else if (userId) {
-        const { master: newMaster, fats: newFats } = generateDefaultHabitState(userId, tabId);
-        setMaster(newMaster);
-        setFats(newFats);
+        const { master: m, fats: f } = generateDefaultHabitState(userId, tabId);
+        setMaster(m);
+        setFats(f);
       } else {
-        setAlert({ show: true, header: "Error", message: "No patient ID was provided." });
+        setAlert({ show: true, header: "Error", message: "No patient ID provided. Please select a patient from Page 1." });
         setIsEditable(false);
       }
     } catch (e: any) {
-      setAlert({ show: true, header: "Load Error", message: `Failed to load data: ${e.message}` });
+      setAlert({ show: true, header: "Load Error", message: `Failed to load: ${e.message}` });
       setIsEditable(false);
     }
     setIsLoading(false);
@@ -163,11 +135,7 @@ export default function FoodHabitPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [db, sqlite, userId, masterId, tabId]);
 
-  useBlockNavigation(isUnsaved, () => {
-    setAlert({ show: true, header: "Unsaved Changes", message: "You have unsaved changes. Please save before leaving the page." });
-  });
-
-  // helpers unchanged
+  // change helpers
   const handleMasterChange = (field: keyof IFoodHabitMaster, value: any) => {
     if (!master) return;
     setIsUnsaved(true);
@@ -179,7 +147,7 @@ export default function FoodHabitPage() {
     setIsUnsaved(true);
     const newFat: IFoodHabitFat = {
       id: shortUUID.generate(),
-      master_id: master!.id,
+      master_id: master.id,
       name: "",
       usage: "yes",
       family_consumption: "",
@@ -198,15 +166,31 @@ export default function FoodHabitPage() {
     setFats((prev) => prev.filter((f) => f.id !== id));
   };
 
-  // save
+  // validation for completeness (simple 80/20 checks)
+  const checkDietaryComplete = (m: IFoodHabitMaster | null) => {
+    if (!m) return false;
+    return !!m.diet_type && m.diet_type.length > 0;
+  };
+  const checkCookingComplete = (m: IFoodHabitMaster | null, f: IFoodHabitFat[]) => {
+    if (!m) return false;
+    // consider at least one fat entry present or any prep method set to non-zero
+    const anyPrep = ["method_shallow_frying", "method_deep_frying", "method_boiling", "method_steaming", "method_sauting", "method_grill_bbq"].some(k => (m as any)[k] !== '0');
+    return anyPrep || f.length > 0;
+  };
+  const checkHouseholdComplete = (m: IFoodHabitMaster | null) => {
+    if (!m) return false;
+    return !!m.meals_per_day || !!m.family_sharing;
+  };
+
+  // Save
   const handleSave = async (): Promise<boolean> => {
     if (!db || !sqlite || !master || !isEditable) {
-      setAlert({ show: true, header: "Cannot Save", message: "The database is not ready, data is missing, or you do not have permission to edit." });
+      setAlert({ show: true, header: "Cannot Save", message: "DB not ready or missing data." });
       return false;
     }
 
     if (db && !(await checkHabitEditEligibility(db, masterId || "", tabId))) {
-      setAlert({ show: true, header: "Restricted access", message: "This record was registered with a different tab id." });
+      setAlert({ show: true, header: "Restricted access", message: "This record belongs to another tab." });
       return false;
     }
 
@@ -214,62 +198,51 @@ export default function FoodHabitPage() {
     try {
       await saveHabitData(db, sqlite, master, fats, tabId);
       setIsUnsaved(false);
-      setAllowNext(
-        isDietaryComplete(master) &&
-          isCookingComplete(master, fats) &&
-          isHouseholdComplete(master)
-      );
       setSaveInProgress(false);
+      setAlert({ show: true, header: "Saved", message: "Food Habit data saved." });
       return true;
     } catch (e: any) {
       setSaveInProgress(false);
-      setAlert({ show: true, header: "Save Error", message: `Failed to save data: ${e.message}` });
+      setAlert({ show: true, header: "Save Error", message: `Failed to save: ${e.message}` });
       return false;
     }
   };
 
-  // Step click -> save (if needed) then scroll to section or navigate to recall page
-  const onStepClick = async (index: number) => {
-    const step = steps[index];
-    // If final step (recall) -> navigate to page 3 after ensuring saved
-    if (step.key === "recall") {
-      if (isUnsaved) {
-        const ok = await handleSave();
-        if (!ok) return;
-      } else {
-        // optional: final save to refresh updated_at
-        await handleSave();
-      }
-      history.push(`/food-recall/page3?master_id=${master!.id}&user_id=${master!.user_id}`);
+  // Next button behaviour
+  const handleNextClick = async () => {
+    // Always save any unsaved changes first
+    if (isUnsaved) {
+      const ok = await handleSave();
+      if (!ok) return;
+    }
+
+    // if not last step: switch step
+    if (currentStep < steps.length - 1) {
+      const next = currentStep + 1;
+      setCurrentStep(next);
+      const params = new URLSearchParams(location.search);
+      params.set("step", String(next));
+      history.replace({ pathname: location.pathname, search: params.toString() });
       return;
     }
 
-    // If there are unsaved edits, save before jumping
-    if (isUnsaved) {
-      const ok = await handleSave();
-      if (!ok) return; // abort if save failed
+    // final-step: validate completeness
+    const okDiet = checkDietaryComplete(master);
+    const okCook = checkCookingComplete(master, fats);
+    const okHouse = checkHouseholdComplete(master);
+    if (!(okDiet && okCook && okHouse)) {
+      setAlert({ show: true, header: "Incomplete", message: "Please complete all sections before proceeding to Food Recall." });
+      return;
     }
 
-    // Map step key to ref and scroll
-    const mapKeyToRef: Record<string, React.RefObject<HTMLDivElement> | null> = {
-      "7.1": ref71,
-      "7.2": ref72,
-      "7.3": ref73,
-      "7.4": ref74,
-      "7.5": ref75,
-      "7.6": ref76,
-    };
+    const finalOk = await handleSave();
+    if (!finalOk) return;
 
-    const targetRef = mapKeyToRef[step.key];
-    if (targetRef && targetRef.current) {
-      targetRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      // if not found, scroll to top
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    // redirect to Page 3
+    history.push(`/food-recall/page3?master_id=${master!.id}&user_id=${master!.user_id}`);
   };
 
-  // refresh handler
+  // Refresh handler
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await loadOrCreateData();
     setIsUnsaved(false);
@@ -298,7 +271,6 @@ export default function FoodHabitPage() {
     );
   }
 
-  // Parse multi-selects
   const additives = JSON.parse(master.additives_json || "[]") as string[];
   const waterSupply = JSON.parse(master.water_supply_json || "[]") as string[];
 
@@ -307,185 +279,170 @@ export default function FoodHabitPage() {
       <Header title="Food Habit Survey (Module 1)" />
       <IonContent className="ion-padding" fullscreen>
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent className="spinner-only" refreshingSpinner="circles" />
+          <IonRefresherContent refreshingSpinner="circles" />
         </IonRefresher>
 
         <div className="max-w-5xl mx-auto p-2">
-          {/* Stepper UI — clickable items */}
-          <div className="mb-4 sticky top-14 bg-white/90 z-20 py-2 border-b border-gray-100">
-            <div className="flex gap-3 items-center overflow-auto px-2">
-              {steps.map((s, idx) => (
-                <button
-                  key={s.key}
-                  onClick={() => onStepClick(idx)}
-                  className="px-3 py-2 rounded-md border border-gray-200 hover:bg-gray-50 text-sm font-medium"
-                  title={s.title}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
+          <FlowCrumbs steps={steps} currentPageLabel={steps[currentStep].label} idQueryParam={"master_id"} />
+
+          <div className="flex items-center gap-4 mt-2 text-sm">
+            {saveInProgress ? <div className="text-xs text-gray-500">Saving...</div> : isUnsaved ? <div className="text-xs text-orange-500">Unsaved changes</div> : <div className="text-xs text-green-600">All changes saved</div>}
+            <div className="ml-auto text-xs">Step {currentStep + 1} of {steps.length}</div>
           </div>
 
           <ShowRegisteredTab id={master.id} table_name="FOOD_HABITS_MASTER" />
 
           <main className="space-y-6">
-            {/* 7.1 Dietary Profile */}
-            <div ref={ref71} className="bg-white p-6 rounded-lg shadow border">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">7.1 Dietary Profile</h2>
-              <fieldset className="border border-gray-200 p-4 rounded-md mb-4" disabled={!isEditable}>
-                <legend className="text-sm font-semibold text-gray-600 px-2">Are you Vegetarian or Non-Veg?</legend>
-                <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
-                  <CustomRadio id="d_veg" name="dietType" value="V" onChange={(e: any) => handleMasterChange("diet_type", e.target.value)} checked={master.diet_type === "V"} label="Vegetarian (1)" disabled={!isEditable} />
-                  <CustomRadio id="d_nonveg" name="dietType" value="N" onChange={(e: any) => handleMasterChange("diet_type", e.target.value)} checked={master.diet_type === "N"} label="Non-Veg (2)" disabled={!isEditable} />
-                  <CustomRadio id="d_other" name="dietType" value="O" onChange={(e: any) => handleMasterChange("diet_type", e.target.value)} checked={master.diet_type === "O"} label="Other/Mixed (0)" disabled={!isEditable} />
+            {/* ---------- Step panels ---------- */}
+            {currentStep === 0 && (
+              <div className="bg-white p-6 rounded-lg shadow border">
+                <h2 className="text-xl font-semibold">1. Dietary Profile</h2>
+                <fieldset className="border p-3 rounded mt-3" disabled={!isEditable}>
+                  <legend className="px-1 text-sm text-gray-600">7.1 Are you Vegetarian or Non-Veg?</legend>
+                  <div className="flex gap-4 mt-2">
+                    <CustomRadio id="d_veg" name="dietType" value="V" onChange={(e: any) => handleMasterChange("diet_type", e.target.value)} checked={master.diet_type === "V"} label="Vegetarian" />
+                    <CustomRadio id="d_nonveg" name="dietType" value="N" onChange={(e: any) => handleMasterChange("diet_type", e.target.value)} checked={master.diet_type === "N"} label="Non-Veg" />
+                    <CustomRadio id="d_other" name="dietType" value="O" onChange={(e: any) => handleMasterChange("diet_type", e.target.value)} checked={master.diet_type === "O"} label="Other/Mixed" />
+                  </div>
+                </fieldset>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium">7.2 How long have you been following this diet? (Years/Months)</label>
+                  <input type="text" value={master.diet_duration} onChange={(e) => handleMasterChange("diet_duration", e.target.value)} className="w-full p-2 border rounded mt-1 disabled:bg-gray-100" disabled={!isEditable} placeholder="e.g., 5 years" />
                 </div>
-              </fieldset>
-              <div className="mt-4">
-                <label htmlFor="diet_duration" className="block text-gray-600 font-semibold mb-2 text-sm">7.2 How long have you been following this diet? (Years/Months)</label>
-                <input type="text" id="diet_duration" value={master.diet_duration} onChange={(e) => handleMasterChange("diet_duration", e.target.value)} placeholder="e.g., 5 years" disabled={!isEditable} className="w-full p-2 border border-gray-300 rounded-md disabled:bg-gray-100" />
               </div>
-            </div>
+            )}
 
-            {/* 7.3 Cooking Habits */}
-            <div ref={ref73} className="bg-white p-6 rounded-lg shadow border">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">7.3 Cooking Habits</h2>
-              <fieldset className="border border-gray-200 p-4 rounded-md mb-4" disabled={!isEditable}>
-                <legend className="text-sm font-semibold text-gray-600 px-2">7.4 Do you add following to cooked food? (Multiple Select)</legend>
-                <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
-                  {["Salt", "Sugar", "Jaggery", "Ghee", "Pickled Vegetables", "Mustard Oil", "Khar/Tapigo", "None"].map(item => (
-                    <div key={item} className="flex items-center">
-                      <input type="checkbox" id={`add-${item}`} checked={additives.includes(item)} disabled={!isEditable} onChange={(e) => {
-                        const newAdditives = e.target.checked ? [...additives, item] : additives.filter(a => a !== item);
-                        handleMasterChange('additives_json', JSON.stringify(newAdditives));
-                      }} className="w-4 h-4 text-cyan-600 border-gray-300 focus:ring-cyan-500" />
-                      <label htmlFor={`add-${item}`} className="ml-2 text-sm font-medium text-gray-700">{item}</label>
-                    </div>
-                  ))}
-                </div>
-              </fieldset>
+            {currentStep === 1 && (
+              <div className="bg-white p-6 rounded-lg shadow border">
+                <h2 className="text-xl font-semibold">2. Cooking Habits</h2>
 
-              {/* 7.4 Fats list (section ref 7.4 maps to ref74) */}
-              <div ref={ref74} className="mt-6 border border-gray-200 p-4 rounded-md">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-semibold text-gray-600">7.5 Which of the following you cook your food with? (Fats/Oils)</h3>
-                  <Button label="+ Add Fat/Oil" severity="info" onClick={handleAddFat} disabled={!isEditable} className="py-2" />
-                </div>
-                <div className="space-y-4">
-                  {fats.map((fat, index) => (
-                    <div key={fat.id} className="border border-dashed border-gray-300 rounded-md p-3 bg-white relative">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-md font-semibold text-gray-800">Fat/Oil {index + 1}</h4>
-                        <button onClick={() => handleRemoveFat(fat.id)} disabled={!isEditable} className="text-red-500 hover:text-red-700 font-bold text-xl px-2 py-0 disabled:text-gray-300">&times;</button>
-                      </div>
-                      <input type="text" value={fat.name} onChange={(e) => handleFatChange(fat.id, "name", e.target.value)} placeholder="Type of Fat/Oil" disabled={!isEditable} className="w-full p-2 border rounded-md mb-3 disabled:bg-gray-100" />
-                      <div className="grid grid-cols-3 gap-3 items-center">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Used?</label>
-                          <IonSelect value={fat.usage} onIonChange={(e) => handleFatChange(fat.id, "usage", e.detail.value)} interface="popover" placeholder="Select" disabled={!isEditable}>
-                            <IonSelectOption value="yes">Yes</IonSelectOption>
-                            <IonSelectOption value="no">No</IonSelectOption>
-                            <IonSelectOption value="dont know">Don't Know</IonSelectOption>
-                            <IonSelectOption value="refused">Refused</IonSelectOption>
-                          </IonSelect>
+                <fieldset className="border p-3 rounded mt-3" disabled={!isEditable}>
+                  <legend className="px-1 text-sm text-gray-600">7.4 Do you add following to cooked food? (Multiple Select)</legend>
+                  <div className="flex flex-wrap gap-3 mt-2">
+                    {["Salt", "Sugar", "Jaggery", "Ghee", "Pickled Vegetables", "Mustard Oil", "Khar/Tapigo", "None"].map(item => {
+                      const checked = additives.includes(item);
+                      return (
+                        <label key={item} className="inline-flex items-center gap-2">
+                          <input type="checkbox" checked={checked} disabled={!isEditable} onChange={(e) => {
+                            const newAdd = e.target.checked ? [...additives, item] : additives.filter(a => a !== item);
+                            handleMasterChange("additives_json", JSON.stringify(newAdd));
+                          }} />
+                          <span className="text-sm">{item}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+
+                <div className="mt-4 border p-3 rounded">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-md font-semibold">7.5 Fats Used</h3>
+                    <Button label="+ Add Fat/Oil" size="small" onClick={handleAddFat} disabled={!isEditable} />
+                  </div>
+
+                  <div className="space-y-3">
+                    {fats.map((fat, idx) => (
+                      <div className="border p-3 rounded" key={fat.id}>
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="font-medium">Fat/Oil {idx + 1}</div>
+                          <button onClick={() => handleRemoveFat(fat.id)} className="text-red-500" disabled={!isEditable}>&times;</button>
                         </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Consumption (Lt/Kg/M)</label>
-                          <input type="text" value={fat.family_consumption} onChange={(e) => handleFatChange(fat.id, "family_consumption", e.target.value)} placeholder="e.g., 2 Liters/Month" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Years Used</label>
-                          <input type="text" value={fat.years_used} onChange={(e) => handleFatChange(fat.id, "years_used", e.target.value)} placeholder="e.g., 10 years" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
+                        <input value={fat.name} onChange={(e) => handleFatChange(fat.id, "name", e.target.value)} placeholder="Type of Fat/Oil" className="w-full p-2 border rounded mb-2" disabled={!isEditable} />
+                        <div className="grid grid-cols-3 gap-3">
+                          <select value={fat.usage} onChange={(e) => handleFatChange(fat.id, "usage", e.target.value)} disabled={!isEditable} className="p-2 border rounded">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                            <option value="dont know">Don't Know</option>
+                          </select>
+                          <input value={fat.family_consumption} onChange={(e) => handleFatChange(fat.id, "family_consumption", e.target.value)} placeholder="Consumption (Lt/Kg/M)" className="p-2 border rounded" disabled={!isEditable} />
+                          <input value={fat.years_used} onChange={(e) => handleFatChange(fat.id, "years_used", e.target.value)} placeholder="Years Used" className="p-2 border rounded" disabled={!isEditable} />
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 border p-3 rounded">
+                  <h3 className="font-semibold mb-2">7.6 Preparation Method Frequency</h3>
+                  <div className="grid grid-cols-4 gap-2 text-xs font-bold border-b pb-2 mb-2">
+                    <div>Method</div>
+                    <div className="text-center">Never (0)</div>
+                    <div className="text-center">Rarely (1)</div>
+                    <div className="text-center">Most Time (2)</div>
+                  </div>
+                  {PREP_METHODS.map((method) => {
+                    const key = ("method_" + method.split(" ")[0].replace("/", "").toLowerCase()) as PrepMethodKey;
+                    return (
+                      <div key={method} className="grid grid-cols-4 items-center py-2 border-b last:border-b-0">
+                        <div>{method}</div>
+                        {["0", "1", "2"].map((val) => (
+                          <div key={val} className="flex justify-center">
+                            <input type="radio" name={`prep-${method}`} value={val} checked={(master as any)[key] === val} disabled={!isEditable} onChange={(e) => handleMasterChange(key, e.target.value as PrepFrequencyValue)} />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
+            )}
 
-              {/* 7.5 Preparation Frequency */}
-              <div ref={ref75} className="mt-6 border border-gray-200 p-4 rounded-md">
-                <h3 className="text-sm font-semibold text-gray-600 mb-4">7.6 How often do you prepare food using these methods?</h3>
-                <div className="grid grid-cols-4 text-xs font-bold text-gray-600 border-b pb-2 mb-2">
-                  <div className="col-span-1">Method</div>
-                  <div className="text-center">Never (0)</div>
-                  <div className="text-center">Rarely (1)</div>
-                  <div className="text-center">Most Time (2)</div>
+            {currentStep === 2 && (
+              <div className="bg-white p-6 rounded-lg shadow border">
+                <h2 className="text-xl font-semibold">3. Household Habits</h2>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium">7.7 How many family members usually share each meal?</label>
+                  <input type="number" value={master.family_sharing as any} onChange={(e) => handleMasterChange("family_sharing", e.target.value)} className="w-full p-2 border rounded mt-1" disabled={!isEditable} />
                 </div>
-                {PREP_METHODS.map((method) => {
-                  const key = ("method_" + method.split(" ")[0].replace("/", "").toLowerCase()) as PrepMethodKey;
-                  return (
-                    <div key={method} className="grid grid-cols-4 items-center py-2 border-b border-gray-100 last:border-b-0">
-                      <div className="col-span-1 text-sm font-medium text-gray-800">{method}</div>
-                      {["0", "1", "2"].map((frequency) => (
-                        <div key={`${method}-${frequency}`} className="flex justify-center">
-                          <input type="radio" id={`prep-${method}-${frequency}`} name={`prepMethod-${method}`} value={frequency} checked={master[key] === frequency} disabled={!isEditable} onChange={(e) => handleMasterChange(key, e.target.value as PrepFrequencyValue)} className="w-4 h-4 text-cyan-600 border-gray-300 focus:ring-cyan-500" />
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
 
-            {/* 7.6 Household Habits */}
-            <div ref={ref76} className="bg-white p-6 rounded-lg shadow border">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">7.6 Household Habits</h2>
-              <div className="mb-4">
-                <label htmlFor="family_sharing" className="block text-gray-600 font-semibold mb-2 text-sm">7.7 How many family members usually share each meal?</label>
-                <input type="number" id="family_sharing" value={master.family_sharing as any} onChange={(e) => handleMasterChange("family_sharing", e.target.value)} placeholder="Enter number" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="meals_per_day" className="block text-gray-600 font-semibold mb-2 text-sm">7.8 How many times do you eat daily (including breakfast/snacks)?</label>
-                <input type="number" id="meals_per_day" value={master.meals_per_day as any} onChange={(e) => handleMasterChange("meals_per_day", e.target.value)} placeholder="Enter number" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
-              </div>
-              <div className="mb-4">
-                <label htmlFor="water_supply" className="block text-gray-600 font-semibold mb-2 text-sm">7.9 Water supply (Multiple Select)</label>
-                <IonSelect value={waterSupply} multiple={true} onIonChange={(e) => handleMasterChange("water_supply_json", JSON.stringify(e.detail.value))} placeholder="Select all that apply" disabled={!isEditable} className="p-2 border rounded-md">
-                  {["River", "Govt Municipal", "Tube", "Water Well", "Pond", "Other"].map((source) => (
-                    <IonSelectOption key={source} value={source}>{source}</IonSelectOption>
-                  ))}
-                </IonSelect>
-              </div>
-            </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium">7.8 How many times do you eat daily?</label>
+                  <input type="number" value={master.meals_per_day as any} onChange={(e) => handleMasterChange("meals_per_day", e.target.value)} className="w-full p-2 border rounded mt-1" disabled={!isEditable} />
+                </div>
 
-            {/* Save & Navigation area */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium">7.9 Water supply (Multiple Select)</label>
+                  <select multiple value={JSON.parse(master.water_supply_json || "[]")} onChange={(e: any) => {
+                    const opts = Array.from(e.target.selectedOptions).map((o: any) => o.value);
+                    handleMasterChange("water_supply_json", JSON.stringify(opts));
+                  }} className="w-full p-2 border rounded mt-1" disabled={!isEditable}>
+                    {["River", "Govt Municipal", "Tube", "Water Well", "Pond", "Other"].map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* navigation */}
             <div className="flex justify-between items-center mt-6">
-              <Link to={`/food1`} onClick={(e) => {
+              <Link to="/food1" onClick={(e) => {
                 if (isUnsaved) {
-                  setAlert({ show: true, header: "Unsaved Changes", message: "You have unsaved changes. Please save before leaving the page." });
+                  setAlert({ show: true, header: "Unsaved Changes", message: "Please save before leaving." });
                   e.preventDefault();
                 }
               }}>
-                <Button label="Back to Patient List" className="px-5 py-2 rounded" icon="pi pi-arrow-left" outlined />
+                <Button label="Back to Patient List" icon="pi pi-arrow-left" outlined />
               </Link>
 
               <div className="flex gap-3 items-center">
-                <Button label="Save" onClick={async () => { await handleSave(); }} severity="success" icon="pi pi-check" />
-                <Button label="Next to Recall" onClick={async () => {
+                {currentStep > 0 && <Button label="Previous" onClick={async () => {
                   if (isUnsaved) {
                     const ok = await handleSave();
                     if (!ok) return;
                   }
-                  // Recompute completeness live
-                  const dietaryOk = isDietaryComplete(master);
-                  const cookingOk = isCookingComplete(master, fats);
-                  const householdOk = isHouseholdComplete(master);
-                  if (!(dietaryOk && cookingOk && householdOk)) {
-                    setAlert({ show: true, header: "Incomplete", message: "Please complete all sections before proceeding to Food Recall." });
-                    return;
-                  }
-                  await handleSave();
-                  history.push(`/food-recall/page3?master_id=${master.id}&user_id=${master.user_id}`);
-                }} severity="secondary" />
+                  setCurrentStep(currentStep - 1);
+                }} outlined />}
+
+                <Button label={currentStep < steps.length - 1 ? "Next Section" : "Next (to Recall)"} onClick={handleNextClick} severity="success" />
               </div>
             </div>
 
-            <div className="pb-[200px]" />
+            <div style={{ paddingBottom: 160 }} />
           </main>
         </div>
 
-        <IonAlert isOpen={alert.show} onDidDismiss={() => setAlert((a) => ({ ...a, show: false }))} header={alert.header} message={alert.message} buttons={["OK"]} />
+        <IonAlert isOpen={alert.show} onDidDismiss={() => setAlert({ show: false, header: "", message: "" })} header={alert.header} message={alert.message} buttons={["OK"]} />
       </IonContent>
     </IonPage>
   );

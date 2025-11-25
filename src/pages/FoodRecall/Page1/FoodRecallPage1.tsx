@@ -85,11 +85,17 @@ export default function FoodRecallPage1() {
     };
 
     // Body template for the "View/Edit" table link
+    // Clicking "Edit" on Page 1 will now open Page 3 (Food Recall) in edit mode directly.
     const previousRecallLinkBody = (rowData: any) => {
-        // This link goes to the FoodHabitPage (Page 2) and passes the MASTER HABIT ID
-        // This will trigger "edit" mode in the habit page
-        return <Link to={`/food-recall/page2?master_id=${rowData.master_id}&user_id=${rowData.user_id}`}>{rowData.master_id}</Link>
+        // route directly to FoodRecallEntryPage (page3) for editing the existing survey
+        // we keep user_id for context/compatibility
+        return (
+            <Link to={`/food-recall/page3?master_id=${rowData.master_id}&user_id=${rowData.user_id}`}>
+                {rowData.master_id}
+            </Link>
+        );
     };
+
 
     return (
         <IonPage>
@@ -98,9 +104,9 @@ export default function FoodRecallPage1() {
                 <main className="p-2">
                     <div className="mt-5 border rounded">
                         <div className="pl-5 py-2">
-                            <h2 className="text-slate-600 font-semibold">Process a new Food Recall (Select Patient)</h2>
+                            <h2 className="text-slate-600 font-semibold">New Food Habit Record (Select Patient)</h2>
                         </div>
-                        <DataTable 
+                        <DataTable
                             value={participants}
                             globalFilter={globalFilterValue}
                             header={renderHeaderNew}
@@ -116,9 +122,9 @@ export default function FoodRecallPage1() {
 
                     <div className="mt-10 border rounded">
                         <div className="pl-5 py-2">
-                            <h2 className="text-slate-500 font-semibold">View/Edit Previous Food Recalls</h2>
+                            <h2 className="text-slate-500 font-semibold">Add Food Recall for Patient (View/Edit Habit Record)</h2>
                         </div>
-                        <DataTable 
+                        <DataTable
                             value={previousRecalls}
                             globalFilter={globalFilterValue1}
                             header={renderHeaderPrevious}
