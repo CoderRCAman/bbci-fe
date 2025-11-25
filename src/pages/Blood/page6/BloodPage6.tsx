@@ -59,14 +59,14 @@ export default function BloodPage6() {
         res2?.values?.length
           ? (res2?.values as RFTType[])
           : [
-              {
-                sampleId: sampleId,
-                test_name: "Uric Acid",
-                result: 0,
-                unit: "mg/dL",
-                id: shortUUID().generate(),
-              },
-            ]
+            {
+              sampleId: sampleId,
+              test_name: "Uric Acid",
+              result: 0,
+              unit: "mg/dL",
+              id: shortUUID().generate(),
+            },
+          ]
       );
     } catch (error) {
       console.log(error);
@@ -213,8 +213,8 @@ export default function BloodPage6() {
                   body={(rowData) => (
                     <InputText
                       placeholder="Modify"
-                       value={parseFloat(rowData.result).toString()}
-                      className="p-2 border" 
+                      value={parseFloat(rowData.result).toString()}
+                      className="p-2 border"
                       type="number"
                       id="result_blood"
                       onChange={(e) => {
@@ -223,9 +223,9 @@ export default function BloodPage6() {
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                  ...item,
-                                  result: parseFloat(e.target.value) || 0,
-                                }
+                                ...item,
+                                result: e.target.value === "" ? "" : parseFloat(e.target.value),
+                              }
                               : item
                           )
                         );
@@ -255,9 +255,8 @@ export default function BloodPage6() {
 
             <div className="flex gap-2 mt-10 justify-between ">
               <Link
-                to={`/blood5?id=${id}&sampleId=${sampleId}&edit=${
-                  editFlag ? "yes" : "no"
-                }`}
+                to={`/blood5?id=${id}&sampleId=${sampleId}&edit=${editFlag ? "yes" : "no"
+                  }`}
               >
                 <Button
                   label="PREV"
@@ -267,9 +266,8 @@ export default function BloodPage6() {
                 />
               </Link>
               <Link
-                to={`/blood7?id=${id}&sampleId=${sampleId}&edit=${
-                  editFlag ? "yes" : "no"
-                }`}
+                to={`/blood7?id=${id}&sampleId=${sampleId}&edit=${editFlag ? "yes" : "no"
+                  }`}
               >
                 <Button
                   label="NEXT"

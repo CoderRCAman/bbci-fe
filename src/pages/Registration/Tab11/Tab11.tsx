@@ -53,6 +53,7 @@ export default function Tab11() {
   const [dirtyValuesMaster, setDirtyValuesMaster] = useState<initialState[]>(
     []
   );
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [isUnsaved, setIsUnsaved] = useState(false);
   const resetProduct = (
     p: TOBACCO_ALCOHOL_CONSUMPION
@@ -72,6 +73,7 @@ export default function Tab11() {
     without_tobacco: 0,
     consumption_unit_per_day: 0,
     days_in_month: 0,
+    product: p.is_other_product === 1 ? '' : p.product
   });
 
   async function fetchInitialData() {
@@ -104,6 +106,10 @@ export default function Tab11() {
       message: "You have unsaved changes. Are you sure you want to leave?",
     });
   });
+  const productChangedAfterReset = (oldP: any, resetP: any) => {
+    return JSON.stringify(oldP) !== JSON.stringify(resetP);
+  };
+
   const handleChangeMaster = (id: string, field: string, value: any) => {
     setIsUnsaved(true);
 
@@ -113,30 +119,60 @@ export default function Tab11() {
 
         let updatedItem = { ...item, [field]: value };
 
+        // RUN RESET ONLY WHEN consumed ≠ 1
         if (field === "consumed" && value !== 1) {
-          const resetProducts = updatedItem.products.map((p) =>
-            resetProduct(p)
-          );
 
-          updatedItem = {
-            ...updatedItem,
-            products: resetProducts,
-          };
+          const resetProducts = updatedItem.products.map((p) => resetProduct(p));
 
-          // ⭐ ALSO UPDATE DIRTY LIST FOR ALL RESET PRODUCTS
-          setDirtyValuesProduct((prevDirty) => {
-            const cleared = prevDirty.filter(
-              (d) => d.type !== item.product_type
+          // Replace all products with reset versions
+          updatedItem = { ...updatedItem, products: resetProducts };
+
+          // Detect duplicate "other" items
+          const idsDeleted = resetProducts
+            .filter((p) => p.is_other_product === 1)
+            .map((p) => p.id);
+
+          // Remove duplicates (keep first)
+          if (idsDeleted.length > 1) {
+            const toDelete = idsDeleted.slice(1);
+
+            setDeletedIds(toDelete);
+
+            updatedItem.products = updatedItem.products.filter(
+              (p) => !toDelete.includes(p.id)
             );
-            return [...cleared, ...resetProducts];
+          }
+
+          // ⭐ DIRTY ONLY THE PRODUCTS THAT CHANGED
+          setDirtyValuesProduct((prevDirty) => {
+            let cleaned = [...prevDirty];
+
+            // 1️⃣ Remove deleted IDs from dirty list
+            cleaned = cleaned.filter(
+              (p) => !(idsDeleted.length > 1 && idsDeleted.slice(1).includes(p.id))
+            );
+
+            // 2️⃣ Remove all products of this type (since master reset)
+            cleaned = cleaned.filter((p) => p.type !== item.product_type);
+
+            // 3️⃣ Add only changed products (not all resetProducts)
+            const productsToDirty: any[] = [];
+
+            updatedItem.products.forEach((resetP, index) => {
+              const oldP = item.products[index];
+              if (productChangedAfterReset(oldP, resetP)) {
+                productsToDirty.push(resetP);
+              }
+            });
+
+            return [...cleaned, ...productsToDirty];
           });
         }
 
         return updatedItem;
       });
 
-      // master dirty unchanged
-      const updatedItem = updated.find((item) => item.id === id);
+      // MASTER dirty tracking stays the same
       setDirtyValuesMaster((prev) => {
         const exists = prev.some((x) => x.id === id);
         if (exists) {
@@ -146,12 +182,14 @@ export default function Tab11() {
         }
         const original = data.find((item) => item.id === id);
         if (!original) return prev;
+
         return [...prev, { ...original, [field]: value }];
       });
 
       return updated;
     });
   };
+
 
   const handleChangeProds = (
     id: string,
@@ -244,13 +282,14 @@ export default function Tab11() {
     )
       return;
     setIsUnsaved(true);
+    setDeletedIds(ids => [...ids, id]);
     setData((d) =>
       d.map((item) =>
         item.product_type === type
           ? {
-              ...item,
-              products: item.products.filter((x) => x.id !== id),
-            }
+            ...item,
+            products: item.products.filter((x) => x.id !== id),
+          }
           : item
       )
     );
@@ -297,7 +336,8 @@ export default function Tab11() {
         db,
         sqlite,
         dirtyValuesMaster,
-        dirtyValuesProduct,
+        dirtyValuesProduct, 
+        deletedIds, 
         id,
         tabId
       );
@@ -321,6 +361,8 @@ export default function Tab11() {
     setIsUnsaved(false);
     event.detail.complete();
   };
+
+  console.log(dirtyValuesMaster, dirtyValuesProduct , deletedIds)
   return (
     <IonPage>
       <Header
