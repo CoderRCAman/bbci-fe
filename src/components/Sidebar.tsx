@@ -29,7 +29,7 @@ const menuItems = [
     { text: 'Blood Test / Physical', path: '/blood1', icon: medkitOutline },
     { text: 'Endoscopy', path: '/endo1', icon: cameraOutline },
     { text: 'Food Recall', path: '/food1', icon: fastFoodOutline },
-    { text: 'Synch To Database', path: '/tab3', icon: syncOutline },
+    { text: 'Sync To Database', path: '/tab3', icon: syncOutline },
 ];
 
 export default function Sidebar() {
