@@ -204,7 +204,7 @@ export default function BloodPage4() {
                             item.id === rowData.id
                               ? {
                                   ...item,
-                                  result: parseFloat(e.target.value) || 0,
+                                  result: e.target.value === "" ? "" : parseFloat(e.target.value),
                                 }
                               : item
                           )

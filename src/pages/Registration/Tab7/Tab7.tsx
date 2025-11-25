@@ -342,6 +342,7 @@ export default function Tab7() {
                 <InputText
                   id="brothers"
                   keyfilter={"int"}
+                  type="number"
                   placeholder="0" // Placeholder "0" is clearer for number inputs
                   className="p-inputtext-sm w-full" // PrimeReact's small size + full width
                   value={familyHistoryMaster[0]?.brothers.toString()}
@@ -349,9 +350,7 @@ export default function Tab7() {
                     handleChangeMaster(
                       familyHistoryMaster[0].id,
                       "brothers",
-                      isNaN(parseInt(e.target.value))
-                        ? 0
-                        : parseInt(e.target.value)
+                      e.target.value === "" ? "" : parseInt(e.target.value)
                     )
                   }
                 />
@@ -368,6 +367,7 @@ export default function Tab7() {
                 <InputText
                   id="sisters"
                   keyfilter={"int"}
+                  type="number"
                   placeholder="0"
                   className="p-inputtext-sm w-full"
                   value={familyHistoryMaster[0]?.sisters.toString()}
@@ -375,9 +375,7 @@ export default function Tab7() {
                     handleChangeMaster(
                       familyHistoryMaster[0].id,
                       "sisters",
-                      isNaN(parseInt(e.target.value))
-                        ? 0
-                        : parseInt(e.target.value)
+                      e.target.value === "" ? "" : parseInt(e.target.value)
                     )
                   }
                 />
@@ -394,6 +392,7 @@ export default function Tab7() {
                 <InputText
                   id="sons"
                   keyfilter={"int"}
+                  type="number"
                   placeholder="0"
                   className="p-inputtext-sm w-full"
                   value={familyHistoryMaster[0]?.sons.toString()}
@@ -401,9 +400,7 @@ export default function Tab7() {
                     handleChangeMaster(
                       familyHistoryMaster[0].id,
                       "sons",
-                      isNaN(parseInt(e.target.value))
-                        ? 0
-                        : parseInt(e.target.value)
+                    e.target.value === "" ? "" : parseInt(e.target.value)
                     )
                   }
                 />
@@ -420,6 +417,7 @@ export default function Tab7() {
                 <InputText
                   id="daughters"
                   keyfilter={"int"}
+                  type="number"
                   placeholder="0"
                   className="p-inputtext-sm w-full"
                   value={familyHistoryMaster[0]?.daughters.toString()}
@@ -579,7 +577,8 @@ export default function Tab7() {
                         </label>
                         <InputText
                           disabled={isDisabled}
-                          keyfilter={"int"}
+                          keyfilter={"int"} 
+                          type="number"
                           className="border-1 p-2 w-full"
                           value={rowData.age_at_diagnosis.toString()}
                           placeholder="e.g., 55"

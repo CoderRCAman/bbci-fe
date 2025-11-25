@@ -66,7 +66,9 @@ export function validateDiagnosisAge(
     // --- check year ---
     if (year !== undefined) {
       if (year < birthYear) {
-        throw new Error("Year of diagnosis cannot be before patient's birth year.");
+        throw new Error(
+          "Year of diagnosis cannot be before patient's birth year."
+        );
       }
       if (year > currentYear) {
         throw new Error("Year of diagnosis cannot be in the future.");
@@ -74,7 +76,6 @@ export function validateDiagnosisAge(
     }
   }
 }
-
 
 function generateDefaultData(user_id: string): PERSONAL_MEDICAL_HISTORY_DB[] {
   return data.map((item) => ({
@@ -117,56 +118,84 @@ export default function Tab6() {
       header: "Unsaved Changes",
       message: "You have unsaved changes. Are you sure you want to leave?",
     });
-
   });
   const updateStateData = (id: string, field: string, value: any) => {
-    setDirtyIds((prev) => (prev.some((x) => x === id) ? prev : [...prev, id]));
-    setIsUnsaved(true)
+    setDirtyIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setIsUnsaved(true);
+
     setDataState((prevState) => {
       return prevState.map((item) => {
-        if (item.id === id) {
-          // --- Start of New Logic ---
-          if (
-            field === "mode_of_diagnosis" ||
-            field === "mode_of_diagnosis_other"
-          ) {
-            // Case 1: The "Don't know" checkbox was clicked.
-            if (value === "Don't know") {
-              if (item.mode_of_diagnosis === "Don't know") {
-                // If it was already "Don't know", uncheck it.
-                return {
-                  ...item,
-                  mode_of_diagnosis: "",
-                  mode_of_diagnosis_other: "",
-                };
-              } else {
-                // Otherwise, overwrite the current value with "Don't know".
-                console.log("hello");
-                return {
-                  ...item,
-                  mode_of_diagnosis: "Don't know",
-                  mode_of_diagnosis_other: "",
-                };
-              }
-            }
-            // Case 2: A different checkbox was clicked while "Don't know" was active.
-            if (
-              item.mode_of_diagnosis === "Don't know" &&
-              value !== "Don't know"
-            ) {
-              // Overwrite "Don't know" with the new value
+        if (item.id !== id) return item;
+
+        let updated = { ...item, [field]: value };
+
+        // --------------------------
+        // RULE 1: diagnosed !== 1 → reset ALL dependent fields
+        // --------------------------
+        if (field === "diagnosed" && value !== 1) {
+          updated = {
+            ...updated,
+            age_first_diagnosis: 0,
+            year_of_first_diagnosis: "",
+            treatment_received: 2,
+            mode_of_treatment: "",
+            mode_of_diagnosis: "",
+            mode_of_diagnosis_other: "",
+          };
+          return updated;
+        }
+
+        // --------------------------
+        // RULE 2: treatment_received !== 1 → reset treatment-dependent fields
+        // --------------------------
+        if (field === "treatment_received" && value !== 1) {
+          updated = {
+            ...updated,
+            mode_of_treatment: "",
+            mode_of_diagnosis: "",
+            mode_of_diagnosis_other: "",
+          };
+          return updated;
+        }
+
+        // --------------------------
+        // Existing "Don't know" logic remains intact
+        // --------------------------
+        if (
+          field === "mode_of_diagnosis" ||
+          field === "mode_of_diagnosis_other"
+        ) {
+          if (value === "Don't know") {
+            if (item.mode_of_diagnosis === "Don't know") {
               return {
-                ...item,
-                mode_of_diagnosis: value
-                  .split("|")
-                  .filter((item: string) => item.trim() !== "Don't know")
-                  .join("|"),
+                ...updated,
+                mode_of_diagnosis: "",
+                mode_of_diagnosis_other: "",
+              };
+            } else {
+              return {
+                ...updated,
+                mode_of_diagnosis: "Don't know",
+                mode_of_diagnosis_other: "",
               };
             }
           }
-          return { ...item, [field]: value };
+
+          if (
+            item.mode_of_diagnosis === "Don't know" &&
+            value !== "Don't know"
+          ) {
+            return {
+              ...updated,
+              mode_of_diagnosis: value
+                .split("|")
+                .filter((m: string) => m !== "Don't know")
+                .join("|"),
+            };
+          }
         }
-        return item;
+
+        return updated;
       });
     });
   };
@@ -219,17 +248,17 @@ export default function Tab6() {
           message: "This user was registered with a different tab id.",
           show: true,
         });
-      } 
-      const ress = await db?.query(`SELECT * FROM patients WHERE id = ?`, [id]); 
-      const userData = ress?.values?.[0]; 
+      }
+      const ress = await db?.query(`SELECT * FROM patients WHERE id = ?`, [id]);
+      const userData = ress?.values?.[0];
       try {
         validateDiagnosisAge(dataState, userData.dob);
-      } catch (error:any) {
+      } catch (error: any) {
         return setAlert({
           show: true,
           header: "FAILED",
           message: error.message,
-        })
+        });
       }
       for (const item of dataState) {
         if (!dirtyIds.includes(item.id)) continue;
@@ -277,14 +306,14 @@ export default function Tab6() {
         await db?.run(query, values);
       }
       await saveToStore(sqlite);
-      setAllowNext(true); 
-      setIsUnsaved(false) ;
+      setAllowNext(true);
+      setIsUnsaved(false);
       setAlert({
         show: true,
         header: "Success",
         message: "Data saved successfully",
       });
-    } catch (error:any) {
+    } catch (error: any) {
       console.log(error);
       setAlert({
         show: true,
@@ -294,8 +323,8 @@ export default function Tab6() {
     }
   };
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
-    await fetchExistingData(); 
-    setIsUnsaved(false) ;
+    await fetchExistingData();
+    setIsUnsaved(false);
     event.detail.complete();
   };
   return (
@@ -314,9 +343,7 @@ export default function Tab6() {
               refreshingSpinner="circles"
             ></IonRefresherContent>
           </IonRefresher>
-          <RegistrationCrumbs 
-           currentPageLabel="Personal Medical History"
-          />
+          <RegistrationCrumbs currentPageLabel="Personal Medical History" />
           <ShowRegisteredTab
             id={id || ""}
             table_name="personal_medical_history"

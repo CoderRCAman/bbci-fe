@@ -43,11 +43,12 @@ export default function AddResidential({
         <FloatLabel>
           <InputText
             keyfilter="int"
+            type="number"
             value={data["from_age"].toString()}
             onChange={(e) =>
               handleUpdate(
                 "from_age",
-                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+                e.target.value === "" ? "" : parseInt(e.target.value)
               )
             }
           />
@@ -56,12 +57,13 @@ export default function AddResidential({
 
         <FloatLabel>
           <InputText
-            keyfilter="int"
+            keyfilter="int" 
+            type="number"
             value={data["to_age"].toString()}
             onChange={(e) =>
               handleUpdate(
                 "to_age",
-                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+                e.target.value === "" ? "" : parseInt(e.target.value)
               )
             }
           />

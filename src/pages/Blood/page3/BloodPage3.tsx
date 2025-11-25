@@ -27,7 +27,7 @@ import { Card } from "primereact/card";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 export interface RFTType {
   test_name: string;
-  result: number;
+  result: number | '';
   unit: string;
   id: string;
   sampleId?: string;
@@ -260,7 +260,7 @@ export default function BloodPage3() {
                             item.id === rowData.id
                               ? {
                                 ...item,
-                                result: parseFloat(e.target.value) || 0,
+                                result: e.target.value === "" ? "" : parseFloat(e.target.value),
                               }
                               : item
                           )

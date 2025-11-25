@@ -199,7 +199,7 @@ export default function BloodPage7() {
                     <InputText
                       placeholder="Modify"
                       type="number"
-                       value={parseFloat(rowData.result).toString()}
+                      value={parseFloat(rowData.result).toString()}
                       className="border p-2 "
                       onChange={(e) => {
                         setIsUnsaved(true);
@@ -207,9 +207,9 @@ export default function BloodPage7() {
                           prev.map((item) =>
                             item.id === rowData.id
                               ? {
-                                  ...item,
-                                  result: parseFloat(e.target.value) || 0,
-                                }
+                                ...item,
+                                result: e.target.value === "" ? "" : parseFloat(e.target.value),
+                              }
                               : item
                           )
                         );
@@ -239,9 +239,8 @@ export default function BloodPage7() {
 
             <div className="flex gap-2 mt-10 justify-end ">
               <Link
-                to={`/blood6?id=${id}&sampleId=${sampleId}&edit=${
-                  editFlag ? "yes" : "no"
-                }`}
+                to={`/blood6?id=${id}&sampleId=${sampleId}&edit=${editFlag ? "yes" : "no"
+                  }`}
               >
                 <Button label="PREV" className="px-5 py-2 rounded" outlined icon="pi pi-arrow-left" />
               </Link>

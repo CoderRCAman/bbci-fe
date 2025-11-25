@@ -8,14 +8,14 @@ export default function AddIndoorAirPollution({
   handleRemoveUi,
   data,
   setIndoorAirData,
-  setIsUnsaved
+  setIsUnsaved,
 }: {
   handleRemoveUi: any;
   data: INDOOR_AIR_POLLUTION;
   setIndoorAirData: React.Dispatch<
     React.SetStateAction<INDOOR_AIR_POLLUTION[]>
   >;
-  setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>
+  setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const handleUpdate = (field: string, value: any) => {
     setIsUnsaved(true);
@@ -33,7 +33,7 @@ export default function AddIndoorAirPollution({
           onChange={(e) =>
             handleUpdate(
               "from_age",
-              isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+              e.target.value ? parseInt(e.target.value) : ""
             )
           }
         />
@@ -47,7 +47,7 @@ export default function AddIndoorAirPollution({
           onChange={(e) =>
             handleUpdate(
               "to_age",
-              isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+              e.target.value === "" ? "" : parseInt(e.target.value)
             )
           }
         />

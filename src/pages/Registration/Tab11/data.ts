@@ -318,6 +318,7 @@ export const saveToDBAlcohol = async (
   sqlite: SQLiteConnection,
   dirtyMaster: initialState[],
   dirtyProds: TOBACCO_ALCOHOL_CONSUMPION[],
+  deletedIds : string[],
   user_id: string,
   tab_id: string
 ) => {
@@ -409,7 +410,8 @@ export const saveToDBAlcohol = async (
       ];
 
       await db.run(query, values);
-    }
+    } 
+    await db?.run(`delete from TOBACCO_ALCOHOL_CONSUMPTION where id in ('${deletedIds.join("','")}')`);
     await saveToStore(sqlite);
   } catch (error) {
     console.log(error);
