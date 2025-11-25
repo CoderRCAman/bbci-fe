@@ -1,3 +1,4 @@
+// /mnt/data/FoodRecallPage3.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useLocation, Link, useHistory } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
@@ -41,12 +42,10 @@ export default function FoodRecallEntryPage() {
   const userId = searchParams.get("user_id") || "";
   const masterId = searchParams.get("master_id") || null;
 
-  // Steps include Food Recall as a final constant step here
+  // TWO-STEP flow (Food Habits + 24-Hr Recall)
   const steps = [
-    { label: "Dietary Profile", path: "/food-recall/page2?step=0", order: 1 },
-    { label: "Cooking Habits", path: "/food-recall/page2?step=1", order: 2 },
-    { label: "Household Habits", path: "/food-recall/page2?step=2", order: 3 },
-    { label: "Food Recall", path: "/food-recall/page3", order: 4 },
+    { label: "Food Habits", path: "/food-recall/page2", order: 1 },
+    { label: "24-Hr Recall", path: "/food-recall/page3", order: 2 },
   ];
 
   // helpers for datetime conversion
@@ -147,7 +146,7 @@ export default function FoodRecallEntryPage() {
     }
   }, [groupedByDate.keys.length]);
 
-  // CRUD handlers
+  // CRUD handlers (unchanged)
   const handleAddFoodEntry = () => {
     if (!masterId) return;
     setIsUnsaved(true);
@@ -168,8 +167,6 @@ export default function FoodRecallEntryPage() {
       tab_id: tabId,
     };
     setFoodLog(prev => [...prev, newEntry]);
-
-    // Expand the new date group
     const newKey = getDateKey(newEntry.date_time);
     setExpandedKey(newKey);
   };
@@ -221,7 +218,6 @@ export default function FoodRecallEntryPage() {
     }));
   };
 
-  // Save recalls
   const handleSave = async () => {
     if (!db || !sqlite || !masterId || !isEditable) {
       setAlert({ show: true, header: "Cannot Save", message: "The database is not ready, data is missing, or you do not have permission to edit." });
@@ -237,18 +233,14 @@ export default function FoodRecallEntryPage() {
     try {
       await saveRecallData(db, sqlite, foodLog, masterId, tabId);
 
-      // --- NEW: set sessionStorage flag so Page2 can detect a recent save and update its steps ---
       try {
         sessionStorage.setItem(`foodrecall_saved_${masterId}`, String(Date.now()));
-      } catch (e) {
-        // ignore storage failures
-      }
+      } catch (e) { /* ignore */ }
 
       setIsLoading(false);
       setAlert({ show: true, header: "Success", message: "Food Recall (7.3) data has been saved." });
       setIsUnsaved(false);
 
-      // Reload entries from DB (ensure consistent view)
       const latest = await loadRecallData(db, masterId);
       setFoodLog(latest || []);
     } catch (e: any) {
@@ -257,13 +249,13 @@ export default function FoodRecallEntryPage() {
     }
   };
 
-  // When user clicks a Step in the crumb, FlowCrumbs will produce a URL including master_id
+  // FlowCrumbs step click -> go to Page2 with master_id
   const handleStepClick = (e: any) => {
     const stepIndex = e.index;
     const params = new URLSearchParams();
     if (masterId) params.set("master_id", masterId);
     if (userId) params.set("user_id", userId);
-    params.set("step", String(stepIndex));
+    // step param not needed since Page2 is single merged page
     history.push(`/food-recall/page2?${params.toString()}`);
   };
 
@@ -293,8 +285,7 @@ export default function FoodRecallEntryPage() {
         </IonRefresher>
 
         <div className="max-w-5xl mx-auto p-2">
-          {/* FlowCrumbs always includes the Food Recall final step on Page3 */}
-          <FlowCrumbs steps={steps} currentPageLabel="Food Recall" idQueryParam={"master_id"} />
+          <FlowCrumbs steps={steps} currentPageLabel={steps[1].label} idQueryParam={"master_id"} />
 
           <ShowRegisteredTab id={masterId || ""} table_name="FOOD_RECALL_ENTRY" field_name="master_id" />
 
