@@ -542,14 +542,14 @@ export default function FoodHabitPage() {
             </section>
 
             <div className="flex justify-between items-center mt-4">
-              <Link to="/food-recall/page1" onClick={(e) => {
+              {/* <Link to="/food-recall/page1" onClick={(e) => {
                 if (isUnsaved) {
                   setAlert({ show: true, header: "Unsaved Changes", message: "Please save before leaving." });
                   e.preventDefault();
                 }
               }}>
                 <Button label="Back to Patient List" icon="pi pi-arrow-left" outlined />
-              </Link>
+              </Link> */}
 
               <div className="flex gap-2">
                 <Button label="Save Habits" onClick={handleSave} disabled={!isEditable} />

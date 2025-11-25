@@ -278,7 +278,7 @@ export default function FoodRecallEntryPage() {
 
   return (
     <IonPage>
-      <Header title="Food Recall Entry (Module 2: 7.3)" />
+      <Header title="24-Hours Food Recall Entry" />
       <IonContent className="ion-padding" fullscreen>
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent refreshingSpinner="circles" />
@@ -386,15 +386,15 @@ export default function FoodRecallEntryPage() {
           </div>
 
           <div className="mt-6 flex justify-between items-center">
-            <Button label="Save Recalls (7.3)" severity="success" className="px-10 py-2" onClick={handleSave} disabled={!isEditable || isLoading} />
-            <Link to={`/food-recall/page2?master_id=${masterId}&user_id=${userId}`} onClick={(e) => {
+            <Button label="Save Recalls" severity="success" className="px-10 py-2" onClick={handleSave} disabled={!isEditable || isLoading} />
+            {/* <Link to={`/food-recall/page2?master_id=${masterId}&user_id=${userId}`} onClick={(e) => {
               if (isUnsaved) {
                 e.preventDefault();
                 setAlert({ show: true, header: "Unsaved Changes", message: "You have unsaved changes. Please save before navigating away." });
               }
             }}>
               <Button label="Back to Habits (Module 1)" className="px-5 py-2 rounded" />
-            </Link>
+            </Link> */}
           </div>
         </div>
 
