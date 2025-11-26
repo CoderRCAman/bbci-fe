@@ -9,12 +9,14 @@ export default function AddResidential({
   handleRemoveUi,
   data,
   setResidentialData,
-  setIsUnsaved
+  setIsUnsaved,
+  ageLimit
 }: {
   handleRemoveUi: any;
   data: RESIDENTIAL_TYPE;
   setResidentialData: React.Dispatch<React.SetStateAction<RESIDENTIAL_TYPE[]>>;
   setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>
+  ageLimit: number
 }) {
   const handleUpdate = (field: string, value: any) => {
     setIsUnsaved(true);
@@ -45,11 +47,17 @@ export default function AddResidential({
             keyfilter="int"
             type="number"
             value={data["from_age"].toString()}
-            onChange={(e) =>
-              handleUpdate(
-                "from_age",
-                e.target.value === "" ? "" : parseInt(e.target.value)
-              )
+            max={ageLimit}
+            onChange={(e) => {
+              let val = e.target.value;
+              if (val === "") {
+                handleUpdate("from_age", "");
+                return;
+              }
+              let num = parseInt(val);
+              if (num > ageLimit) num = ageLimit;  // enforce max
+              handleUpdate("from_age", num);
+            }
             }
           />
           <label>From Age</label>
@@ -57,14 +65,19 @@ export default function AddResidential({
 
         <FloatLabel>
           <InputText
-            keyfilter="int" 
+            keyfilter="int"
             type="number"
             value={data["to_age"].toString()}
-            onChange={(e) =>
-              handleUpdate(
-                "to_age",
-                e.target.value === "" ? "" : parseInt(e.target.value)
-              )
+            onChange={(e) => {
+              let val = e.target.value;
+              if (val === "") {
+                handleUpdate("to_age", "");
+                return;
+              }
+              let num = parseInt(val);
+              if (num > ageLimit) num = ageLimit;  // enforce max
+              handleUpdate("to_age", num);
+            }
             }
           />
           <label>To Age</label>

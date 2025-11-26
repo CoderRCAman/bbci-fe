@@ -32,7 +32,8 @@ export default function FoodRecallPage1() {
                         m.user_id, 
                         p.name, 
                         m.created_at, 
-                        m.updated_at
+                        m.updated_at,
+                        m.tab_id
                     FROM FOOD_HABITS_MASTER m
                     JOIN patients p ON m.user_id = p.id
                     ORDER BY m.updated_at DESC;
@@ -135,7 +136,8 @@ export default function FoodRecallPage1() {
                             <Column field="master_id" sortable header="Recall Survey ID" body={previousRecallLinkBody}></Column>
                             <Column field="name" sortable header="Patient Name"></Column>
                             <Column field="user_id" sortable header="Patient Id"></Column>
-                            <Column field="updated_at" sortable header="Last Updated"></Column>
+                            <Column field="updated_at" sortable header="Last Updated"></Column> 
+                            <Column field="tab_id" sortable header="Tab ID"></Column> 
                         </DataTable>
                     </div>
                 </main>

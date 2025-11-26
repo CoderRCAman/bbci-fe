@@ -30,6 +30,7 @@ import { chevronDownCircleOutline } from "ionicons/icons";
 import { Card } from "primereact/card";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
+import { differenceInYears } from "date-fns";
 export type FAMILY_HISTORY_OF_CANCER_MASTER = {
   id: string;
   user_id: string;
@@ -81,6 +82,7 @@ export default function Tab7() {
   const [familyHistoryMaster, setfamilyHistoryMaster] = useState(initialState);
   const [removedIds, setRemovedIds] = useState<string[]>([]);
   const [isUnsaved, setIsUnsaved] = useState(false);
+  const [ageLimit, setAgeLimit] = useState(-1);
   const [familyHistoryRelatives, setfamilyHistoryRelatives] = useState(
     initialStateRelatives
   );
@@ -116,14 +118,17 @@ export default function Tab7() {
       } else {
         setfamilyHistoryRelatives(initialStateRelatives);
       }
+      const res3 = await db?.query(`select * from patients where id = '${currentId}' ;`);
+      const values3 = res3?.values;
+      setAgeLimit(differenceInYears(new Date(), new Date(values3?.[0].dob)))
     } catch (error) {
       console.log(error);
     }
   }
   useEffect(() => {
     const currentId = searchParams?.get("id") || "";
-    setId(currentId); 
-    if(isUnsaved) return ;
+    setId(currentId);
+    if (isUnsaved) return;
     fetchInitialState(currentId);
   }, [location.pathname, db]);
   useBlockNavigation(isUnsaved, () => {
@@ -301,10 +306,10 @@ export default function Tab7() {
             refreshingSpinner="circles"
           // You can remove the other text props
           ></IonRefresherContent>
-        </IonRefresher> 
-        <RegistrationCrumbs 
-         currentPageLabel="Family History"
-        /> 
+        </IonRefresher>
+        <RegistrationCrumbs
+          currentPageLabel="Family History"
+        />
         <ShowRegisteredTab
           id={id || ""}
           table_name="family_history_of_cancer_master"
@@ -400,7 +405,7 @@ export default function Tab7() {
                     handleChangeMaster(
                       familyHistoryMaster[0].id,
                       "sons",
-                    e.target.value === "" ? "" : parseInt(e.target.value)
+                      e.target.value === "" ? "" : parseInt(e.target.value)
                     )
                   }
                 />
@@ -577,17 +582,23 @@ export default function Tab7() {
                         </label>
                         <InputText
                           disabled={isDisabled}
-                          keyfilter={"int"} 
+                          keyfilter={"int"}
                           type="number"
                           className="border-1 p-2 w-full"
                           value={rowData.age_at_diagnosis.toString()}
                           placeholder="e.g., 55"
-                          onChange={(e) =>
-                            handleChangeRelative(
-                              rowData.id,
-                              "age_at_diagnosis",
-                              e.target.value
-                            )
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            // Allow clearing the field
+                            if (raw === "") {
+                              handleChangeRelative(rowData.id, "age_at_diagnosis", "");
+                              return;
+                            }
+                            let num = parseInt(raw);
+                            // Enforce max
+                            if (num > ageLimit) num = ageLimit;
+                            handleChangeRelative(rowData.id, "age_at_diagnosis", num);
+                          }
                           }
                         />
                       </div>

@@ -56,13 +56,13 @@ interface Patient {
 }
 
 const employeeNameOptions = [
-  { name: "ITTEST1", value: "ITEST1" },
-  { name: "ITTEST2", value: "ITEST2" },
+  { name: "Ampi Landi", value: "Ampi Lamdi" },
+  { name: "Miyum Tally", value: "Miyum Tally" },
 ];
 
 const employeeCodeOptions = [
-  { name: "CODE1", value: "CODE1" },
-  { name: "CODE2", value: "CODE2" },
+  { name: "146681", value: "146681" },
+  { name: "146682", value: "146682" },
 ];
 
 const genderOptions = [
@@ -118,7 +118,7 @@ const Tab1: React.FC = () => {
     reset,
     getValues,
   } = useForm({
-    values: { 
+    values: {
       i_name: patient.i_name,
       i_emp_code: patient.i_emp_code,
       name: patient.name,
@@ -178,7 +178,7 @@ const Tab1: React.FC = () => {
         }
       }
       reset((res as any)?.values[0]);
-    } catch (error) {}
+    } catch (error) { }
   }
   useEffect(() => {
     const id = searchParams.get("id");
@@ -289,7 +289,7 @@ const Tab1: React.FC = () => {
       }));
     } else {
       // Insert
-      const uniqueId = generateUniqueId(data.name);
+      const uniqueId = generateUniqueId();
       await db?.run(
         `INSERT INTO patients (id, i_name, i_emp_code, name,  gender,
          lat, long, time, dob, date , created_at , updated_at , tab_id,signature , card_type , card_no)
@@ -335,7 +335,7 @@ const Tab1: React.FC = () => {
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
-    
+
     await fetchPatient(currentId);
     setIsUnsaved(false);
     event.detail.complete();
@@ -355,8 +355,8 @@ const Tab1: React.FC = () => {
             refreshingSpinner="circles"
           />
         </IonRefresher>
-        <RegistrationCrumbs 
-         currentPageLabel="Registration"
+        <RegistrationCrumbs
+          currentPageLabel="Registration"
         />
         <ShowRegisteredTab id={id || ""} />
 
@@ -506,9 +506,9 @@ const Tab1: React.FC = () => {
                     severity="warning"
                     type="button"
                     onClick={() => {
-                      if(strokes.length===0){
+                      if (strokes.length === 0) {
                         return;
-                      } 
+                      }
                       setShowConfirm(true);
                     }}
                     text // Use a 'text' button for a cleaner look

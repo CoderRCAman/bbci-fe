@@ -15,6 +15,7 @@ export default function ChewingTobacco({
   handleChangeProds,
   addNewOtherUi,
   handleRemoveUi,
+  ageLimit
 }: {
   data: initialState;
   handleChangeMaster: (id: string, field: string, value: any) => void;
@@ -39,7 +40,8 @@ export default function ChewingTobacco({
       | "chewing_without_tobacco"
       | "alcohol"
   ) => void;
-}) { 
+  ageLimit: number
+}) {
   // Helper array for the master radio buttons
   const masterOptions = [
     { name: "YES", value: 1 },
@@ -47,7 +49,7 @@ export default function ChewingTobacco({
     { name: "DON'T KNOW", value: 8 },
     { name: "Refused to answer", value: 9 },
   ];
-console.log(data)
+  console.log(data)
   // Helper array for Site of Placement checkboxes
   const siteOptions = [
     { label: "L", key: "site_of_placement_L" },
@@ -58,7 +60,7 @@ console.log(data)
 
   return (
     // Use a <Card> for a premium container. mt-5 is from your original code.
-    <Card  className="shadow-lg mt-5">
+    <Card className="shadow-lg mt-5">
       <div
         className="sticky -mt-20 top-0 text-center py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
         style={{ zIndex: 10 }}
@@ -154,16 +156,20 @@ console.log(data)
                 <div className="p-fluid space-y-7">
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={item?.from_age?.toString() || ""}
-                      onChange={(e) =>
-                        handleChangeProds(
-                          item?.id,
-                          item?.type || "",
-                          "from_age",
-                          e.target.value ? parseInt(e.target.value) : ""
-                        )
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          handleChangeProds(item?.id, item?.type || "", "from_age", "");
+                          return;
+                        }
+                        let num = parseInt(raw);
+                        if (num > ageLimit) num = ageLimit;
+                        handleChangeProds(item?.id, item?.type || "", "from_age", num);
+                      }
                       }
                       disabled={data?.consumed !== 1 || item?.consumes !== 1}
                     />
@@ -172,16 +178,20 @@ console.log(data)
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={item?.to_age?.toString() || ""}
-                      onChange={(e) =>
-                        handleChangeProds(
-                          item?.id,
-                          item?.type || "",
-                          "to_age",
-                          e.target.value ? parseInt(e.target.value) : ""
-                        )
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          handleChangeProds(item?.id, item?.type || "", "to_age", "");
+                          return;
+                        }
+                        let num = parseInt(raw);
+                        if (num > ageLimit) num = ageLimit;
+                        handleChangeProds(item?.id, item?.type || "", "to_age", num);
+                      }
                       }
                       disabled={data?.consumed !== 1 || item?.consumes !== 1}
                     />
@@ -189,8 +199,9 @@ console.log(data)
                   </FloatLabel>
 
                   <FloatLabel>
-                    <InputText
+                    <InputText 
                       keyfilter="int"
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={item?.number_per_day?.toString() || ""}
                       onChange={(e) =>
@@ -208,15 +219,18 @@ console.log(data)
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={item?.days_in_week?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
-                          item?.id,
-                          item?.type || "",
+                          item.id,
+                          item.type || "",
                           "days_in_week",
-                          e.target.value ? parseInt(e.target.value) : ""
+                          e.target.value === ""
+                            ? ""
+                            : Math.min(parseInt(e.target.value), 7)
                         )
                       }
                       disabled={data?.consumed !== 1 || item?.consumes !== 1}
@@ -233,7 +247,8 @@ console.log(data)
                   <div className="flex gap-2 items-center font-semibold text-sm text-slate-500">
                     <InputText
                       className="w-20 text-center" // Use a wider, fixed width
-                      keyfilter={"int"}
+                      keyfilter={"int"} 
+                      type="number"
                       value={item?.duration_placement_hr?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
@@ -249,7 +264,8 @@ console.log(data)
                     <span className="font-bold mx-1">:</span>
                     <InputText
                       className="w-20 text-center" // Use a wider, fixed width
-                      keyfilter={"int"}
+                      keyfilter={"int"} 
+                      type="number"
                       value={item?.duration_placement_min?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
@@ -316,6 +332,7 @@ console.log(data)
                 addNewOtherUi={addNewOtherUi}
                 handleChangeProds={handleChangeProds}
                 isDisabled={data?.consumed !== 1}
+                ageLimit={ageLimit}
               />
             ))}
         </div>

@@ -9,6 +9,7 @@ export default function AddIndoorAirPollution({
   data,
   setIndoorAirData,
   setIsUnsaved,
+  ageLimit,
 }: {
   handleRemoveUi: any;
   data: INDOOR_AIR_POLLUTION;
@@ -16,6 +17,7 @@ export default function AddIndoorAirPollution({
     React.SetStateAction<INDOOR_AIR_POLLUTION[]>
   >;
   setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>;
+  ageLimit: number
 }) {
   const handleUpdate = (field: string, value: any) => {
     setIsUnsaved(true);
@@ -30,11 +32,17 @@ export default function AddIndoorAirPollution({
           keyfilter="int"
           className="border-1 w-[50%] p-2"
           value={data["from_age"].toString()}
-          onChange={(e) =>
-            handleUpdate(
-              "from_age",
-              e.target.value ? parseInt(e.target.value) : ""
-            )
+          onChange={(e) => {
+            const raw = e.target.value;
+            if (raw === "") {
+              handleUpdate("from_age", "");
+              return;
+            }
+            let num = parseInt(raw);
+            // Enforce max age
+            if (num > ageLimit) num = ageLimit;
+            handleUpdate("from_age", num);
+          }
           }
         />
         <label>From Age</label>
@@ -44,11 +52,17 @@ export default function AddIndoorAirPollution({
           keyfilter="int"
           className="border-1 w-[50%] p-2"
           value={data["to_age"].toString()}
-          onChange={(e) =>
-            handleUpdate(
-              "to_age",
-              e.target.value === "" ? "" : parseInt(e.target.value)
-            )
+          onChange={(e) => {
+            const raw = e.target.value;
+            if (raw === "") {
+              handleUpdate("to_age", "");
+              return;
+            }
+            let num = parseInt(raw);
+            // Enforce max age
+            if (num > ageLimit) num = ageLimit;
+            handleUpdate("to_age", num);
+          }
           }
         />
         <label>To Age</label>

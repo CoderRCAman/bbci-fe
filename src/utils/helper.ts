@@ -1,15 +1,16 @@
 import { SQLiteConnection, SQLiteDBConnection } from "@capacitor-community/sqlite";
 import { isPlatform, getPlatforms } from '@ionic/react';
-export const generateUniqueId = (name = "") => {
-  const timestamp = Date.now();
-  const cleanName =
-    name
-      .toLowerCase()
-      .split(" ")[0]
-      .replace(/[^a-z0-9]/g, "")
-      .slice(0, 8) || "user";
+export const generateUniqueId = () => {
+  const prefix = "ZGC";
 
-  return `${cleanName}_${timestamp}`;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  const random5 = Math.floor(10000 + Math.random() * 90000);
+
+  return `${prefix}${year}${month}${day}/${random5}`;
 };
 
 export const getMisMatchFields = (obj1: any, obj2: any) => {
@@ -34,9 +35,9 @@ export const saveToStore = async (sqlite: SQLiteConnection | null) => {
   }
 }
 
-export const fetchCurrentUserDetails = async (db: SQLiteDBConnection|null, id: string) => {
-  try { 
-    if(!db) return null ;
+export const fetchCurrentUserDetails = async (db: SQLiteDBConnection | null, id: string) => {
+  try {
+    if (!db) return null;
     const result = await db?.query(`SELECT * FROM patients WHERE id = ? `, [id]);
     if (result.values)
       return result?.values[0];

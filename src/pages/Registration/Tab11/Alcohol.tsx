@@ -19,6 +19,7 @@ export default function Alcohol({
   handleChangeProds,
   handleRemoveUi,
   addNewOtherUi,
+  ageLimit
 }: {
   data: initialState;
   handleChangeMaster: (id: string, field: string, value: any) => void;
@@ -43,6 +44,7 @@ export default function Alcohol({
       | "chewing_without_tobacco"
       | "alcohol"
   ) => void;
+  ageLimit: number
 }) {
   // Helper array for the master radio buttons
   const masterOptions = [
@@ -51,7 +53,7 @@ export default function Alcohol({
     { name: "DON'T KNOW", value: 8 },
     { name: "Refused to answer", value: 9 },
   ];
-console.log(data)
+  console.log(data)
   return (
     // 1. Replaced main div with Card, removed title prop
     <Card className="shadow-lg ">
@@ -151,16 +153,15 @@ console.log(data)
                 <div className="p-fluid space-y-7">
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       value={item?.["from_age"]?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
-                          item?.id,
+                          item.id,
                           "alcohol",
                           "from_age",
-                          isNaN(parseInt(e.target.value))
-                            ? 0
-                            : parseInt(e.target.value)
+                          e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
                       disabled={item?.consumes !== 1}
@@ -170,16 +171,15 @@ console.log(data)
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       value={item?.["to_age"]?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
-                          item?.id,
+                          item.id,
                           "alcohol",
                           "to_age",
-                          isNaN(parseInt(e.target.value))
-                            ? 0
-                            : parseInt(e.target.value)
+                          e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
                       disabled={item?.consumes !== 1}
@@ -190,6 +190,7 @@ console.log(data)
                   <FloatLabel>
                     <InputText
                       keyfilter="int"
+                      type="number"
                       value={item?.["number_per_day"]?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
@@ -203,7 +204,7 @@ console.log(data)
                       }
                       disabled={item?.consumes !== 1}
                     />
-                    <label>Number per day</label>
+                    <label>Number of times per day</label>
                   </FloatLabel>
 
                   {/* 9. Styled the Week/Month section */}
@@ -215,16 +216,15 @@ console.log(data)
                     <div className="grid grid-cols-2 gap-4 mt-7">
                       <FloatLabel>
                         <InputText
-                          keyfilter="int"
+                          keyfilter="int" 
+                          type="number"
                           value={item?.["days_in_week"]?.toString() || ""}
                           onChange={(e) =>
                             handleChangeProds(
-                              item?.id,
+                              item.id,
                               "alcohol",
                               "days_in_week",
-                              isNaN(parseInt(e.target.value))
-                                ? 0
-                                : parseInt(e.target.value)
+                              e.target.value === "" ? "" : Math.min(parseInt(e.target.value), 7)
                             )
                           }
                           disabled={item?.consumes !== 1}
@@ -234,16 +234,15 @@ console.log(data)
 
                       <FloatLabel>
                         <InputText
-                          keyfilter="int"
+                          keyfilter="int" 
+                          type="number"
                           value={item?.["days_in_month"]?.toString() || ""}
                           onChange={(e) =>
                             handleChangeProds(
-                              item?.id,
+                              item.id,
                               "alcohol",
                               "days_in_month",
-                              isNaN(parseInt(e.target.value))
-                                ? 0
-                                : parseInt(e.target.value)
+                              e.target.value === "" ? "" : Math.min(parseInt(e.target.value), 31)
                             )
                           }
                           disabled={item?.consumes !== 1}
@@ -256,7 +255,8 @@ console.log(data)
                   {/* 10. Styled Consumption Unit, removed w-[60%] */}
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       value={
                         item?.["consumption_unit_per_day"]?.toString() || ""
                       }
@@ -292,6 +292,7 @@ console.log(data)
                 addNewOtherUi={addNewOtherUi}
                 handleChangeProds={handleChangeProds}
                 isDisabled={data?.consumed !== 1} // Used optional chaining
+                ageLimit = {ageLimit}
               />
             ))}
         </div>

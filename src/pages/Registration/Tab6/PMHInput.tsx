@@ -12,12 +12,14 @@ export default function PMHInput({
   mode_of_diagnosis,
   data,
   updateStateData,
+  ageLimit
 }: {
   condition: string;
   mode_of_treatment: string[];
   mode_of_diagnosis: string[];
   data: PERSONAL_MEDICAL_HISTORY_DB;
   updateStateData: (id: string, field: string, value: any) => void;
+  ageLimit: number
 }) {
   console.log(data);
 
@@ -59,7 +61,7 @@ export default function PMHInput({
       {/* p-fluid makes all child PrimeReact inputs full-width */}
       <div
         className="sticky top-0 -mt-10 text-center bg-white py-3"
-        style={{ zIndex: 10  }}
+        style={{ zIndex: 10 }}
       >
         <h1 className="font-semibold text-primary-600 dark:text-primary-300 text-lg m-0">
           {condition}
@@ -90,17 +92,27 @@ export default function PMHInput({
         <FloatLabel>
           <InputText
             disabled={data?.diagnosed !== 1}
-            keyfilter="int" 
+            keyfilter="int"
             type="number"
             value={data?.age_first_diagnosis?.toString() || ""}
             // Removed custom classes
-            onChange={(e) =>
-              updateStateData(
-                data.id,
-                "age_first_diagnosis",
-                e.target.value === "" ? "" : parseInt(e.target.value)
-              )
+            onChange={(e) => {
+              const raw = e.target.value;
+
+              // allow clearing
+              if (raw === "") {
+                updateStateData(data.id, "age_first_diagnosis", "");
+                return;
+              }
+
+              let num = parseInt(raw);
+
+              // enforce max
+              if (num > ageLimit) num = ageLimit;
+
+              updateStateData(data.id, "age_first_diagnosis", num);
             }
+          }
           />
           <label>Age at first diagnosis</label>
         </FloatLabel>
@@ -208,7 +220,7 @@ export default function PMHInput({
                   value={data?.mode_of_diagnosis_other}
                 />
                 <label htmlFor={`${data?.id}_mod_other`}>Other (Specify)</label>
-                
+
               </FloatLabel>
             </div>
 

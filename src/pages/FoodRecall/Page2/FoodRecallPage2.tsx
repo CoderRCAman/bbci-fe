@@ -35,6 +35,14 @@ const PREP_METHODS = [
   "Sauting",
   "Grill/Barbeque",
 ] as const;
+const PREP_KEYS: Record<string, keyof IFoodHabitMaster> = {
+  "Shallow Frying": "method_shallow_frying",
+  "Deep Frying": "method_deep_frying",
+  "Boiling": "method_boiling",
+  "Steaming": "method_steaming",
+  "Sauting": "method_sauting",
+  "Grill/Barbeque": "method_grill_bbq",
+};
 
 const CustomRadio = ({
   id,
@@ -372,7 +380,7 @@ export default function FoodHabitPage() {
     // sync waterSupplyTags into master before save
     const updatedMaster = { ...master, water_supply_json: JSON.stringify(waterSupplyTags) } as IFoodHabitMaster;
     setMaster(updatedMaster);
-
+    console.log(updatedMaster)
     setSaveInProgress(true);
     try {
       await saveHabitData(db, sqlite, updatedMaster, fats, tabId);
@@ -567,7 +575,7 @@ export default function FoodHabitPage() {
                       <tr className="text-left border-b">
                         <th className="py-2 pr-3">Name</th>
                         <th className="py-2 pr-3">Usage</th>
-                        <th className="py-2 pr-3">Consumption</th>
+                        <th className="py-2 pr-3">Monthly Consumption(Ltr/Kg)</th>
                         <th className="py-2 pr-3">Years</th>
                         <th className="py-2 pr-3">Actions</th>
                       </tr>
@@ -616,13 +624,21 @@ export default function FoodHabitPage() {
                   <div className="text-center">Most Time (2)</div>
                 </div>
                 {PREP_METHODS.map((method) => {
-                  const key = ("method_" + method.split(" ")[0].replace("/", "").toLowerCase()) as keyof IFoodHabitMaster;
+                  const key = PREP_KEYS[method] ;
                   return (
-                    <div key={method} className="grid grid-cols-4 items-center py-2 border-b last:border-b-0 text-sm">
+                    <div key={key} className="grid grid-cols-4 items-center py-2 border-b last:border-b-0 text-sm">
                       <div>{method}</div>
                       {["0", "1", "2"].map((val) => (
                         <div key={val} className="flex justify-center">
-                          <input type="radio" name={`prep-${method}`} value={val} checked={(master as any)[key] === val} disabled={!isEditable} onChange={(e) => handleMasterChange(key, e.target.value as any)} />
+                          <input
+                            type="radio"
+                            name={`prep-${method}`}
+                            value={val}
+                            checked={(master as any)[key] === val}
+                            disabled={!isEditable}
+                            onChange={(e) => handleMasterChange(key, e.target.value)}
+                          />
+
                         </div>
                       ))}
                     </div>
@@ -726,7 +742,7 @@ export default function FoodHabitPage() {
         </div>
 
         {/* Persistent bottom-center status toast (does not auto-hide) */}
-        <div className="fixed left-1/2 transform -translate-x-1/2 bottom-6 z-50">
+        <div className="fixed left-1/2 transform -translate-x-1/2 bottom- z-50">
           <div className={`px-4 py-2 rounded-full shadow-md text-sm flex items-center gap-3 ${saveInProgress ? "bg-blue-600 text-white" : isUnsaved ? "bg-orange-500 text-white" : "bg-green-600 text-white"}`}>
             {saveInProgress ? (
               <>

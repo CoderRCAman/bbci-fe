@@ -39,6 +39,7 @@ const Tab2: React.FC = () => {
     { data: 'age', title: 'Age' },
     { data: 'lat', title: 'Lat' },
     { data: 'long', title: 'Long' },
+    { data: 'tab_id', title: 'Tab ID' }
   ];
 
 
@@ -78,6 +79,7 @@ const Tab2: React.FC = () => {
             <Column field="id" sortable header="Id"
               body={(rowData) => <Link to={`/tab1?id=${rowData.id}`}>{rowData.id}</Link>}
             ></Column>
+            <Column field="tab_id" header="Tab ID"></Column>
             <Column field="name" sortable header="Name"></Column>
             <Column field="dob" sortable header="Dob"
               body={(rowData) => {
@@ -87,6 +89,7 @@ const Tab2: React.FC = () => {
             <Column field="gender" sortable header="Gender"></Column>
             <Column field="lat" header="Lat"></Column>
             <Column field="long" header="Long"></Column>
+
           </DataTable>
         </main>
 

@@ -19,12 +19,12 @@ const FlowCrumbs: FC<FlowCrumbsProps> = ({ steps, currentPageLabel, idQueryParam
   }, [location.search, idQueryParam]);
 
   const buildStepPath = (stepPath: string) => {
-    // Split into base and existing query. Use URLSearchParams to merge safely.
-    const [base, existingQuery] = stepPath.split("?");
-    const params = new URLSearchParams(existingQuery || "");
-    if (id) params.set(idQueryParam, id);
-    const qs = params.toString();
-    return qs ? `${base}?${qs}` : base;
+    const currentQuery = location.search; // includes leading "?". Empty string if none
+
+    const [base] = stepPath.split("?"); // ignore any query in step definition (safe)
+
+    // Keep the full existing query string exactly as it is
+    return currentQuery ? `${base}${currentQuery}` : base;
   };
 
   return (
@@ -38,8 +38,8 @@ const FlowCrumbs: FC<FlowCrumbsProps> = ({ steps, currentPageLabel, idQueryParam
           const textColor = isCurrent
             ? "text-orange-600 font-bold"
             : isClickable
-            ? "text-blue-600 hover:text-blue-800 transition duration-150"
-            : "text-gray-500 cursor-default";
+              ? "text-blue-600 hover:text-blue-800 transition duration-150"
+              : "text-gray-500 cursor-default";
 
           const stepPath = buildStepPath(step.path);
 

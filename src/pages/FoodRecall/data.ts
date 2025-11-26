@@ -141,7 +141,8 @@ export const saveHabitData = async (
     fats: IFoodHabitFat[] , 
     tabId : string
 ) => {
-    try {
+    try { 
+        
         const now = new Date().toLocaleString("SV-SE").replace("T", " ");
         master.updated_at = now;
         master.synch_flag = 2; // Mark as updated

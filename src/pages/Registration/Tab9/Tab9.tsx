@@ -128,6 +128,7 @@ export default function Tab9() {
   const searchParams = new URLSearchParams(location.search);
   const [removedIds, setRemovedIds] = useState<string[]>([]);
   const [isUnsaved, setIsUnsaved] = useState(false);
+  const [ageLimit, setAgeLimit] = useState(-1);
   const [indoorAirData, setIndoorAirData] = useState<INDOOR_AIR_POLLUTION[]>(
     []
   );
@@ -150,6 +151,8 @@ export default function Tab9() {
         handleAddNewUi(true);
       }
       console.log(res);
+      const res2 = await db?.query(`select * from patients where id = '${curId}' ;`);
+      setAgeLimit(differenceInYears(new Date(), new Date(res2?.values?.[0].dob)))
     } catch (error) {
       console.log(error);
     }
@@ -317,6 +320,7 @@ export default function Tab9() {
               handleRemoveUi={handleRemoveUi}
               setIndoorAirData={setIndoorAirData}
               setIsUnsaved={setIsUnsaved}
+              ageLimit={ageLimit}
             />
           ))}
           <div className="mt-4 flex justify-end gap-4 pr-2 pb-5">

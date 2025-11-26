@@ -134,7 +134,8 @@ export default function Tab5() {
   const [isUnsaved, setIsUnsaved] = useState(false);
   const [allowNext, setAllowNext] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
-  const [removedIds, setRemovedIds] = useState<string[]>([]);
+  const [removedIds, setRemovedIds] = useState<string[]>([]); 
+  const [ageLimit , setAgeLimit] = useState(-1) ; 
   const scrollRef = useRef<HTMLDivElement>(null);
   const handleAddNewUi = () => {
     if (residentialData.length > 0) setIsUnsaved(true);
@@ -161,9 +162,13 @@ export default function Tab5() {
     try {
       const query = `
                     select * from residential_history where user_id = '${curId}' ;    
-                    `;
+                    `; 
+      const userQuery = `select * from patients where id = '${curId}' ;`;  
       const res = await db?.query(query);
-      const values = res?.values;
+      const res2 = await db?.query(userQuery); 
+      const values = res?.values; 
+      const values2 = res2?.values; 
+      setAgeLimit(differenceInYears(new Date(), new Date(values2?.[0].dob))) 
       if (values?.length === 0 && residentialData.length === 0) {
         handleAddNewUi();
       } else {
@@ -285,7 +290,7 @@ export default function Tab5() {
   const handleSaveUpdated = () => {
     //for updated records
   };
-  console.log(residentialData.length);
+  console.log(residentialData.length );
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
     await loadExisting(currentId);
@@ -323,6 +328,7 @@ export default function Tab5() {
                 data={item}
                 setResidentialData={setResidentialData}
                 setIsUnsaved={setIsUnsaved}
+                ageLimit = {ageLimit}
               />
             ))}
           </main>

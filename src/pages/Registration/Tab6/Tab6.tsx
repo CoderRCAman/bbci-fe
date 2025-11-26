@@ -20,6 +20,7 @@ import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
+import { differenceInYears } from "date-fns";
 const translator = ShortUUID();
 export interface PERSONAL_MEDICAL_HISTORY {
   diagnoss: string;
@@ -101,6 +102,7 @@ export default function Tab6() {
   const [dirtyIds, setDirtyIds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isUnsaved, setIsUnsaved] = useState(false);
+  const [ageLimit, setAgeLimit] = useState(-1);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -207,6 +209,9 @@ export default function Tab6() {
         `SELECT * FROM personal_medical_history  WHERE user_id = ?`,
         [id]
       );
+      const userQuery = `select * from patients where id = '${id}' ;`;
+      const res2 = await db?.query(userQuery);
+      setAgeLimit(differenceInYears(new Date(), new Date(res2?.values?.[0].dob)))
       console.log(res?.values as PERSONAL_MEDICAL_HISTORY_DB[]);
       if (res?.values && res?.values.length === 0) {
         const defaultData = generateDefaultData(id || "");
@@ -359,7 +364,8 @@ export default function Tab6() {
                 mode_of_diagnosis={d.mode_of_diagnosis}
                 mode_of_treatment={d.mode_of_treatment}
                 key={index}
-                updateStateData={updateStateData}
+                updateStateData={updateStateData} 
+                ageLimit = {ageLimit}
               />
             ))}
 

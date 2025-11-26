@@ -16,7 +16,8 @@ export default function SmokingTobacco({
   data,
   handleChangeMaster,
   handleChangeProds,
-}: { 
+  ageLimit
+}: {
   data: initialState;
   handleChangeMaster: (id: string, field: string, value: any) => void;
   handleChangeProds: (
@@ -25,6 +26,7 @@ export default function SmokingTobacco({
     field: string,
     value: any
   ) => void;
+  ageLimit: number
 }) {
   // Helper array for the master radio buttons 
   console.log(data)
@@ -37,7 +39,7 @@ export default function SmokingTobacco({
 
   return (
     // Use a <Card> for a premium container
-    <Card  className="shadow-lg ">
+    <Card className="shadow-lg ">
       <div
         className="sticky -mt-10 top-0 text-center py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
         style={{ zIndex: 10 }}
@@ -131,16 +133,20 @@ export default function SmokingTobacco({
                   {/* Inputs grouped together */}
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={item?.from_age?.toString() || ""} // Handle null/undefined
-                      onChange={(e) =>
-                        handleChangeProds(
-                          item?.id,
-                          item?.type || "",
-                          "from_age",
-                          e.target.value ? parseInt(e.target.value) : ""
-                        )
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          handleChangeProds(item?.id, item?.type || "", "from_age", "");
+                          return;
+                        }
+                        let num = parseInt(raw);
+                        if (num > ageLimit) num = ageLimit;
+                        handleChangeProds(item?.id, item?.type || "", "from_age", num);
+                      }
                       }
                       disabled={data?.consumed !== 1 || item?.consumes !== 1}
                     />
@@ -149,16 +155,20 @@ export default function SmokingTobacco({
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={item?.to_age?.toString() || ""}
-                      onChange={(e) =>
-                        handleChangeProds(
-                          item?.id,
-                          item?.type || "",
-                          "to_age",
-                          e.target.value ? parseInt(e.target.value) : ""
-                        )
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          handleChangeProds(item?.id, item?.type || "", "to_age", "");
+                          return;
+                        }
+                        let num = parseInt(raw);
+                        if (num > ageLimit) num = ageLimit;
+                        handleChangeProds(item?.id, item?.type || "", "to_age", num);
+                      }
                       }
                       disabled={data?.consumed !== 1 || item?.consumes !== 1}
                     />
@@ -168,6 +178,7 @@ export default function SmokingTobacco({
                   <FloatLabel>
                     <InputText
                       keyfilter="int"
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={item?.number_per_day?.toString() || ""}
                       onChange={(e) =>
@@ -185,16 +196,20 @@ export default function SmokingTobacco({
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={item?.days_in_week?.toString() || ""}
-                      onChange={(e) =>
-                        handleChangeProds(
-                          item?.id,
-                          item?.type || "",
-                          "days_in_week",
-                          e.target.value ? parseInt(e.target.value) : ""
-                        )
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          handleChangeProds(item?.id, item?.type || "", "days_in_week", "");
+                          return;
+                        }
+                        let num = parseInt(raw);
+                        if (num > 7) num = 7;
+                        handleChangeProds(item?.id, item?.type || "", "days_in_week", num);
+                      }
                       }
                       disabled={data?.consumed !== 1 || item?.consumes !== 1}
                     />
@@ -230,15 +245,16 @@ export default function SmokingTobacco({
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={p?.from_age?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
-                          p?.id,
-                          p?.type || "",
-                          "from_age",
-                          e.target.value ? parseInt(e.target.value) : ""
+                          p.id,
+                          p.type || "",
+                          "to_age",
+                          e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
                       disabled={data?.consumed !== 1}
@@ -248,15 +264,16 @@ export default function SmokingTobacco({
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={p?.to_age?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
-                          p?.id,
-                          p?.type || "",
+                          p.id,
+                          p.type || "",
                           "to_age",
-                          e.target.value ? parseInt(e.target.value) : ""
+                          e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
                       disabled={data?.consumed !== 1}
@@ -266,7 +283,8 @@ export default function SmokingTobacco({
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={p?.number_per_day?.toString() || ""}
                       onChange={(e) =>
@@ -284,15 +302,16 @@ export default function SmokingTobacco({
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       value={p?.days_in_week?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
-                          p?.id,
-                          p?.type || "",
+                          p.id,
+                          p.type || "",
                           "days_in_week",
-                          e.target.value ? parseInt(e.target.value) : ""
+                          e.target.value === "" ? "" : Math.min(parseInt(e.target.value), 7)
                         )
                       }
                       disabled={data?.consumed !== 1}

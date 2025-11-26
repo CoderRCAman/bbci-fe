@@ -16,6 +16,7 @@ export default function ChewingWithoutTobacco({
   handleChangeProds,
   addNewOtherUi,
   handleRemoveUi,
+  ageLimit
 }: {
   data: initialState;
   handleChangeMaster: (id: string, field: string, value: any) => void;
@@ -40,6 +41,7 @@ export default function ChewingWithoutTobacco({
       | "chewing_without_tobacco"
       | "alcohol"
   ) => void;
+  ageLimit: number
 }) {
   // Helper array for the master radio buttons
   // NOTE: Based on your code, NO=2, DON'T KNOW=8, REFUSED=9
@@ -59,7 +61,7 @@ export default function ChewingWithoutTobacco({
     { label: "F", key: "site_of_placement_F" },
     { label: "n/a", key: "site_of_placement_NA" },
   ];
-console.log(data)
+  console.log(data)
   return (
     // 1. Use <Card> and remove the 'title' prop
     <Card className="shadow-lg ">
@@ -159,15 +161,14 @@ console.log(data)
                   <FloatLabel>
                     <InputText
                       keyfilter="int"
+                      type="number"
                       // Removed 'border-1 p-2'
                       onChange={(e) =>
                         handleChangeProds(
-                          item?.id,
+                          item.id,
                           "chewing_without_tobacco",
                           "from_age",
-                          isNaN(parseInt(e.target.value))
-                            ? "" // Use empty string instead of 0
-                            : parseInt(e.target.value)
+                          e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
                       value={item?.from_age?.toString() || ""}
@@ -178,16 +179,15 @@ console.log(data)
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       onChange={(e) =>
                         handleChangeProds(
-                          item?.id,
+                          item.id,
                           "chewing_without_tobacco",
                           "to_age",
-                          isNaN(parseInt(e.target.value))
-                            ? ""
-                            : parseInt(e.target.value)
+                          e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
                       value={item?.to_age?.toString() || ""}
@@ -198,16 +198,15 @@ console.log(data)
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       onChange={(e) =>
                         handleChangeProds(
                           item?.id,
                           "chewing_without_tobacco",
                           "number_per_day",
-                          isNaN(parseInt(e.target.value))
-                            ? ""
-                            : parseInt(e.target.value)
+                          e.target.value === "" ? "" : parseInt(e.target.value)
                         )
                       }
                       value={item?.number_per_day?.toString() || ""}
@@ -218,16 +217,15 @@ console.log(data)
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int"
+                      keyfilter="int" 
+                      type="number"
                       // Removed 'border-1 p-2'
                       onChange={(e) =>
                         handleChangeProds(
-                          item?.id,
+                          item.id,
                           "chewing_without_tobacco",
                           "days_in_week",
-                          isNaN(parseInt(e.target.value))
-                            ? ""
-                            : parseInt(e.target.value)
+                          e.target.value === "" ? "" : Math.min(parseInt(e.target.value), 7)
                         )
                       }
                       value={item?.days_in_week?.toString() || ""}
@@ -245,7 +243,8 @@ console.log(data)
                   <div className="flex gap-2 items-center font-semibold text-sm text-slate-500">
                     <InputText
                       className="w-20 text-center" // Wider width
-                      keyfilter={"int"}
+                      keyfilter={"int"} 
+                      type="number"
                       value={item?.duration_placement_hr?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
@@ -264,6 +263,7 @@ console.log(data)
                     <InputText
                       className="w-20 text-center" // Wider width
                       keyfilter={"int"}
+                      type="number"
                       value={item?.duration_placement_min?.toString() || ""}
                       onChange={(e) =>
                         handleChangeProds(
@@ -330,6 +330,7 @@ console.log(data)
                 addNewOtherUi={addNewOtherUi}
                 handleChangeProds={handleChangeProds}
                 isDisabled={data?.consumed !== 1}
+                ageLimit={ageLimit}
               />
             ))}
         </div>

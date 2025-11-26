@@ -29,6 +29,7 @@ import shortUUID from "short-uuid";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
+import { differenceInYears } from "date-fns";
 
 export default function Tab11() {
   const [alert, setAlert] = useState({
@@ -54,6 +55,7 @@ export default function Tab11() {
   );
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [isUnsaved, setIsUnsaved] = useState(false);
+  const [ageLimit, setAgeLimit] = useState(-1);
   const resetProduct = (
     p: TOBACCO_ALCOHOL_CONSUMPION
   ): TOBACCO_ALCOHOL_CONSUMPION => ({
@@ -90,6 +92,8 @@ export default function Tab11() {
       console.log(res);
       const result = populateWithBackend(masterValue, values, id, tabId);
       setData(result);
+      const res3 = await db?.query(`select * from patients where id = '${id}' ;`);
+      setAgeLimit(differenceInYears(new Date(), new Date(res3?.values?.[0].dob)))
     } catch (error) {
       console.log(error);
     }
@@ -335,8 +339,8 @@ export default function Tab11() {
         db,
         sqlite,
         dirtyValuesMaster,
-        dirtyValuesProduct, 
-        deletedIds, 
+        dirtyValuesProduct,
+        deletedIds,
         id,
         tabId
       );
@@ -361,7 +365,7 @@ export default function Tab11() {
     event.detail.complete();
   };
 
-  console.log(dirtyValuesMaster, dirtyValuesProduct , deletedIds)
+  console.log(dirtyValuesMaster, dirtyValuesProduct, deletedIds)
   return (
     <IonPage>
       <Header
@@ -394,6 +398,7 @@ export default function Tab11() {
                 handleChangeMaster={handleChangeMaster}
                 data={data?.[0]}
                 handleChangeProds={handleChangeProds}
+                ageLimit={ageLimit}
               />
             </AccordionTab>
             <AccordionTab
@@ -406,6 +411,7 @@ export default function Tab11() {
                 handleChangeProds={handleChangeProds}
                 addNewOtherUi={addNewOtherUi}
                 handleRemoveUi={handleRemoveUi}
+                ageLimit={ageLimit}
               />
             </AccordionTab>
             <AccordionTab
@@ -418,6 +424,7 @@ export default function Tab11() {
                 handleRemoveUi={handleRemoveUi}
                 handleChangeMaster={handleChangeMaster}
                 handleChangeProds={handleChangeProds}
+                ageLimit={ageLimit}
               />
             </AccordionTab>
             <AccordionTab
@@ -430,6 +437,7 @@ export default function Tab11() {
                 handleRemoveUi={handleRemoveUi}
                 handleChangeMaster={handleChangeMaster}
                 handleChangeProds={handleChangeProds}
+                ageLimit = {ageLimit}
               />
             </AccordionTab>
           </Accordion>

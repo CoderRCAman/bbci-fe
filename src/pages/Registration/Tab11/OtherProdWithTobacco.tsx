@@ -11,6 +11,7 @@ export default function OtherProdWithTobacco({
   addNewOtherUi,
   handleChangeProds,
   isDisabled,
+  ageLimit
 }: {
   data: TOBACCO_ALCOHOL_CONSUMPION;
   handleChangeProds: (
@@ -35,6 +36,7 @@ export default function OtherProdWithTobacco({
       | "alcohol"
   ) => void;
   isDisabled: boolean;
+  ageLimit: number
 }) {
   // Helper array for Site of Placement checkboxes
   const siteOptions = [
@@ -64,15 +66,19 @@ export default function OtherProdWithTobacco({
         <FloatLabel>
           <InputText
             keyfilter="int"
+            type="number"
             // Removed 'border-1 p-2'
             value={data?.from_age?.toString() || ""}
-            onChange={(e) =>
-              handleChangeProds(
-                data?.id,
-                data?.type,
-                "from_age",
-                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
-              )
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (raw === "") {
+                handleChangeProds(data?.id, data?.type, "from_age", "");
+                return;
+              }
+              let num = parseInt(raw);
+              if (num > ageLimit) num = ageLimit;
+              handleChangeProds(data?.id, data?.type, "from_age", num);
+            }
             }
             disabled={isDisabled}
           />
@@ -82,15 +88,19 @@ export default function OtherProdWithTobacco({
         <FloatLabel>
           <InputText
             keyfilter="int"
+            type="number"
             // Removed 'border-1 p-2'
             value={data?.to_age?.toString() || ""}
-            onChange={(e) =>
-              handleChangeProds(
-                data?.id,
-                data?.type,
-                "to_age",
-                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
-              )
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (raw === "") {
+                handleChangeProds(data?.id, data?.type, "to_age", "");
+                return;
+              }
+              let num = parseInt(raw);
+              if (num > ageLimit) num = ageLimit;
+              handleChangeProds(data?.id, data?.type, "to_age", num);
+            }
             }
             disabled={isDisabled}
           />
@@ -100,6 +110,7 @@ export default function OtherProdWithTobacco({
         <FloatLabel>
           <InputText
             keyfilter="int"
+            type="number"
             // Removed 'border-1 p-2'
             value={data?.number_per_day?.toString() || ""}
             onChange={(e) =>
@@ -107,7 +118,7 @@ export default function OtherProdWithTobacco({
                 data?.id,
                 data?.type,
                 "number_per_day",
-                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
+                e.target.value === "" ? "" : parseInt(e.target.value)
               )
             }
             disabled={isDisabled}
@@ -118,15 +129,19 @@ export default function OtherProdWithTobacco({
         <FloatLabel>
           <InputText
             keyfilter="int"
+            type="number"
             // Removed 'border-1 p-2'
             value={data?.days_in_week?.toString() || ""}
-            onChange={(e) =>
-              handleChangeProds(
-                data?.id,
-                data?.type,
-                "days_in_week",
-                isNaN(parseInt(e.target.value)) ? 0 : parseInt(e.target.value)
-              )
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (raw === "") {
+                handleChangeProds(data?.id, data?.type, "days_in_week", "");
+                return;
+              }
+              let num = parseInt(raw);
+              if (num > 7) num = 7;
+              handleChangeProds(data?.id, data?.type, "days_in_week", num);
+            }
             }
             disabled={isDisabled}
           />
@@ -143,6 +158,7 @@ export default function OtherProdWithTobacco({
           <InputText
             className="w-20 text-center" // Wider, cleaner input
             keyfilter={"int"}
+            type="number"
             value={data?.duration_placement_hr?.toString() || ""}
             onChange={(e) =>
               handleChangeProds(
@@ -159,6 +175,7 @@ export default function OtherProdWithTobacco({
           <InputText
             className="w-20 text-center" // Wider, cleaner input
             keyfilter={"int"}
+            type="number"
             value={data?.duration_placement_min?.toString() || ""}
             onChange={(e) =>
               handleChangeProds(
@@ -214,7 +231,7 @@ export default function OtherProdWithTobacco({
         <Button
           label="Remove" // Changed label
           icon="pi pi-trash" // Added icon
-          onClick={() => handleRemoveUi(data?.id, data?.type )}
+          onClick={() => handleRemoveUi(data?.id, data?.type)}
           severity="danger"
         />
       </div>
