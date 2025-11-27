@@ -663,7 +663,7 @@ export default function FoodHabitPage() {
             <section>
               <h2 className="text-lg font-semibold">2. Cooking Habits</h2>
               <div className="mt-3">
-                <label className="block text-sm font-semibold">Do you add any of the following to cooked food?</label>
+                <label className="block text-sm font-medium">Do you add any of the following to cooked food?</label>
                 <div className="flex flex-wrap gap-3 mt-2 text-sm">
                   {["Salt", "Sugar", "Jaggery", "Ghee", "Pickled Vegetables", "Mustard Oil", "Khar/Tapigo", "None"].map((item) => {
                     const checked = additives.includes(item);
