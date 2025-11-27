@@ -27,6 +27,18 @@ import { Tag } from "primereact/tag";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 import FlowCrumbs from "../../../components/FlowCrumbs";
+import AlphaOnlyInput from "../../../components/AlphaOnlyInput";
+
+// ---------- PREP METHODS LIST (standardized) ----------
+const PREP_METHODS = [
+  "Shallow Frying",
+  "Deep Frying",
+  "Boiling",
+  "Steaming",
+  "Sauting",
+  "Grill/Barbeque",
+  "Other (input)",
+] as const;
 
 export default function FoodRecallEntryPage() {
   const { db, sqlite, tabId } = useSQLite();
@@ -162,9 +174,28 @@ export default function FoodRecallEntryPage() {
         setReadOnlyNotice("Read-only (permission check failed)");
       }
 
-      // load entries
+      // load entries and normalize ingredient prep_method fields
       const entries = await loadRecallData(db!!, masterId);
-      setFoodLog(entries || []);
+      const normalized = (entries || []).map((entry) => {
+        const ents = { ...entry };
+        ents.ingredients = (entry.ingredients || []).map((ing: any) => {
+          const copy: any = { ...ing };
+          // If DB stored "Other: x", normalize for UI
+          if (typeof copy.prep_method === "string" && copy.prep_method.startsWith("Other: ")) {
+            copy._prep_other = copy.prep_method.substring(7);
+            copy.prep_method = "Other (input)";
+          } else if (!copy.prep_method) {
+            copy.prep_method = ""; // empty selection
+          }
+          // ensure fields exist
+          if (!copy.quantity) copy.quantity = "";
+          if (!copy.name) copy.name = "";
+          return copy;
+        });
+        return ents;
+      });
+
+      setFoodLog(normalized || []);
     } catch (e: any) {
       setAlert({ show: true, header: "Load Error", message: `Failed to load data: ${e.message}` });
       setIsEditable(false);
@@ -252,19 +283,19 @@ export default function FoodRecallEntryPage() {
       updated_at: nowDb,
       tab_id: tabId,
     };
-    setFoodLog(prev => [...prev, newEntry]);
+    setFoodLog((prev) => [...prev, newEntry]);
     const newKey = getDateKey(newEntry.date_time);
     setExpandedKey(newKey);
   };
 
   const handleRemoveFoodEntry = (id: string) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.filter((entry) => entry.id !== id));
+    setFoodLog((prev) => prev.filter((entry) => entry.id !== id));
   };
 
   const handleFoodEntryChange = (id: string, field: keyof IFoodRecallEntry, value: any) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)));
+    setFoodLog((prev) => prev.map((entry) => (entry.id === id ? { ...entry, [field]: value } : entry)));
   };
 
   const handleAddIngredient = (foodId: string) => {
@@ -273,39 +304,60 @@ export default function FoodRecallEntryPage() {
       return;
     }
     setIsUnsaved(true);
-    setFoodLog(prev => prev.map(food => {
-      if (food.id === foodId) {
-        const newIng: IFoodRecallIngredient = {
-          id: shortUUID.generate(),
-          entry_id: foodId,
-          name: "",
-          quantity: "",
-          prep_method: "",
-        };
-        return { ...food, ingredients: [...food.ingredients, newIng] };
-      }
-      return food;
-    }));
+    setFoodLog((prev) =>
+      prev.map((food) => {
+        if (food.id === foodId) {
+          const newIng: IFoodRecallIngredient & { _prep_other?: string } = {
+            id: shortUUID.generate(),
+            entry_id: foodId,
+            name: "",
+            quantity: "",
+            prep_method: "", // empty initially
+          } as any;
+          return { ...food, ingredients: [...food.ingredients, newIng] };
+        }
+        return food;
+      })
+    );
   };
 
-  const handleIngredientChange = (foodId: string, ingId: string, field: keyof IFoodRecallIngredient, value: any) => {
+  const handleIngredientChange = (
+    foodId: string,
+    ingId: string,
+    field: keyof IFoodRecallIngredient | string,
+    value: any
+  ) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.map(food => {
-      if (food.id === foodId) {
-        return { ...food, ingredients: food.ingredients.map(ing => ing.id === ingId ? { ...ing, [field]: value } : ing) };
-      }
-      return food;
-    }));
+    setFoodLog((prev) =>
+      prev.map((food) => {
+        if (food.id === foodId) {
+          return {
+            ...food,
+            ingredients: food.ingredients.map((ing: any) => {
+              if (ing.id !== ingId) return ing;
+              // support UI-only '_prep_other' field as well
+              if (field === "_prep_other") {
+                return { ...ing, _prep_other: value, prep_method: value ? "Other (input)" : ing.prep_method };
+              }
+              return { ...ing, [field]: value };
+            }),
+          };
+        }
+        return food;
+      })
+    );
   };
 
   const handleRemoveIngredient = (foodId: string, ingId: string) => {
     setIsUnsaved(true);
-    setFoodLog(prev => prev.map(food => {
-      if (food.id === foodId) {
-        return { ...food, ingredients: food.ingredients.filter(ing => ing.id !== ingId) };
-      }
-      return food;
-    }));
+    setFoodLog((prev) =>
+      prev.map((food) => {
+        if (food.id === foodId) {
+          return { ...food, ingredients: food.ingredients.filter((ing) => ing.id !== ingId) };
+        }
+        return food;
+      })
+    );
   };
 
   const handleSave = async () => {
@@ -335,16 +387,48 @@ export default function FoodRecallEntryPage() {
 
     setIsLoading(true);
     try {
-      await saveRecallData(db, sqlite, foodLog, masterId, tabId);
+      // sanitize foodLog before saving: convert prep_method "Other (input)" + _prep_other => "Other: <value>"
+      const sanitized = (foodLog || []).map((entry) => {
+        const ecopy: any = { ...entry };
+        ecopy.ingredients = (entry.ingredients || []).map((ing: any) => {
+          const icopy: any = { ...ing };
+          if (icopy.prep_method === "Other (input)" && icopy._prep_other) {
+            icopy.prep_method = `Other: ${icopy._prep_other}`;
+          }
+          // ensure no UI-only fields in the saved object (optional: keep them, but better to strip)
+          delete icopy._prep_other;
+          return icopy;
+        });
+        return ecopy;
+      });
+
+      await saveRecallData(db, sqlite, sanitized, masterId, tabId);
       try {
         sessionStorage.setItem(`foodrecall_saved_${masterId}`, String(Date.now()));
-      } catch {}
+      } catch { }
       setIsLoading(false);
       setAlert({ show: true, header: "Success", message: "Food Recall (7.3) data has been saved." });
       setIsUnsaved(false);
 
       const latest = await loadRecallData(db, masterId);
-      setFoodLog(latest || []);
+      // normalize newly loaded entries same as during initial load
+      const normalized = (latest || []).map((entry) => {
+        const ents = { ...entry };
+        ents.ingredients = (entry.ingredients || []).map((ing: any) => {
+          const copy: any = { ...ing };
+          if (typeof copy.prep_method === "string" && copy.prep_method.startsWith("Other: ")) {
+            copy._prep_other = copy.prep_method.substring(7);
+            copy.prep_method = "Other (input)";
+          } else if (!copy.prep_method) {
+            copy.prep_method = "";
+          }
+          if (!copy.quantity) copy.quantity = "";
+          if (!copy.name) copy.name = "";
+          return copy;
+        });
+        return ents;
+      });
+      setFoodLog(normalized || []);
     } catch (e: any) {
       setIsLoading(false);
       setAlert({ show: true, header: "Save Error", message: `Failed to save data: ${e.message}` });
@@ -362,7 +446,16 @@ export default function FoodRecallEntryPage() {
     const params = new URLSearchParams();
     if (masterId) params.set("master_id", masterId);
     if (userId) params.set("user_id", userId);
-    history.push(`/food-recall/page2?${params.toString()}`);
+
+    // Temporarily bypass the block (toggle off) to allow breadcrumb navigation even when editing.
+    const prevUnsaved = isUnsaved;
+    try {
+      setIsUnsaved(false); // temporarily disable guard
+      history.push(`/food-recall/page2?${params.toString()}`);
+    } finally {
+      // restore unsaved flag shortly after navigation so UI state remains correct if user returns
+      setTimeout(() => setIsUnsaved(prevUnsaved), 150);
+    }
   };
 
   if (isLoading) {
@@ -391,9 +484,13 @@ export default function FoodRecallEntryPage() {
               <FlowCrumbs steps={steps} currentPageLabel={steps[1].label} idQueryParam={"master_id"} />
               {/* patient name shown under stepper */}
               {patientName ? (
-                <div className="mt-2 text-sm font-medium text-gray-700">Participant: <span className="font-semibold">{patientName}</span></div>
+                <div className="mt-2 text-sm font-medium text-gray-700">
+                  Participant: <span className="font-semibold">{patientName}</span>
+                </div>
               ) : (
-                <div className="mt-2 text-sm text-gray-500">Participant: <span className="italic">Unknown</span></div>
+                <div className="mt-2 text-sm text-gray-500">
+                  Participant: <span className="italic">Unknown</span>
+                </div>
               )}
             </div>
 
@@ -424,23 +521,40 @@ export default function FoodRecallEntryPage() {
             {groupedByDate.ordered.length === 0 ? (
               <p className="text-sm text-gray-500 text-center italic py-6">No entries yet — use "Add Meal/Dish" to create the first entry.</p>
             ) : (
-              <Accordion activeIndex={expandedKey ? groupedByDate.keys.indexOf(expandedKey) : -1} onTabChange={(e) => {
-                const idx = e.index;
-                if (idx === -1) setExpandedKey(null);
-                else setExpandedKey(groupedByDate.keys[idx as number]);
-              }}>
+              <Accordion
+                activeIndex={expandedKey ? groupedByDate.keys.indexOf(expandedKey) : -1}
+                onTabChange={(e) => {
+                  const idx = e.index;
+                  if (idx === -1) setExpandedKey(null);
+                  else setExpandedKey(groupedByDate.keys[idx as number]);
+                }}
+              >
                 {groupedByDate.ordered.map(([dateKey, entries]) => (
                   <AccordionTab key={dateKey} header={`${dateKey} — ${entries.length} item(s)`}>
                     <div className="space-y-4">
                       {entries.map((entry, idx) => (
                         <div key={entry.id} className="border-2 border-cyan-100 rounded-lg p-4 bg-cyan-50/50 relative">
                           <h3 className="font-bold text-gray-800 mb-2">Meal/Dish {idx + 1}</h3>
-                          <button onClick={() => handleRemoveFoodEntry(entry.id)} disabled={!isEditable} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl px-2 py-0 disabled:text-gray-300" title="Remove Dish">&times;</button>
+                          <button
+                            onClick={() => handleRemoveFoodEntry(entry.id)}
+                            disabled={!isEditable}
+                            className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl px-2 py-0 disabled:text-gray-300"
+                            title="Remove Dish"
+                          >
+                            &times;
+                          </button>
 
-                          <div className="grid grid-cols-2 gap-4 mb-3">
+                          {/* compact top row: Timing | Type of Diet | Date/Time */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                             <div>
                               <label className="block text-sm font-medium text-gray-700">Timing</label>
-                              <IonSelect value={entry.timing} onIonChange={(e) => handleFoodEntryChange(entry.id, "timing", e.detail.value)} interface="popover" placeholder="Select" disabled={!isEditable}>
+                              <IonSelect
+                                value={entry.timing}
+                                onIonChange={(e) => handleFoodEntryChange(entry.id, "timing", e.detail.value)}
+                                interface="popover"
+                                placeholder="Select"
+                                disabled={!isEditable}
+                              >
                                 <IonSelectOption value="Breakfast">Breakfast</IonSelectOption>
                                 <IonSelectOption value="Lunch">Lunch</IonSelectOption>
                                 <IonSelectOption value="Dinner">Dinner</IonSelectOption>
@@ -448,40 +562,73 @@ export default function FoodRecallEntryPage() {
                                 <IonSelectOption value="Other">Other</IonSelectOption>
                               </IonSelect>
                             </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700">Date/Time</label>
-                              <input type="datetime-local" value={dbToInputDatetime(entry.date_time)} onChange={(e) => handleFoodEntryChange(entry.id, "date_time", inputToDbDatetime((e.target as HTMLInputElement).value))} disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
-                            </div>
-                          </div>
 
-                          <div className="grid grid-cols-2 gap-4 mb-3">
                             <div>
                               <label className="block text-sm font-medium text-gray-700">Type of Diet for this Dish</label>
-                              <IonSelect value={entry.diet_context} disabled={!isEditable} onIonChange={(e) => {
-                                handleFoodEntryChange(entry.id, "diet_context", e.detail.value);
-                                if (e.detail.value !== "festival") handleFoodEntryChange(entry.id, "festival_name", "");
-                              }} interface="popover" placeholder="Select">
+                              <IonSelect
+                                value={entry.diet_context}
+                                disabled={!isEditable}
+                                onIonChange={(e) => {
+                                  handleFoodEntryChange(entry.id, "diet_context", e.detail.value);
+                                  if (e.detail.value !== "festival") handleFoodEntryChange(entry.id, "festival_name", "");
+                                }}
+                                interface="popover"
+                                placeholder="Select"
+                              >
                                 <IonSelectOption value="regular">Regular</IonSelectOption>
                                 <IonSelectOption value="fasting">Ritual</IonSelectOption>
                                 <IonSelectOption value="festival">Festival</IonSelectOption>
                               </IonSelect>
+
+                              {/* festival name inline under Type column */}
+                              {entry.diet_context === "festival" && (
+                                <div className="mt-2">
+                                  <label className="block text-sm font-medium text-gray-700">Festival Name</label>
+                                  <AlphaOnlyInput
+                                    value={entry.festival_name}
+                                    onChange={(e: any) => handleFoodEntryChange(entry.id, "festival_name", e.target.value)}
+                                    placeholder="Name of Festival"
+                                    disabled={!isEditable}
+                                    className="w-full p-2 border rounded-md disabled:bg-gray-100"
+                                  />
+                                </div>
+                              )}
                             </div>
-                            {entry.diet_context === "festival" && (
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700">Festival Name</label>
-                                <input type="text" value={entry.festival_name} onChange={(e) => handleFoodEntryChange(entry.id, "festival_name", e.target.value)} placeholder="Name of Festival" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
-                              </div>
-                            )}
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">Date/Time</label>
+                              <input
+                                type="datetime-local"
+                                value={dbToInputDatetime(entry.date_time)}
+                                onChange={(e) => handleFoodEntryChange(entry.id, "date_time", inputToDbDatetime((e.target as HTMLInputElement).value))}
+                                disabled={!isEditable}
+                                className="w-full p-2 border rounded-md disabled:bg-gray-100"
+                              />
+                            </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-4 mb-3">
+                          {/* second row: Name of Dish | Quantity */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                             <div>
                               <label className="block text-sm font-medium text-gray-700">Name of Dish</label>
-                              <input type="text" value={entry.name_of_dish} onChange={(e) => handleFoodEntryChange(entry.id, "name_of_dish", e.target.value)} placeholder="e.g., Dal, Roti" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
+                              <AlphaOnlyInput
+                                value={entry.name_of_dish}
+                                onChange={(e: any) => handleFoodEntryChange(entry.id, "name_of_dish", e.target.value)}
+                                placeholder="e.g., Dal, Roti"
+                                disabled={!isEditable}
+                                className="w-full p-2 border rounded-md disabled:bg-gray-100"
+                              />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700">Quantity Consumed</label>
-                              <input type="text" value={entry.quantity} onChange={(e) => handleFoodEntryChange(entry.id, "quantity", e.target.value)} placeholder="e.g., 2 gm" disabled={!isEditable} className="w-full p-2 border rounded-md disabled:bg-gray-100" />
+                              <input
+                                type="text"
+                                value={entry.quantity}
+                                onChange={(e) => handleFoodEntryChange(entry.id, "quantity", e.target.value)}
+                                placeholder="e.g., 2 gm"
+                                disabled={!isEditable}
+                                className="w-full p-2 border rounded-md disabled:bg-gray-100"
+                              />
                             </div>
                           </div>
 
@@ -491,20 +638,79 @@ export default function FoodRecallEntryPage() {
                               <Button label="+ Ingredient" severity="secondary" className="p-button-sm" onClick={() => handleAddIngredient(entry.id)} disabled={!isEditable} />
                             </div>
 
-                            {(entry.ingredients || []).map((ing) => (
+                            {/* Ingredients header row */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs font-bold border-b pb-2 mb-2">
+                              <div>Ingredient</div>
+                              <div>Qty</div>
+                              <div>Prep Method</div>
+                              <div className="text-right">Actions</div>
+                            </div>
+
+                            {(entry.ingredients || []).map((ing: any) => (
                               <div key={ing.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 border-t pt-2 mt-2 items-end">
-                                <input type="text" value={ing.name} onChange={(e) => handleIngredientChange(entry.id, ing.id, "name", e.target.value)} placeholder="Ingredient Name" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
-                                <input type="text" value={ing.quantity} onChange={(e) => handleIngredientChange(entry.id, ing.id, "quantity", e.target.value)} placeholder="Gram" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
-                                <input type="text" value={ing.prep_method} onChange={(e) => handleIngredientChange(entry.id, ing.id, "prep_method", e.target.value)} placeholder="Prep Method" disabled={!isEditable} className="p-1 border rounded-md col-span-1 disabled:bg-gray-100" />
-                                <Button icon="pi pi-times" severity="danger" className="p-button-sm p-button-text" onClick={() => handleRemoveIngredient(entry.id, ing.id)} disabled={!isEditable} />
+                                <AlphaOnlyInput
+                                  value={ing.name}
+                                  onChange={(e: any) => handleIngredientChange(entry.id, ing.id, "name", e.target.value)}
+                                  placeholder="Ingredient Name"
+                                  disabled={!isEditable}
+                                  className="p-1 border rounded-md col-span-1 disabled:bg-gray-100"
+                                />
+                                <input
+                                  type="text"
+                                  value={ing.quantity}
+                                  onChange={(e) => handleIngredientChange(entry.id, ing.id, "quantity", e.target.value)}
+                                  placeholder="Gram"
+                                  disabled={!isEditable}
+                                  className="p-1 border rounded-md col-span-1 disabled:bg-gray-100"
+                                />
+
+                                {/* Prep method: standardized select + optional other input */}
+                                <div className="col-span-1 flex gap-2 items-center">
+                                  <select
+                                    value={ing.prep_method || ""}
+                                    onChange={(e) => {
+                                      const v = e.target.value;
+                                      handleIngredientChange(entry.id, ing.id, "prep_method", v);
+                                      // clear _prep_other if not other
+                                      if (v !== "Other (input)") {
+                                        handleIngredientChange(entry.id, ing.id, "_prep_other", "");
+                                      }
+                                    }}
+                                    disabled={!isEditable}
+                                    className="p-1 border rounded text-sm w-full"
+                                  >
+                                    <option value="">-- Select prep method --</option>
+                                    {PREP_METHODS.map((pm) => (
+                                      <option key={pm} value={pm}>
+                                        {pm}
+                                      </option>
+                                    ))}
+                                  </select>
+
+                                  {/* other input when needed (alpha-only) */}
+                                  {ing.prep_method === "Other (input)" && (
+                                    <AlphaOnlyInput
+                                      value={ing._prep_other || ""}
+                                      onChange={(e: any) => handleIngredientChange(entry.id, ing.id, "_prep_other", e.target.value)}
+                                      placeholder="Specify"
+                                      disabled={!isEditable}
+                                      className="p-1 border rounded text-sm w-36"
+                                    />
+                                  )}
+                                </div>
+
+
+                                <div className="flex justify-end">
+                                  <Button icon="pi pi-times" severity="danger" className="p-button-sm p-button-text" onClick={() => handleRemoveIngredient(entry.id, ing.id)} disabled={!isEditable} />
+                                </div>
                               </div>
-                            ))} 
+                            ))}
                           </div>
                         </div>
                       ))}
                     </div>
                   </AccordionTab>
-                ))} 
+                ))}
               </Accordion>
             )}
           </div>

@@ -19,6 +19,7 @@ import {
   loadRecallData,
   saveHabitData,
   checkHabitEditEligibility,
+  fetchPatientAgeOrCompute, // <-- imported
 } from "../data";
 import shortUUID from "short-uuid";
 import { Button } from "primereact/button";
@@ -44,6 +45,24 @@ const PREP_KEYS: Record<string, keyof IFoodHabitMaster> = {
   "Grill/Barbeque": "method_grill_bbq",
 };
 
+// -- OIL OPTIONS (static list you requested)
+const OIL_OPTIONS = [
+  "Mixed vegetable oil",
+  "Sunflower oil",
+  "Cornflower oil",
+  "Soya oil",
+  "Mustard oil",
+  "Sesame oil",
+  "Palm oil",
+  "Coconut Oil",
+  "Groundnut oil",
+  "Rice bran oil",
+  "Vegetable ghee",
+  "Animal ghee",
+  "Other (input)",
+];
+
+// Custom radio (keeps visual similar)
 const CustomRadio = ({
   id,
   name,
@@ -81,6 +100,13 @@ const CustomRadio = ({
   </div>
 );
 
+// ---------- small shared validator ----------
+const validateNotGreaterThanPatientAge = (value: number | string, patientAge: number | null) => {
+  if (patientAge === null || patientAge === undefined) return true; // no info -> allow
+  const v = Number(value);
+  return !isNaN(v) && v <= patientAge;
+};
+
 export default function FoodHabitPage() {
   const { db, sqlite, tabId } = useSQLite();
   const location = useLocation();
@@ -91,12 +117,16 @@ export default function FoodHabitPage() {
   const [saveInProgress, setSaveInProgress] = useState(false);
 
   const [master, setMaster] = useState<IFoodHabitMaster | null>(null);
-  const [fats, setFats] = useState<IFoodHabitFat[]>([]);
+  // note: IFoodHabitFat doesn't define _other_name; we use it as UI-only (any)
+  const [fats, setFats] = useState<any[]>([]);
   const [alert, setAlert] = useState({ show: false, header: "", message: "" });
 
   // UI-only states
   const [patientName, setPatientName] = useState<string>("");
   const [readOnlyNotice, setReadOnlyNotice] = useState<string>(""); // subtle inline read-only badge text
+
+  // age
+  const [patientAge, setPatientAge] = useState<number | null>(null);
 
   // water supply tags local state + add input toggle
   const [waterSupplyTags, setWaterSupplyTags] = useState<string[]>([]);
@@ -135,14 +165,12 @@ export default function FoodHabitPage() {
   const fetchPatientName = async (dbConn: any, uId: string) => {
     if (!dbConn || !uId) return "";
     try {
-      // try common fields; adapt if your patients table uses different column names
       let name = "";
       const tryQuery = async (q: string) => {
         try {
           const res = await dbConn.query(q, [uId]);
           if (res?.values && res.values[0]) {
             const val = res.values[0];
-            // pick first string-like property
             for (const k of Object.keys(val)) {
               if (typeof val[k] === "string" && val[k].trim().length > 0) return val[k];
             }
@@ -187,10 +215,21 @@ export default function FoodHabitPage() {
         existing = await loadHabitData(db!!, userId, null); // assume loadHabitData can search by userId if masterId null
       }
 
+      // determine which user id to use for fetching age (prefer userId from query, else from master)
+      let effectiveUserId = userId || (existing?.master?.user_id || "");
+
       if (existing) {
         // Use canonical master (edit-only)
         setMaster(existing.master);
-        setFats(existing.fats || []);
+
+        // Normalize fats: detect "Other: value" and map to name="Other (input)" + _other_name="value"
+        const normalizedFats = (existing.fats || []).map((f: any) => {
+          if (typeof f.name === "string" && f.name.startsWith("Other: ")) {
+            return { ...f, _other_name: f.name.substring(7), name: "Other (input)" };
+          }
+          return f;
+        });
+        setFats(normalizedFats);
 
         try {
           const ws = JSON.parse(existing.master.water_supply_json || "[]");
@@ -211,7 +250,6 @@ export default function FoodHabitPage() {
           const allowed = await checkHabitEditEligibility(db!!, existing.master.id, tabId);
           setIsEditable(!!allowed);
           if (!allowed) {
-            // don't show alert popup — show inline subtle badge instead
             setReadOnlyNotice(`Read-only (created by another tab)`);
           } else {
             setReadOnlyNotice("");
@@ -238,6 +276,19 @@ export default function FoodHabitPage() {
         setAlert({ show: true, header: "Error", message: "Could not load or create habit record. Please go back to Page 1 and select a patient." });
         setIsEditable(false);
       }
+
+      // fetch patient age (best-effort) using effectiveUserId (if available)
+      if (db && effectiveUserId) {
+        try {
+          const age = await fetchPatientAgeOrCompute(db, effectiveUserId);
+          setPatientAge(age);
+        } catch (e) {
+          console.warn("fetchPatientAgeOrCompute error:", e);
+          setPatientAge(null);
+        }
+      } else {
+        setPatientAge(null);
+      }
     } catch (e: any) {
       setAlert({ show: true, header: "Load Error", message: `Failed to load data: ${e.message}` });
       setIsEditable(false);
@@ -259,24 +310,61 @@ export default function FoodHabitPage() {
     setMaster((prev) => ({ ...prev!, [field]: value }));
   };
 
+  // specialized setter for diet_duration with age validation
+  const handleDietDurationChange = (value: any) => {
+    // allow empty
+    if (value === "" || value === null) {
+      handleMasterChange("diet_duration", "");
+      return;
+    }
+    if (!validateNotGreaterThanPatientAge(value, patientAge)) {
+      setAlert({ show: true, header: "Invalid Age", message: `Diet duration cannot exceed participant age (${patientAge}).` });
+      return;
+    }
+    handleMasterChange("diet_duration", value);
+  };
+
   // fats (compact table)
   const handleAddFat = () => {
     if (!master) return;
     setIsUnsaved(true);
-    const newFat: IFoodHabitFat = {
+    const newFat: any = {
       id: shortUUID.generate(),
       master_id: master.id,
-      name: "",
+      name: "", // initially empty
       usage: "yes",
       family_consumption: "",
       years_used: "",
+      _other_name: "",
     };
     setFats((prev) => [...prev, newFat]);
   };
 
-  const handleFatChange = (id: string, field: keyof IFoodHabitFat, value: any) => {
+  // Accept UI-only fields (string) as field name
+  const handleFatChange = (id: string, field: keyof IFoodHabitFat | string, value: any) => {
+    // if years_used, validate against patientAge
+    if (field === "years_used" && value !== "" && patientAge !== null) {
+      if (!validateNotGreaterThanPatientAge(value, patientAge)) {
+        setAlert({ show: true, header: "Invalid Age", message: `Years used cannot exceed participant age (${patientAge}).` });
+        return;
+      }
+    }
+
     setIsUnsaved(true);
-    setFats((prev) => prev.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
+    setFats((prev) =>
+      prev.map((f: any) => {
+        if (f.id !== id) return f;
+        // if updating _other_name, also update name to a marker so save can convert it later
+        if (field === "_other_name") {
+          return { ...f, _other_name: value, name: value ? `Other: ${value}` : "Other (input)" };
+        }
+        // if user selected the special "Other (input)" option from select, keep _other_name unchanged
+        if (field === "name" && value === "Other (input)") {
+          return { ...f, name: "Other (input)" };
+        }
+        return { ...f, [field]: value };
+      })
+    );
   };
 
   const handleRemoveFat = (id: string) => {
@@ -316,7 +404,7 @@ export default function FoodHabitPage() {
       return;
     }
 
-    setWaterSupplyTags(prev => [...prev, val]);
+    setWaterSupplyTags((prev) => [...prev, val]);
     setOtherWaterValue("");
     setSelectedWaterOption(WATER_OPTIONS[0]);
     setShowAddWater(false);
@@ -324,7 +412,7 @@ export default function FoodHabitPage() {
   };
 
   const removeWaterTag = (tag: string) => {
-    setWaterSupplyTags(prev => prev.filter(t => t !== tag));
+    setWaterSupplyTags((prev) => prev.filter((t) => t !== tag));
     setIsUnsaved(true);
   };
 
@@ -358,6 +446,20 @@ export default function FoodHabitPage() {
       return false;
     }
 
+    // Defensive age validations before save
+    if (patientAge !== null && master) {
+      if (!validateNotGreaterThanPatientAge(master.diet_duration, patientAge)) {
+        setAlert({ show: true, header: "Invalid", message: `Diet duration cannot exceed participant age (${patientAge}).` });
+        return false;
+      }
+      for (const f of fats) {
+        if (f.years_used && !validateNotGreaterThanPatientAge(f.years_used, patientAge)) {
+          setAlert({ show: true, header: "Invalid", message: `Years used for ${f.name || "fat"} cannot exceed participant age (${patientAge}).` });
+          return false;
+        }
+      }
+    }
+
     // Attach existing master id if a master for this user already exists (prevent duplicates)
     if (userId && (!master.id || master.id === "")) {
       try {
@@ -380,17 +482,37 @@ export default function FoodHabitPage() {
     // sync waterSupplyTags into master before save
     const updatedMaster = { ...master, water_supply_json: JSON.stringify(waterSupplyTags) } as IFoodHabitMaster;
     setMaster(updatedMaster);
-    console.log(updatedMaster)
     setSaveInProgress(true);
+
     try {
-      await saveHabitData(db, sqlite, updatedMaster, fats, tabId);
+      // Clean fats: convert UI-only markers to DB values (Other: ...) and strip _other_name before saving
+      const fatsToSave = (fats || []).map((f: any) => {
+        const copy: any = { ...f };
+        if (copy.name === "Other (input)" && copy._other_name) {
+          copy.name = `Other: ${copy._other_name}`;
+        }
+        // ensure required fields exist (avoid undefined)
+        if (copy.family_consumption === undefined) copy.family_consumption = "";
+        if (copy.years_used === undefined) copy.years_used = "";
+        delete copy._other_name;
+        return copy;
+      });
+
+      await saveHabitData(db, sqlite, updatedMaster, fatsToSave, tabId);
       setIsUnsaved(false);
 
       // reload to get canonical master id (if newly created)
       const reload = await loadHabitData(db!!, userId, updatedMaster.id);
       if (reload) {
         setMaster(reload.master);
-        setFats(reload.fats || []);
+        // normalize loaded fats same as earlier
+        const normalizedFats = (reload.fats || []).map((f: any) => {
+          if (typeof f.name === "string" && f.name.startsWith("Other: ")) {
+            return { ...f, _other_name: f.name.substring(7), name: "Other (input)" };
+          }
+          return f;
+        });
+        setFats(normalizedFats);
         const ws = JSON.parse(reload.master.water_supply_json || "[]");
         setWaterSupplyTags(Array.isArray(ws) ? ws : []);
         // ensure editability recomputed after save (creator tab preserved)
@@ -479,7 +601,10 @@ export default function FoodHabitPage() {
               <FlowCrumbs steps={steps} currentPageLabel={steps[0].label} idQueryParam={idQueryParam} />
               {/* patient name shown under stepper */}
               {patientName ? (
-                <div className="mt-2 text-sm font-medium text-gray-700">Participant: <span className="font-semibold">{patientName}</span></div>
+                <div className="mt-2 text-sm font-medium text-gray-700">
+                  Participant: <span className="font-semibold">{patientName}</span>
+                  {patientAge !== null ? <span className="ml-2 text-xs text-gray-500">({patientAge} yrs)</span> : null}
+                </div>
               ) : (
                 <div className="mt-2 text-sm text-gray-500">Participant: <span className="italic">Unknown</span></div>
               )}
@@ -500,12 +625,7 @@ export default function FoodHabitPage() {
           </div>
 
           {/* STATUS line removed 'Module: Food Habits' per request */}
-          <div className="mb-2">
-            {/* left intentionally minimal */}
-          </div>
-
-          {/* show registered tab component removed from top (we replaced with stepper tab text) */}
-          {/* If you still want the old ShowRegisteredTab somewhere, you can re-enable it. */}
+          <div className="mb-2">{/* left intentionally minimal */}</div>
 
           <main className="bg-white p-4 rounded shadow space-y-4">
             {/* Dietary Profile */}
@@ -528,7 +648,7 @@ export default function FoodHabitPage() {
                     inputMode="numeric"
                     pattern="\d*"
                     value={master.diet_duration}
-                    onChange={(e) => handleMasterChange("diet_duration", e.target.value)}
+                    onChange={(e) => handleDietDurationChange(e.target.value)}
                     className="w-full p-2 border rounded mt-1 disabled:bg-gray-100"
                     disabled={!isEditable}
                     placeholder="e.g., 5"
@@ -545,14 +665,19 @@ export default function FoodHabitPage() {
               <div className="mt-3">
                 <label className="block text-sm font-semibold">Do you add any of the following to cooked food?</label>
                 <div className="flex flex-wrap gap-3 mt-2 text-sm">
-                  {["Salt", "Sugar", "Jaggery", "Ghee", "Pickled Vegetables", "Mustard Oil", "Khar/Tapigo", "None"].map(item => {
+                  {["Salt", "Sugar", "Jaggery", "Ghee", "Pickled Vegetables", "Mustard Oil", "Khar/Tapigo", "None"].map((item) => {
                     const checked = additives.includes(item);
                     return (
                       <label key={item} className="inline-flex items-center gap-2">
-                        <input type="checkbox" checked={checked} disabled={!isEditable} onChange={(e) => {
-                          const newAdd = e.target.checked ? [...additives, item] : additives.filter(a => a !== item);
-                          handleMasterChange("additives_json", JSON.stringify(newAdd));
-                        }} />
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={!isEditable}
+                          onChange={(e) => {
+                            const newAdd = e.target.checked ? [...additives, item] : additives.filter((a) => a !== item);
+                            handleMasterChange("additives_json", JSON.stringify(newAdd));
+                          }}
+                        />
                         <span className="text-sm">{item}</span>
                       </label>
                     );
@@ -581,11 +706,45 @@ export default function FoodHabitPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {fats.map((fat) => (
+                      {fats.map((fat: any) => (
                         <tr key={fat.id} className="border-b last:border-b-0">
                           <td className="py-2 pr-3">
-                            <input value={fat.name} onChange={(e) => handleFatChange(fat.id, "name", e.target.value)} placeholder="Fat/Oil" className="w-full p-1 border rounded text-sm" disabled={!isEditable} />
+                            <div className="flex gap-2 items-center">
+                              <select
+                                value={fat.name === undefined ? "" : fat.name === "Other (input)" ? "Other (input)" : (typeof fat.name === "string" && fat.name.startsWith("Other: ") ? "Other (input)" : fat.name || "")}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  if (v === "Other (input)") {
+                                    handleFatChange(fat.id, "name", "Other (input)");
+                                  } else {
+                                    handleFatChange(fat.id, "name", v);
+                                  }
+                                }}
+                                disabled={!isEditable}
+                                className="p-1 border rounded text-sm w-full"
+                              >
+                                <option value="">-- Select oil --</option>
+                                {OIL_OPTIONS.map((o) => (
+                                  <option key={o} value={o}>
+                                    {o}
+                                  </option>
+                                ))}
+                              </select>
+
+                              {/* Other input: display when name is Other (input) or stored as Other: */}
+                              {(fat.name === "Other (input)" || (typeof fat.name === "string" && fat.name.startsWith("Other: "))) && (
+                                <input
+                                  type="text"
+                                  placeholder="Specify other oil"
+                                  value={fat._other_name ?? (typeof fat.name === "string" && fat.name.startsWith("Other: ") ? fat.name.substring(7) : "")}
+                                  onChange={(e) => handleFatChange(fat.id, "_other_name", e.target.value)}
+                                  disabled={!isEditable}
+                                  className="p-1 border rounded text-sm w-48"
+                                />
+                              )}
+                            </div>
                           </td>
+
                           <td className="py-2 pr-3">
                             <select value={fat.usage} onChange={(e) => handleFatChange(fat.id, "usage", e.target.value)} disabled={!isEditable} className="p-1 border rounded text-sm">
                               <option value="yes">Yes</option>
@@ -593,21 +752,28 @@ export default function FoodHabitPage() {
                               <option value="dont know">Don't Know</option>
                             </select>
                           </td>
+
                           <td className="py-2 pr-3">
                             <input value={fat.family_consumption} onChange={(e) => handleFatChange(fat.id, "family_consumption", e.target.value)} placeholder="Qty" inputMode="numeric" pattern="\d*" className="p-1 border rounded text-sm" disabled={!isEditable} />
                           </td>
+
                           <td className="py-2 pr-3">
                             <input value={fat.years_used} onChange={(e) => handleFatChange(fat.id, "years_used", e.target.value)} placeholder="Years" type="number" inputMode="numeric" pattern="\d*" className="p-1 border rounded text-sm w-20" disabled={!isEditable} />
                           </td>
+
                           <td className="py-2 pr-3">
-                            <button onClick={() => handleRemoveFat(fat.id)} disabled={!isEditable} className="text-red-500 text-sm px-2 py-1">Remove</button>
+                            <button onClick={() => handleRemoveFat(fat.id)} disabled={!isEditable} className="text-red-500 text-sm px-2 py-1">
+                              Remove
+                            </button>
                           </td>
                         </tr>
                       ))}
 
                       {fats.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="py-3 text-xs text-gray-500">No fat/oil recorded. Click Add to insert.</td>
+                          <td colSpan={5} className="py-3 text-xs text-gray-500">
+                            No fat/oil recorded. Click Add to insert.
+                          </td>
                         </tr>
                       )}
                     </tbody>
@@ -624,7 +790,7 @@ export default function FoodHabitPage() {
                   <div className="text-center">Most Time (2)</div>
                 </div>
                 {PREP_METHODS.map((method) => {
-                  const key = PREP_KEYS[method] ;
+                  const key = PREP_KEYS[method];
                   return (
                     <div key={key} className="grid grid-cols-4 items-center py-2 border-b last:border-b-0 text-sm">
                       <div>{method}</div>
@@ -638,7 +804,6 @@ export default function FoodHabitPage() {
                             disabled={!isEditable}
                             onChange={(e) => handleMasterChange(key, e.target.value)}
                           />
-
                         </div>
                       ))}
                     </div>
@@ -682,53 +847,59 @@ export default function FoodHabitPage() {
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-2">Water supply</label>
 
-                  {/* tags display */}
+                  {/* tags display (more aesthetic) */}
                   <div className="flex gap-2 flex-wrap items-center mb-3">
                     {waterSupplyTags.map((tag) => (
-                      <div key={tag} className="inline-flex items-center bg-gray-200 rounded-full px-3 py-1 text-xs mr-2">
-                        <span className="mr-2">{tag}</span>
-                        <button aria-label={`Remove ${tag}`} onClick={() => removeWaterTag(tag)} className="text-xs text-gray-600 hover:text-red-600 px-1">×</button>
+                      <div key={tag} className="inline-flex items-center bg-white border shadow-sm rounded-full px-3 py-1 text-xs mr-2">
+                        <span className="mr-2 text-xs">{tag}</span>
+                        <button aria-label={`Remove ${tag}`} onClick={() => removeWaterTag(tag)} className="text-xs text-gray-600 hover:text-red-600 px-1">
+                          ×
+                        </button>
                       </div>
                     ))}
 
-                    {waterSupplyTags.length === 0 && (
-                      <div className="text-xs text-gray-500 italic">No water source recorded</div>
-                    )}
+                    {waterSupplyTags.length === 0 && <div className="text-xs text-gray-500 italic">No water source recorded</div>}
                   </div>
 
                   {/* add control: dropdown + optional other input */}
                   <div className="flex items-center gap-2">
                     {showAddWater ? (
                       <>
-                        <select
-                          value={selectedWaterOption}
-                          onChange={(e) => setSelectedWaterOption(e.target.value)}
-                          className="p-1 border rounded text-sm"
-                        >
-                          {WATER_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                        <select value={selectedWaterOption} onChange={(e) => setSelectedWaterOption(e.target.value)} className="p-1 border rounded text-sm">
+                          {WATER_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
                         </select>
 
                         {selectedWaterOption === "Other (input)" && (
-                          <input
-                            type="text"
-                            value={otherWaterValue}
-                            onChange={(e) => setOtherWaterValue(e.target.value)}
-                            placeholder="Specify other source"
-                            className="p-1 border rounded text-sm"
-                          />
+                          <input type="text" value={otherWaterValue} onChange={(e) => setOtherWaterValue(e.target.value)} placeholder="Specify other source" className="p-1 border rounded text-sm" />
                         )}
 
                         <div className="flex gap-1">
-                          <button onClick={addWaterTag} className="px-2 py-1 border rounded text-sm bg-cyan-50">Add</button>
-                          <button onClick={() => { setShowAddWater(false); setOtherWaterValue(""); setSelectedWaterOption(WATER_OPTIONS[0]); }} className="px-2 py-1 border rounded text-sm">Cancel</button>
+                          <button onClick={addWaterTag} className="px-2 py-1 border rounded text-sm bg-cyan-50">
+                            Add
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowAddWater(false);
+                              setOtherWaterValue("");
+                              setSelectedWaterOption(WATER_OPTIONS[0]);
+                            }}
+                            className="px-2 py-1 border rounded text-sm"
+                          >
+                            Cancel
+                          </button>
                         </div>
                       </>
                     ) : (
-                      <button onClick={() => setShowAddWater(true)} className="px-2 py-1 border rounded text-sm">+ Add</button>
+                      <button onClick={() => setShowAddWater(true)} className="px-2 py-1 border rounded text-sm">
+                        + Add
+                      </button>
                     )}
                   </div>
                 </div>
-
               </div>
             </section>
 
@@ -746,7 +917,10 @@ export default function FoodHabitPage() {
           <div className={`px-4 py-2 rounded-full shadow-md text-sm flex items-center gap-3 ${saveInProgress ? "bg-blue-600 text-white" : isUnsaved ? "bg-orange-500 text-white" : "bg-green-600 text-white"}`}>
             {saveInProgress ? (
               <>
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 01-8 8z"></path></svg>
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 01-8 8z"></path>
+                </svg>
                 <span>Saving...</span>
               </>
             ) : isUnsaved ? (

@@ -20,10 +20,20 @@ export default function FoodRecallPage1() {
         async function fetchUsersAndRecalls() {
             if (!db) return;
             try {
-                // Query 1: Get all patients (for starting a NEW survey)
-                const query1 = `SELECT * FROM patients;`;
+                // Participants *without* a master that already has at least one recall
+                const query1 = `
+  SELECT p.*
+  FROM patients p
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM FOOD_HABITS_MASTER m
+    JOIN FOOD_RECALL_ENTRY r ON m.id = r.master_id
+    WHERE m.user_id = p.id
+  );
+`;
                 const res1 = await db.query(query1);
                 setParticipants(res1?.values || []);
+
 
                 // Query 2: Get all existing food habit surveys (for VIEWING/EDITING)
                 const query2 = `
@@ -136,8 +146,8 @@ export default function FoodRecallPage1() {
                             <Column field="master_id" sortable header="Recall Survey ID" body={previousRecallLinkBody}></Column>
                             <Column field="name" sortable header="Patient Name"></Column>
                             <Column field="user_id" sortable header="Patient Id"></Column>
-                            <Column field="updated_at" sortable header="Last Updated"></Column> 
-                            <Column field="tab_id" sortable header="Tab ID"></Column> 
+                            <Column field="updated_at" sortable header="Last Updated"></Column>
+                            <Column field="tab_id" sortable header="Tab ID"></Column>
                         </DataTable>
                     </div>
                 </main>

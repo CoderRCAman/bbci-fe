@@ -396,4 +396,34 @@ export const isHouseholdComplete = (master: IFoodHabitMaster | null): boolean =>
     return familySharingOK && mealsOK && waterOK;
 };
 
+// add to data.ts near other exports
+export const fetchPatientAgeOrCompute = async (db: SQLiteDBConnection, userId: string): Promise<number | null> => {
+  if (!db || !userId) return null;
+  try {
+    // try age numeric column first
+    const tryAge = await db.query(`SELECT age FROM patients WHERE id = ?`, [userId]);
+    if (tryAge?.values && tryAge.values[0] && tryAge.values[0].age !== undefined && tryAge.values[0].age !== null) {
+      const a = Number(tryAge.values[0].age);
+      if (!isNaN(a)) return Math.floor(a);
+    }
+
+    // fallback: try DOB and compute
+    const tryDob = await db.query(`SELECT dob FROM patients WHERE id = ?`, [userId]);
+    if (tryDob?.values && tryDob.values[0] && tryDob.values[0].dob) {
+      const dobRaw = tryDob.values[0].dob;
+      const d = new Date(dobRaw);
+      if (!isNaN(d.getTime())) {
+        const today = new Date();
+        let age = today.getFullYear() - d.getFullYear();
+        const m = today.getMonth() - d.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+        return age;
+      }
+    }
+  } catch (err) {
+    console.warn("fetchPatientAgeOrCompute failed", err);
+  }
+  return null;
+};
+
 
