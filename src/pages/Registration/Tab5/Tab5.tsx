@@ -175,7 +175,8 @@ export default function Tab5() {
       } else {
         setAllowNext(true);
         setResidentialData(values || []);
-        setIsDisabled(values2?.[0].tab_id !== tabId)
+        if (values?.[0].tab_id)
+          setIsDisabled(values2?.[0].tab_id !== tabId)
       }
     } catch (error) {
       console.log(error);
@@ -187,6 +188,7 @@ export default function Tab5() {
     setId(curId);
     setEditFlag(searchParams?.get("edit"));
     loadExisting(curId);
+    setIsUnsaved(false);
   }, [db, location.pathname]);
   useBlockNavigation(isUnsaved, () => {
     setAlert({

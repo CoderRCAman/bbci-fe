@@ -176,18 +176,21 @@ const Tab1: React.FC = () => {
           setStrokes(JSON.parse(res?.values[0]?.signature));
           setCardInput(res?.values[0]?.card_no);
           setCardType(res?.values[0]?.card_type);
-          setIsDisabled(res?.values[0]?.tab_id !== tabId);
+          if (res?.values?.[0]?.tab_id)
+            setIsDisabled(res?.values[0]?.tab_id !== tabId);
         }
       }
       reset((res as any)?.values[0]);
     } catch (error) { }
   }
-  useEffect(() => {
+  useEffect(() => { 
+    console.log('excuted')
     const id = searchParams.get("id");
     const flag = searchParams.get("edit");
     setId(id);
     setEditFlag(flag);
-
+    setIsUnsaved(false); 
+    setIsDisabled(false);
     if (!db) return;
     console.log(id);
     if (!id) {

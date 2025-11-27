@@ -116,14 +116,14 @@ export default function FoodRecallPage1() {
         const userId = rowData.user_id;
         return (
             <div className="flex gap-2">
-              <Button
-                icon="pi pi-pencil"
-                className="p-button-text p-button-sm"
-                aria-label={`Edit habit ${masterId}`}
-                onClick={() => history.push(`/food-recall/page3?master_id=${masterId}&user_id=${userId}`)}
-                tooltip="Edit Food Habit (Master)"
-              />
-              {/* Optional: quick open recall entries editor
+                <Button
+                    icon="pi pi-pencil"
+                    className="p-button-text p-button-sm"
+                    aria-label={`Edit habit ${masterId}`}
+                    onClick={() => history.push(`/food-recall/page3?master_id=${masterId}&user_id=${userId}`)}
+                    tooltip="Edit Food Habit (Master)"
+                />
+                {/* Optional: quick open recall entries editor
               <Button
                 icon="pi pi-file"
                 className="p-button-text p-button-sm"
@@ -157,7 +157,7 @@ export default function FoodRecallPage1() {
                             tableStyle={{ minWidth: '6rem' }}
                         >
                             <Column field="tab_id" header="Tab ID" sortable style={{ width: "120px" }} />
-                            <Column header="Patient Id" body={patientIdBody} sortable style={{ width: "160px" }} />
+                            <Column field="id" header="Patient Id" sortable style={{ width: "160px" }} />
                             <Column field="name" sortable header="Name" />
                             <Column header="Create" body={createButtonBody} style={{ width: "120px", textAlign: 'center' }} />
                         </DataTable>

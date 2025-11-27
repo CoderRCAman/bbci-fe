@@ -148,7 +148,8 @@ export default function Tab9() {
       if (res?.values?.length) {
         setAllowNext(true);
         setIndoorAirData(res?.values as INDOOR_AIR_POLLUTION[]);
-        setIsDisabled(res?.values?.[0].tab_id !== tabId)
+        if (res?.values?.[0].tab_id)
+          setIsDisabled(res?.values?.[0].tab_id !== tabId)
       } else {
         handleAddNewUi(true);
       }
@@ -162,7 +163,8 @@ export default function Tab9() {
   useEffect(() => {
     const curId = searchParams?.get("id");
     setId(curId);
-    setEditFlag(searchParams?.get("edit") === "YES");
+    setEditFlag(searchParams?.get("edit") === "YES"); 
+    setIsDisabled(false);
     if (isUnsaved) return;
     fetchExisting(curId || "");
   }, [location.pathname, db]);
@@ -322,7 +324,7 @@ export default function Tab9() {
               handleRemoveUi={handleRemoveUi}
               setIndoorAirData={setIndoorAirData}
               setIsUnsaved={setIsUnsaved}
-              ageLimit={ageLimit} 
+              ageLimit={ageLimit}
               isDisabled={isDisabled}
             />
           ))}
@@ -340,7 +342,7 @@ export default function Tab9() {
               severity="success"
               icon="pi pi-check"
               className="px-3 py-2 px-10 py-3 rounded-md font-bold"
-              onClick={handleSaveFresh} 
+              onClick={handleSaveFresh}
               disabled={isDisabled}
             />
           </div>

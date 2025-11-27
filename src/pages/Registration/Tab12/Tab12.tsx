@@ -133,7 +133,8 @@ export default function Tab12() {
       } else {
         const values = res?.values as DEMOGRAPHIC_INFO[];
         setDemographicInfo(values[0]);
-        setIsDisabled(values[0].tab_id !== tabId)
+        if (values[0].tab_id)
+          setIsDisabled(values[0].tab_id !== tabId)
       }
     } catch (error) {
       console.log(error);
@@ -142,7 +143,8 @@ export default function Tab12() {
   useEffect(() => {
     if (db === null) return;
     const id = searchParams?.get("id") || "";
-    setId(id);
+    setId(id); 
+    setIsUnsaved(false);
     fetchExisting();
   }, [db, location.pathname]);
   useBlockNavigation(isUnsaved, () => {

@@ -106,7 +106,8 @@ export default function Tab7() {
         setfamilyHistoryMaster(
           res1?.values as FAMILY_HISTORY_OF_CANCER_MASTER[]
         );
-        setIsDisabled(res1?.values[0]?.tab_id !== tabId);
+        if (res1?.values?.[0]?.tab_id)
+          setIsDisabled(res1?.values[0]?.tab_id !== tabId);
       } else {
         setfamilyHistoryMaster(initialState);
       }
@@ -130,6 +131,7 @@ export default function Tab7() {
   useEffect(() => {
     const currentId = searchParams?.get("id") || "";
     setId(currentId);
+    setIsDisabled(false);
     if (isUnsaved) return;
     fetchInitialState(currentId);
   }, [location.pathname, db]);
@@ -196,8 +198,9 @@ export default function Tab7() {
           message: "This user was registered with a different tab id.",
           show: true,
         });
-      }
-      if (familyHistoryMaster[0].history_of_cancer && familyHistoryRelatives.some(item => !item.relation || !item.code || !item.cancer_site || !item.treatment_received))
+      } 
+      console.log(familyHistoryRelatives)
+      if (familyHistoryMaster[0].history_of_cancer && familyHistoryRelatives.some(item =>  !item.code || !item.cancer_site || !item.treatment_received))
         return setAlert({
           header: "Required fields",
           message: "Please fill in all first degree relatives fields",
@@ -614,7 +617,7 @@ export default function Tab7() {
                             }
                             let num = parseInt(raw);
                             // Enforce max
-                            if (num > ageLimit) num = ageLimit;
+                            
                             handleChangeRelative(rowData.id, "age_at_diagnosis", num);
                           }
                           }

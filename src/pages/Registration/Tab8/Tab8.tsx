@@ -73,7 +73,8 @@ export default function Tab8() {
       console.log(res);
       if (res?.values?.length) {
         setAllowNext(true);
-        setIsDisabled(res?.values?.[0]?.tab_id !== tabId);
+        if (res?.values?.[0]?.tab_id)
+          setIsDisabled(res?.values?.[0]?.tab_id !== tabId);
         setReading1({
           height: res?.values?.[0]?.height || 0,
           weight: res?.values?.[0]?.weight || 0,
@@ -114,8 +115,9 @@ export default function Tab8() {
     }
   }
   useEffect(() => {
+    setIsDisabled(false);
     if (db === null) return;
-    if (isUnsaved) return;
+    if (isUnsaved) return; 
     fetchExisting();
   }, [db, location.pathname]);
   useBlockNavigation(isUnsaved, () => {
@@ -244,8 +246,8 @@ export default function Tab8() {
                   type="number"
                   keyfilter={"num"}
                   id="result_blood"
-                  className="p-2 border" 
-                  disabled = {isDisabled}
+                  className="p-2 border"
+                  disabled={isDisabled}
                   onChange={(e) => {
                     setIsUnsaved(true);
                     setReading1((prev) => ({
@@ -261,8 +263,8 @@ export default function Tab8() {
                 <InputText
                   id="result_blood"
                   type="number"
-                  keyfilter={"num"} 
-                  disabled = {isDisabled}
+                  keyfilter={"num"}
+                  disabled={isDisabled}
                   onChange={(e) => {
                     setIsUnsaved(true);
                     setReading1((prev) => ({
@@ -318,7 +320,7 @@ export default function Tab8() {
             <div className="flex justify-end gap-2 mt-4 ">
               <Button
                 onClick={handleSave}
-                label="Save" 
+                label="Save"
                 disabled={isDisabled}
                 severity="success"
                 icon="pi pi-check" // Added icon

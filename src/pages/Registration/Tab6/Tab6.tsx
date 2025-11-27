@@ -112,6 +112,7 @@ export default function Tab6() {
   useEffect(() => {
     if (db === null) return;
     setId(searchParams?.get("id"));
+    setIsDisabled(false);
     fetchExistingData();
   }, [db, location.pathname]);
   useBlockNavigation(isUnsaved, () => {
@@ -230,7 +231,9 @@ export default function Tab6() {
           }
         });
       }
-      setIsDisabled(res?.values?.[0]?.tab_id !== tabId);
+       if (res?.values?.[0]?.tab_id)
+            setIsDisabled(res?.values[0]?.tab_id !== tabId);
+      
       setDataState(newState);
     } catch (error) {
       console.log(error);
