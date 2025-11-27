@@ -189,6 +189,7 @@ export default function Tab5() {
     setEditFlag(searchParams?.get("edit"));
     loadExisting(curId);
     setIsUnsaved(false);
+    setIsDisabled(false);
   }, [db, location.pathname]);
   useBlockNavigation(isUnsaved, () => {
     setAlert({
