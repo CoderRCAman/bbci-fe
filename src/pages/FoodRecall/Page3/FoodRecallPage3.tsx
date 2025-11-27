@@ -622,7 +622,7 @@ export default function FoodRecallEntryPage() {
                             <div>
                               <label className="block text-sm font-medium text-gray-700">Quantity Consumed</label>
                               <input
-                                type="text"
+                                type="number"
                                 value={entry.quantity}
                                 onChange={(e) => handleFoodEntryChange(entry.id, "quantity", e.target.value)}
                                 placeholder="e.g., 2 gm"
@@ -656,7 +656,7 @@ export default function FoodRecallEntryPage() {
                                   className="p-1 border rounded-md col-span-1 disabled:bg-gray-100"
                                 />
                                 <input
-                                  type="text"
+                                  type="number"
                                   value={ing.quantity}
                                   onChange={(e) => handleIngredientChange(entry.id, ing.id, "quantity", e.target.value)}
                                   placeholder="Gram"
