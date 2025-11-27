@@ -253,7 +253,7 @@ export default function SmokingTobacco({
                         handleChangeProds(
                           p.id,
                           p.type || "",
-                          "to_age",
+                          "from_age",
                           e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
