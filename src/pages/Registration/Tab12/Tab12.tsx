@@ -88,7 +88,7 @@ const data = [
     field: "highest_education_spouse",
   },
   {
-    type: "What is your household income",
+    type: "What is your household income monthly?",
     data: [
       "Less than 5,000",
       "5,000 - 14,999",

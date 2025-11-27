@@ -29,7 +29,8 @@ export default function AddIndoorAirPollution({
     <div className="border py-10 rounded-md p-4 space-y-8 shadow-md">
       <FloatLabel>
         <InputText
-          keyfilter="int"
+          keyfilter="int" 
+          type = 'number'
           className="border-1 w-[50%] p-2"
           value={data["from_age"].toString()}
           onChange={(e) => {
@@ -50,6 +51,7 @@ export default function AddIndoorAirPollution({
       <FloatLabel>
         <InputText
           keyfilter="int"
+          type = "number"
           className="border-1 w-[50%] p-2"
           value={data["to_age"].toString()}
           onChange={(e) => {
@@ -99,6 +101,7 @@ export default function AddIndoorAirPollution({
           <InputText
             className="border  w-[60px] text-sm text-center"
             keyfilter={"int"}
+            type="number"
             value={data["hours"] == -1 ? "" : data["hours"].toString()}
             onChange={(e) => handleUpdate("hours", e.target.value)}
           />
@@ -106,7 +109,8 @@ export default function AddIndoorAirPollution({
 
           <InputText
             className="border  w-[60px] text-center"
-            keyfilter={"int"}
+            keyfilter={"int"} 
+            type="number"
             value={data["minutes"] == -1 ? "" : data["minutes"].toString()}
             onChange={(e) => handleUpdate("minutes", e.target.value)}
           />

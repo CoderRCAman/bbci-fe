@@ -121,7 +121,6 @@
 //   );
 // }
 
-
 import { getStroke } from "perfect-freehand";
 import { useRef } from "react";
 // No more useState for currentStroke!
@@ -161,7 +160,7 @@ const strokeOptions = {
 export default function SignaturePad({
   strokes,
   setStrokes,
-  setIsUnsaved
+  setIsUnsaved,
 }: {
   strokes: number[][][];
   setStrokes: React.Dispatch<React.SetStateAction<number[][][]>>;
@@ -194,7 +193,7 @@ export default function SignaturePad({
 
   function handlePointerDown(e: React.PointerEvent<SVGSVGElement>) {
     e.preventDefault();
-    // if (e.pointerType !== 'pen') return;
+    if (e.pointerType !== "pen") return;
     e.currentTarget.setPointerCapture(e.pointerId);
 
     // Start a new stroke in our ref
@@ -205,10 +204,9 @@ export default function SignaturePad({
   }
 
   function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
-    if (e.pointerType !== 'pen') return;
     e.preventDefault();
     if (e.buttons !== 1) return;
-
+    if (e.pointerType !== "pen") return;
     // Add point to the ref (no state update!)
     currentStrokeRef.current.push(getRelativePoint(e));
 
@@ -222,7 +220,7 @@ export default function SignaturePad({
     const stroke = currentStrokeRef.current;
     if (stroke.length > 0) {
       // 3. ONLY update React state ONCE when the stroke is finished
-      setStrokes((prev) => [...prev, stroke]); 
+      setStrokes((prev) => [...prev, stroke]);
       setIsUnsaved(true);
     }
 
@@ -259,13 +257,7 @@ export default function SignaturePad({
       {strokes.map((strokePoints, i) => {
         const outline = getStroke(strokePoints, strokeOptions);
         const pathData = getSvgPathFromStroke(outline as number[][]);
-        return (
-          <path
-            key={i}
-            d={pathData}
-            fill="black"
-          />
-        );
+        return <path key={i} d={pathData} fill="black" />;
       })}
 
       {/* 2. Render ONE path for the LIVE stroke */}

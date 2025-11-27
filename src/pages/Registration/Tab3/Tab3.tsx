@@ -382,7 +382,7 @@ export default function Tab3() {
                 </div>
                 <div>
                   <Button
-                    label="Synch"
+                    label="Sync Now"
                     className="px-6 py-2"
                     onClick={handlePush}
                   />

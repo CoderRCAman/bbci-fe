@@ -479,9 +479,9 @@ export default function FoodHabitPage() {
               <FlowCrumbs steps={steps} currentPageLabel={steps[0].label} idQueryParam={idQueryParam} />
               {/* patient name shown under stepper */}
               {patientName ? (
-                <div className="mt-2 text-sm font-medium text-gray-700">Patient: <span className="font-semibold">{patientName}</span></div>
+                <div className="mt-2 text-sm font-medium text-gray-700">Participant: <span className="font-semibold">{patientName}</span></div>
               ) : (
-                <div className="mt-2 text-sm text-gray-500">Patient: <span className="italic">Unknown</span></div>
+                <div className="mt-2 text-sm text-gray-500">Participant: <span className="italic">Unknown</span></div>
               )}
             </div>
 
@@ -742,7 +742,7 @@ export default function FoodHabitPage() {
         </div>
 
         {/* Persistent bottom-center status toast (does not auto-hide) */}
-        <div className="fixed left-1/2 transform -translate-x-1/2 bottom- z-50">
+        <div className="fixed left-1/2 transform -translate-x-1/2 bottom-20 z-50">
           <div className={`px-4 py-2 rounded-full shadow-md text-sm flex items-center gap-3 ${saveInProgress ? "bg-blue-600 text-white" : isUnsaved ? "bg-orange-500 text-white" : "bg-green-600 text-white"}`}>
             {saveInProgress ? (
               <>

@@ -74,7 +74,7 @@ export default function Tab11() {
     without_tobacco: 0,
     consumption_unit_per_day: 0,
     days_in_month: 0,
-    product: p.is_other_product === 1 ? '' : p.product
+    product: p.is_other_product === 1 ? "" : p.product,
   });
 
   async function fetchInitialData() {
@@ -92,8 +92,12 @@ export default function Tab11() {
       console.log(res);
       const result = populateWithBackend(masterValue, values, id, tabId);
       setData(result);
-      const res3 = await db?.query(`select * from patients where id = '${id}' ;`);
-      setAgeLimit(differenceInYears(new Date(), new Date(res3?.values?.[0].dob)))
+      const res3 = await db?.query(
+        `select * from patients where id = '${id}' ;`
+      );
+      setAgeLimit(
+        differenceInYears(new Date(), new Date(res3?.values?.[0].dob))
+      );
     } catch (error) {
       console.log(error);
     }
@@ -124,8 +128,9 @@ export default function Tab11() {
 
         // RUN RESET ONLY WHEN consumed ≠ 1
         if (field === "consumed" && value !== 1) {
-
-          const resetProducts = updatedItem.products.map((p) => resetProduct(p));
+          const resetProducts = updatedItem.products.map((p) =>
+            resetProduct(p)
+          );
 
           // Replace all products with reset versions
           updatedItem = { ...updatedItem, products: resetProducts };
@@ -152,7 +157,8 @@ export default function Tab11() {
 
             // 1️⃣ Remove deleted IDs from dirty list
             cleaned = cleaned.filter(
-              (p) => !(idsDeleted.length > 1 && idsDeleted.slice(1).includes(p.id))
+              (p) =>
+                !(idsDeleted.length > 1 && idsDeleted.slice(1).includes(p.id))
             );
 
             // 2️⃣ Remove all products of this type (since master reset)
@@ -192,7 +198,6 @@ export default function Tab11() {
       return updated;
     });
   };
-
 
   const handleChangeProds = (
     id: string,
@@ -285,14 +290,14 @@ export default function Tab11() {
     )
       return;
     setIsUnsaved(true);
-    setDeletedIds(ids => [...ids, id]);
+    setDeletedIds((ids) => [...ids, id]);
     setData((d) =>
       d.map((item) =>
         item.product_type === type
           ? {
-            ...item,
-            products: item.products.filter((x) => x.id !== id),
-          }
+              ...item,
+              products: item.products.filter((x) => x.id !== id),
+            }
           : item
       )
     );
@@ -365,7 +370,7 @@ export default function Tab11() {
     event.detail.complete();
   };
 
-  console.log(dirtyValuesMaster, dirtyValuesProduct, deletedIds)
+  console.log(dirtyValuesMaster, dirtyValuesProduct, deletedIds);
   return (
     <IonPage>
       <Header
@@ -437,7 +442,7 @@ export default function Tab11() {
                 handleRemoveUi={handleRemoveUi}
                 handleChangeMaster={handleChangeMaster}
                 handleChangeProds={handleChangeProds}
-                ageLimit = {ageLimit}
+                ageLimit={ageLimit}
               />
             </AccordionTab>
           </Accordion>
@@ -495,6 +500,7 @@ export default function Tab11() {
               scrollRef.current.scrollIntoView({ behavior: "smooth" });
           }}
         />
+        <div className="pb-[250px]"></div>
       </IonContent>
     </IonPage>
   );

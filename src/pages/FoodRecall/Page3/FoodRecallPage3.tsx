@@ -391,9 +391,9 @@ export default function FoodRecallEntryPage() {
               <FlowCrumbs steps={steps} currentPageLabel={steps[1].label} idQueryParam={"master_id"} />
               {/* patient name shown under stepper */}
               {patientName ? (
-                <div className="mt-2 text-sm font-medium text-gray-700">Patient: <span className="font-semibold">{patientName}</span></div>
+                <div className="mt-2 text-sm font-medium text-gray-700">Participant: <span className="font-semibold">{patientName}</span></div>
               ) : (
-                <div className="mt-2 text-sm text-gray-500">Patient: <span className="italic">Unknown</span></div>
+                <div className="mt-2 text-sm text-gray-500">Participant: <span className="italic">Unknown</span></div>
               )}
             </div>
 
