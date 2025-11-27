@@ -144,7 +144,8 @@ export default function Tab12() {
     if (db === null) return;
     const id = searchParams?.get("id") || "";
     setId(id); 
-    setIsUnsaved(false);
+    setIsUnsaved(false); 
+    setIsDisabled(false);
     fetchExisting();
   }, [db, location.pathname]);
   useBlockNavigation(isUnsaved, () => {
