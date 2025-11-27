@@ -25,7 +25,7 @@ const Tab2: React.FC = () => {
   const [globalFilterValue, setGlobalFilterValue] = useState('');
   useEffect(() => {
     const fetchPatients = async () => {
-      const res = await db?.query('SELECT * FROM patients');
+      const res = await db?.query('SELECT * FROM patients order by Date(created_at) desc');
       console.log(res);
       setPatients(res?.values || []);
     };
@@ -87,8 +87,8 @@ const Tab2: React.FC = () => {
               }}
             ></Column>
             <Column field="gender" sortable header="Gender"></Column>
-            <Column field="lat" header="Lat"></Column>
-            <Column field="long" header="Long"></Column>
+            <Column field="created_at" header="Created Date"></Column>
+            <Column field="updated_at" header="last Updated"></Column>
 
           </DataTable>
         </main>

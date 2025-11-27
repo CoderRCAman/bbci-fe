@@ -12,14 +12,16 @@ export default function PMHInput({
   mode_of_diagnosis,
   data,
   updateStateData,
-  ageLimit
+  ageLimit,
+  isDisabled
 }: {
   condition: string;
   mode_of_treatment: string[];
   mode_of_diagnosis: string[];
   data: PERSONAL_MEDICAL_HISTORY_DB;
   updateStateData: (id: string, field: string, value: any) => void;
-  ageLimit: number
+  ageLimit: number;
+  isDisabled: boolean
 }) {
   console.log(data);
 
@@ -79,7 +81,8 @@ export default function PMHInput({
                 checked={data?.["diagnosed"] === option.value}
                 onChange={(e) =>
                   updateStateData(data?.id, "diagnosed", parseInt(e.value))
-                }
+                } 
+                disabled={isDisabled}
               />
               <label htmlFor={`${data?.id}_${option.value}`}>
                 {option.name}
@@ -91,9 +94,10 @@ export default function PMHInput({
         {/* Use p-fluid for full-width inputs */}
         <FloatLabel>
           <InputText
-            disabled={data?.diagnosed !== 1}
+            disabled={data?.diagnosed !== 1 || isDisabled}
             keyfilter="int"
-            type="number"
+            type="number" 
+            
             value={data?.age_first_diagnosis?.toString() || ""}
             // Removed custom classes
             onChange={(e) => {
@@ -112,7 +116,7 @@ export default function PMHInput({
 
               updateStateData(data.id, "age_first_diagnosis", num);
             }
-          }
+            }
           />
           <label>Age at first diagnosis</label>
         </FloatLabel>
@@ -121,7 +125,7 @@ export default function PMHInput({
           <InputText
             value={data?.year_of_first_diagnosis}
             // Removed custom classes
-            disabled={data?.diagnosed !== 1}
+            disabled={data?.diagnosed !== 1 || isDisabled}
             onChange={(e) =>
               updateStateData(
                 data.id,
@@ -136,7 +140,7 @@ export default function PMHInput({
         {/* Use FloatLabel for the dropdown */}
         <FloatLabel>
           <Dropdown
-            disabled={data?.diagnosed !== 1}
+            disabled={data?.diagnosed !== 1 || isDisabled}
             value={data?.treatment_received}
             optionLabel="name"
             optionValue="value"
@@ -164,7 +168,7 @@ export default function PMHInput({
                 <Checkbox
                   inputId={`${data?.id}_mot_${d}`}
                   disabled={
-                    data?.diagnosed !== 1 || data?.treatment_received !== 1
+                    data?.diagnosed !== 1 || data?.treatment_received !== 1 || isDisabled
                   }
                   value={d}
                   checked={
@@ -188,7 +192,7 @@ export default function PMHInput({
                 <Checkbox
                   inputId={`${data?.id}_mod_${d}`}
                   disabled={
-                    data?.diagnosed !== 1 || data?.treatment_received !== 1
+                    data?.diagnosed !== 1 || data?.treatment_received !== 1 || isDisabled
                   }
                   value={d}
                   checked={
@@ -208,7 +212,7 @@ export default function PMHInput({
                 <InputText
                   id={`${data?.id}_mod_other`}
                   disabled={
-                    data?.diagnosed !== 1 || data?.treatment_received !== 1
+                    data?.diagnosed !== 1 || data?.treatment_received !== 1 || isDisabled
                   }
                   onChange={(e) => {
                     updateStateData(
@@ -228,7 +232,7 @@ export default function PMHInput({
               <Checkbox
                 inputId={`${data?.id}_mod_dontknow`}
                 disabled={
-                  data?.diagnosed !== 1 || data?.treatment_received !== 1
+                  data?.diagnosed !== 1 || data?.treatment_received !== 1 || isDisabled
                 }
                 value={"Don't know"}
                 // Add checked/onChange logic if this needs to be saved

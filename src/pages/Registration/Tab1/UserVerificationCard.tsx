@@ -16,6 +16,7 @@ interface VerificationCardProps {
     setSelectedType: (v: CardStringType) => void;
     setSelectedInput: (v: string) => void;
     setIsUnsave: React.Dispatch<React.SetStateAction<boolean>>
+    isDisabled: boolean
 }
 
 const VerificationCard: React.FC<VerificationCardProps> = ({
@@ -23,7 +24,8 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
     selectedType,
     setSelectedType,
     setSelectedInput,
-    setIsUnsave
+    setIsUnsave,
+    isDisabled
 }) => {
     const idOptions: CardStringType[] = useMemo(
         () => [
@@ -81,7 +83,7 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
                     </div>
                 );
             })} */}
-             {/* Dropdown for ID selection */}
+            {/* Dropdown for ID selection */}
             <div className="w-full">
                 <label className="block mb-2 font-medium text-sm">
                     Select ID Type
@@ -94,6 +96,7 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
                         setSelectedType(e.value as CardStringType);
                         setIsUnsave(true);
                     }}
+                    disabled={isDisabled}
                     placeholder="Select ID Type"
                     className="w-full"
                 />
@@ -107,6 +110,7 @@ const VerificationCard: React.FC<VerificationCardProps> = ({
                     </label>
 
                     <InputText
+                        disabled={isDisabled}
                         value={selectedInput}
                         placeholder={placeholders[selectedType]}
                         className="p-inputtext-sm w-full p-2 border rounded-md"

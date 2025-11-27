@@ -8,10 +8,11 @@ export const generateUniqueId = () => {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
 
-  const random5 = Math.floor(10000 + Math.random() * 90000);
+  const random6 = Math.floor(100000 + Math.random() * 900000);
 
-  return `${prefix}${year}${month}${day}/${random5}`;
+  return `${prefix}${year}${month}${day}/${random6}`;
 };
+
 
 export const getMisMatchFields = (obj1: any, obj2: any) => {
   const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);

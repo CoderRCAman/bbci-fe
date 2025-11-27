@@ -161,10 +161,12 @@ export default function SignaturePad({
   strokes,
   setStrokes,
   setIsUnsaved,
+  viewMode
 }: {
   strokes: number[][][];
   setStrokes: React.Dispatch<React.SetStateAction<number[][][]>>;
   setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>;
+  viewMode: boolean
 }) {
   // 1. Remove `currentStroke` state
   // 2. Add refs for the live stroke data and the live path element
@@ -174,6 +176,7 @@ export default function SignaturePad({
   // Your lastCommitTimeRef is no longer needed
 
   function getRelativePoint(e: React.PointerEvent<SVGSVGElement>): number[] {
+
     const svg = svgRef.current;
     if (!svg) return [0, 0, 0];
     const rect = svg.getBoundingClientRect();
@@ -193,6 +196,7 @@ export default function SignaturePad({
 
   function handlePointerDown(e: React.PointerEvent<SVGSVGElement>) {
     e.preventDefault();
+    if (viewMode) return;
     if (e.pointerType !== "pen") return;
     e.currentTarget.setPointerCapture(e.pointerId);
 
@@ -205,6 +209,7 @@ export default function SignaturePad({
 
   function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
     e.preventDefault();
+    if (viewMode) return;
     if (e.buttons !== 1) return;
     if (e.pointerType !== "pen") return;
     // Add point to the ref (no state update!)
@@ -216,7 +221,7 @@ export default function SignaturePad({
 
   function handlePointerUp(e: React.PointerEvent<SVGSVGElement>) {
     svgRef.current?.releasePointerCapture(e.pointerId);
-
+    if (viewMode) return;
     const stroke = currentStrokeRef.current;
     if (stroke.length > 0) {
       // 3. ONLY update React state ONCE when the stroke is finished
@@ -232,6 +237,7 @@ export default function SignaturePad({
   }
 
   function handlePointerCancel(e: React.PointerEvent<SVGSVGElement>) {
+    if (viewMode) return;
     // Replicate original logic: commit stroke on cancel
     handlePointerUp(e);
   }

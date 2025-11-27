@@ -14,6 +14,7 @@ import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { Card } from "primereact/card";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
+import { set } from "date-fns";
 export interface DEMOGRAPHIC_INFO {
   id: string;
   user_id: string;
@@ -114,6 +115,7 @@ export default function Tab12() {
   const [id, setId] = useState<string | null>("");
   const [isUnsaved, setIsUnsaved] = useState(false);
   const searchParams = new URLSearchParams(location.search);
+  const [isDisabled, setIsDisabled] = useState(false)
   const [demographicInfo, setDemographicInfo] =
     useState<DEMOGRAPHIC_INFO>(initialState);
   useEffect(() => {
@@ -131,6 +133,7 @@ export default function Tab12() {
       } else {
         const values = res?.values as DEMOGRAPHIC_INFO[];
         setDemographicInfo(values[0]);
+        setIsDisabled(values[0].tab_id !== tabId)
       }
     } catch (error) {
       console.log(error);
@@ -249,6 +252,7 @@ export default function Tab12() {
                 item={d}
                 handleChange={handleChange}
                 data={demographicInfo}
+                isDisabled={isDisabled}
               />
             ))}
 
@@ -258,6 +262,7 @@ export default function Tab12() {
                 // Removed className="border-1 p-2 w-[60%]"
                 value={demographicInfo?.mother_tongue || ""}
                 onChange={(e) => handleChange("mother_tongue", e.target.value)}
+                disabled={isDisabled}
               />
               <label>What is your mother tongue?</label>
             </FloatLabel>
@@ -267,6 +272,7 @@ export default function Tab12() {
                 // Removed className="border-1 p-2 w-[60%]"
                 onChange={(e) => handleChange("place_of_birth", e.target.value)}
                 value={demographicInfo?.place_of_birth || ""}
+                disabled={isDisabled}
               />
               <label>What is your place of birth?</label>
             </FloatLabel>
@@ -276,6 +282,7 @@ export default function Tab12() {
               <Button
                 onClick={handleSave}
                 label="Save"
+                disabled={isDisabled}
                 severity="success"
                 icon="pi pi-check" // Added icon
                 raised // Added for emphasis

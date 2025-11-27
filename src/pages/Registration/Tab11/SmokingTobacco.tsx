@@ -16,7 +16,8 @@ export default function SmokingTobacco({
   data,
   handleChangeMaster,
   handleChangeProds,
-  ageLimit
+  ageLimit,
+  isDisabled
 }: {
   data: initialState;
   handleChangeMaster: (id: string, field: string, value: any) => void;
@@ -26,7 +27,8 @@ export default function SmokingTobacco({
     field: string,
     value: any
   ) => void;
-  ageLimit: number
+  ageLimit: number;
+  isDisabled: boolean
 }) {
   // Helper array for the master radio buttons 
   console.log(data)
@@ -70,6 +72,7 @@ export default function SmokingTobacco({
                       parseInt(e.value)
                     )
                   }
+                  disabled={isDisabled}
                 />
                 <label htmlFor={`master_consumed_${option.value}`}>
                   {option.name}
@@ -106,7 +109,7 @@ export default function SmokingTobacco({
                             parseInt(e.value)
                           )
                         }
-                        disabled={data?.consumed !== 1}
+                        disabled={data?.consumed !== 1 || isDisabled}
                       />
                       <label htmlFor={`${item?.id}_consumes_1`}>YES</label>
                     </div>
@@ -124,7 +127,7 @@ export default function SmokingTobacco({
                             parseInt(e.value)
                           )
                         }
-                        disabled={data?.consumed !== 1}
+                        disabled={data?.consumed !== 1 || isDisabled}
                       />
                       <label htmlFor={`${item?.id}_consumes_2`}>NO</label>
                     </div>
@@ -133,7 +136,7 @@ export default function SmokingTobacco({
                   {/* Inputs grouped together */}
                   <FloatLabel>
                     <InputText
-                      keyfilter="int" 
+                      keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
                       value={item?.from_age?.toString() || ""} // Handle null/undefined
@@ -148,14 +151,14 @@ export default function SmokingTobacco({
                         handleChangeProds(item?.id, item?.type || "", "from_age", num);
                       }
                       }
-                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1 || isDisabled}
                     />
                     <label>From age</label>
                   </FloatLabel>
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int" 
+                      keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
                       value={item?.to_age?.toString() || ""}
@@ -170,7 +173,7 @@ export default function SmokingTobacco({
                         handleChangeProds(item?.id, item?.type || "", "to_age", num);
                       }
                       }
-                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1 || isDisabled}
                     />
                     <label>To age</label>
                   </FloatLabel>
@@ -189,14 +192,14 @@ export default function SmokingTobacco({
                           e.target.value ? parseInt(e.target.value) : ""
                         )
                       }
-                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1 || isDisabled}
                     />
                     <label>Number per day</label>
                   </FloatLabel>
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int" 
+                      keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
                       value={item?.days_in_week?.toString() || ""}
@@ -211,7 +214,7 @@ export default function SmokingTobacco({
                         handleChangeProds(item?.id, item?.type || "", "days_in_week", num);
                       }
                       }
-                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1 || isDisabled}
                     />
                     <label>Days in a week</label>
                   </FloatLabel>
@@ -238,14 +241,14 @@ export default function SmokingTobacco({
                           e.target.value
                         )
                       }
-                      disabled={data?.consumed !== 1}
+                      disabled={data?.consumed !== 1 || isDisabled}
                     />
                     <label>Specify Other</label>
                   </FloatLabel>
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int" 
+                      keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
                       value={p?.from_age?.toString() || ""}
@@ -257,14 +260,14 @@ export default function SmokingTobacco({
                           e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
-                      disabled={data?.consumed !== 1}
+                      disabled={data?.consumed !== 1 || isDisabled}
                     />
                     <label>From age</label>
                   </FloatLabel>
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int" 
+                      keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
                       value={p?.to_age?.toString() || ""}
@@ -276,14 +279,14 @@ export default function SmokingTobacco({
                           e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
-                      disabled={data?.consumed !== 1}
+                      disabled={data?.consumed !== 1 || isDisabled}
                     />
                     <label>To age</label>
                   </FloatLabel>
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int" 
+                      keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
                       value={p?.number_per_day?.toString() || ""}
@@ -295,14 +298,14 @@ export default function SmokingTobacco({
                           e.target.value ? parseInt(e.target.value) : ""
                         )
                       }
-                      disabled={data?.consumed !== 1}
+                      disabled={data?.consumed !== 1 || isDisabled}
                     />
                     <label>Number per day</label>
                   </FloatLabel>
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int" 
+                      keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
                       value={p?.days_in_week?.toString() || ""}
@@ -314,7 +317,7 @@ export default function SmokingTobacco({
                           e.target.value === "" ? "" : Math.min(parseInt(e.target.value), 7)
                         )
                       }
-                      disabled={data?.consumed !== 1}
+                      disabled={data?.consumed !== 1 || isDisabled}
                     />
                     <label>Days in a week</label>
                   </FloatLabel>

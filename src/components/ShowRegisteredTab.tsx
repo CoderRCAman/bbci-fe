@@ -36,7 +36,7 @@ export default function ShowRegisteredTab({
         <div className="text-slate-600 rounded-md my-4 border p-2 text-slate-500 text-sm font-semibold">
           <p>
             This record has been registered with TAB ID:{" "}
-            <Tag value={user?.tab_id}></Tag>
+            <Tag severity={user?.tab_id === "TAB2_BLUE" ? "info" : "success"} value={user?.tab_id}></Tag>
           </p>
         </div>
       )}

@@ -18,7 +18,7 @@ export default function Header({ title }: { title: string }) {
                         </p>
                         <div className='text-slate-600 flex  items-center gap-1 p-2 rounded border-1 border-cyan-300'>
                             <p className='text-sm font-semibold'>Your Tab Id:</p>
-                            <Tag value={tabId}></Tag>
+                            <Tag severity={tabId === 'TAB2_BLUE' ? 'info' : 'success' } value={tabId}></Tag>
                         </div>
                     </div>
                 </IonTitle>

@@ -102,6 +102,7 @@ const Tab1: React.FC = () => {
   const { db, sqlite, tabId } = useSQLite();
   const listenerHandle = useRef<PluginListenerHandle | null>(null);
   const [isUnsaved, setIsUnsaved] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -175,6 +176,7 @@ const Tab1: React.FC = () => {
           setStrokes(JSON.parse(res?.values[0]?.signature));
           setCardInput(res?.values[0]?.card_no);
           setCardType(res?.values[0]?.card_type);
+          setIsDisabled(res?.values[0]?.tab_id !== tabId);
         }
       }
       reset((res as any)?.values[0]);
@@ -381,6 +383,7 @@ const Tab1: React.FC = () => {
                 render={({ field }: any) => (
                   <FloatLabel>
                     <Dropdown
+                      disabled={isDisabled}
                       {...field}
                       options={employeeNameOptions}
                       optionLabel="name"
@@ -401,6 +404,7 @@ const Tab1: React.FC = () => {
                 render={({ field }: any) => (
                   <FloatLabel>
                     <Dropdown
+                      disabled={isDisabled}
                       {...field}
                       options={employeeCodeOptions}
                       optionLabel="name"
@@ -417,6 +421,7 @@ const Tab1: React.FC = () => {
                 patient={patient}
                 setPatient={setPatient}
                 setIsUnsaved={setIsUnsaved}
+                isDisabled={isDisabled}
               />
 
               {/* --- 4. Participant Name --- */}
@@ -427,7 +432,7 @@ const Tab1: React.FC = () => {
                 rules={{ required: "Name is required" }}
                 render={({ field }: any) => (
                   <FloatLabel>
-                    <InputText {...field} className="w-full" />
+                    <InputText {...field} className="w-full" disabled={isDisabled} />
                     <label>Participant's name</label>
                   </FloatLabel>
                 )}
@@ -450,6 +455,7 @@ const Tab1: React.FC = () => {
                         >
                           {/* Use the PrimeReact <RadioButton> */}
                           <RadioButton
+                            disabled={isDisabled}
                             inputId={option.value}
                             name="gender"
                             value={option.value}
@@ -475,6 +481,7 @@ const Tab1: React.FC = () => {
                 render={({ field: { onChange, value } }: any) => (
                   <FloatLabel>
                     <Calendar
+                      disabled={isDisabled}
                       value={value ? new Date(value) : null}
                       onChange={onChange}
                       showIcon
@@ -491,6 +498,7 @@ const Tab1: React.FC = () => {
                 setSelectedInput={setCardInput}
                 setSelectedType={setCardType}
                 setIsUnsave={setIsUnsaved}
+                isDisabled={isDisabled}
               />
               {/* --- 8. Signature Pad --- */}
               <div className="flex flex-col gap-2">
@@ -499,9 +507,11 @@ const Tab1: React.FC = () => {
                   strokes={strokes}
                   setStrokes={setStrokes}
                   setIsUnsaved={setIsUnsaved}
+                  viewMode={isDisabled}
                 />
                 <div className="flex justify-end">
                   <Button
+                    disabled={isDisabled}
                     label="Clear"
                     severity="warning"
                     type="button"
@@ -519,6 +529,7 @@ const Tab1: React.FC = () => {
 
               {/* --- 9. Save Button --- */}
               <Button
+                disabled={isDisabled}
                 label={id ? "Update Participant" : "Save Participant"}
                 type="submit"
                 icon="pi pi-check"

@@ -132,6 +132,7 @@ export default function Tab9() {
   const [indoorAirData, setIndoorAirData] = useState<INDOOR_AIR_POLLUTION[]>(
     []
   );
+  const [isDisabled, setIsDisabled] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -147,6 +148,7 @@ export default function Tab9() {
       if (res?.values?.length) {
         setAllowNext(true);
         setIndoorAirData(res?.values as INDOOR_AIR_POLLUTION[]);
+        setIsDisabled(res?.values?.[0].tab_id !== tabId)
       } else {
         handleAddNewUi(true);
       }
@@ -320,7 +322,8 @@ export default function Tab9() {
               handleRemoveUi={handleRemoveUi}
               setIndoorAirData={setIndoorAirData}
               setIsUnsaved={setIsUnsaved}
-              ageLimit={ageLimit}
+              ageLimit={ageLimit} 
+              isDisabled={isDisabled}
             />
           ))}
           <div className="mt-4 flex justify-end gap-4 pr-2 pb-5">
@@ -329,6 +332,7 @@ export default function Tab9() {
               raised
               icon="pi pi-plus"
               onClick={() => handleAddNewUi(false)}
+              disabled={isDisabled}
             />
 
             <Button
@@ -336,7 +340,8 @@ export default function Tab9() {
               severity="success"
               icon="pi pi-check"
               className="px-3 py-2 px-10 py-3 rounded-md font-bold"
-              onClick={handleSaveFresh}
+              onClick={handleSaveFresh} 
+              disabled={isDisabled}
             />
           </div>
 

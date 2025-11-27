@@ -15,7 +15,8 @@ export default function ChewingTobacco({
   handleChangeProds,
   addNewOtherUi,
   handleRemoveUi,
-  ageLimit
+  ageLimit,
+  isDisabled
 }: {
   data: initialState;
   handleChangeMaster: (id: string, field: string, value: any) => void;
@@ -40,7 +41,8 @@ export default function ChewingTobacco({
       | "chewing_without_tobacco"
       | "alcohol"
   ) => void;
-  ageLimit: number
+  ageLimit: number;
+  isDisabled: boolean
 }) {
   // Helper array for the master radio buttons
   const masterOptions = [
@@ -93,6 +95,7 @@ export default function ChewingTobacco({
                       parseInt(e.value)
                     )
                   }
+                  disabled={isDisabled}
                 />
                 <label htmlFor={`master_chewing_${option.value}`}>
                   {option.name}
@@ -128,7 +131,7 @@ export default function ChewingTobacco({
                           parseInt(e.value)
                         )
                       }
-                      disabled={data?.consumed !== 1}
+                      disabled={data?.consumed !== 1 || isDisabled}
                     />
                     <label htmlFor={`${item?.id}_consumes_1`}>YES</label>
                   </div>
@@ -146,7 +149,7 @@ export default function ChewingTobacco({
                           parseInt(e.value)
                         )
                       }
-                      disabled={data?.consumed !== 1}
+                      disabled={data?.consumed !== 1 || isDisabled}
                     />
                     <label htmlFor={`${item?.id}_consumes_2`}>NO</label>
                   </div>
@@ -156,7 +159,7 @@ export default function ChewingTobacco({
                 <div className="p-fluid space-y-7">
                   <FloatLabel>
                     <InputText
-                      keyfilter="int" 
+                      keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
                       value={item?.from_age?.toString() || ""}
@@ -171,14 +174,14 @@ export default function ChewingTobacco({
                         handleChangeProds(item?.id, item?.type || "", "from_age", num);
                       }
                       }
-                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1 || isDisabled}
                     />
                     <label>From age</label>
                   </FloatLabel>
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int" 
+                      keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
                       value={item?.to_age?.toString() || ""}
@@ -193,13 +196,13 @@ export default function ChewingTobacco({
                         handleChangeProds(item?.id, item?.type || "", "to_age", num);
                       }
                       }
-                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1 || isDisabled}
                     />
                     <label>To age</label>
                   </FloatLabel>
 
                   <FloatLabel>
-                    <InputText 
+                    <InputText
                       keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
@@ -212,14 +215,14 @@ export default function ChewingTobacco({
                           e.target.value ? parseInt(e.target.value) : ""
                         )
                       }
-                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1 || isDisabled}
                     />
                     <label>Number per day</label>
                   </FloatLabel>
 
                   <FloatLabel>
                     <InputText
-                      keyfilter="int" 
+                      keyfilter="int"
                       type="number"
                       // Removed 'border-1 p-2'
                       value={item?.days_in_week?.toString() || ""}
@@ -233,7 +236,7 @@ export default function ChewingTobacco({
                             : Math.min(parseInt(e.target.value), 7)
                         )
                       }
-                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1 || isDisabled}
                     />
                     <label>Days in a week</label>
                   </FloatLabel>
@@ -247,7 +250,7 @@ export default function ChewingTobacco({
                   <div className="flex gap-2 items-center font-semibold text-sm text-slate-500">
                     <InputText
                       className="w-20 text-center" // Use a wider, fixed width
-                      keyfilter={"int"} 
+                      keyfilter={"int"}
                       type="number"
                       value={item?.duration_placement_hr?.toString() || ""}
                       onChange={(e) =>
@@ -258,13 +261,13 @@ export default function ChewingTobacco({
                           e.target.value ? parseInt(e.target.value) : ""
                         )
                       }
-                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1 || isDisabled}
                     />
                     <label>HOUR</label>
                     <span className="font-bold mx-1">:</span>
                     <InputText
                       className="w-20 text-center" // Use a wider, fixed width
-                      keyfilter={"int"} 
+                      keyfilter={"int"}
                       type="number"
                       value={item?.duration_placement_min?.toString() || ""}
                       onChange={(e) =>
@@ -275,7 +278,7 @@ export default function ChewingTobacco({
                           e.target.value ? parseInt(e.target.value) : ""
                         )
                       }
-                      disabled={data?.consumed !== 1 || item?.consumes !== 1}
+                      disabled={data?.consumed !== 1 || item?.consumes !== 1 || isDisabled}
                     />
                     <label>MINUTES</label>
                   </div>
@@ -306,7 +309,7 @@ export default function ChewingTobacco({
                             );
                           }}
                           disabled={
-                            data?.consumed !== 1 || item?.consumes !== 1
+                            data?.consumed !== 1 || item?.consumes !== 1 || isDisabled
                           }
                         />
                         <label htmlFor={`${item?.id}_${site.key}`}>
@@ -331,7 +334,7 @@ export default function ChewingTobacco({
                 handleRemoveUi={handleRemoveUi}
                 addNewOtherUi={addNewOtherUi}
                 handleChangeProds={handleChangeProds}
-                isDisabled={data?.consumed !== 1}
+                isDisabled={data?.consumed !== 1 || isDisabled}
                 ageLimit={ageLimit}
               />
             ))}

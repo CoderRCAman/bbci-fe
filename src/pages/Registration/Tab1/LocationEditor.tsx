@@ -7,12 +7,14 @@ interface LocationEditorProps {
     patient: any;
     setPatient: React.Dispatch<React.SetStateAction<any>>;
     setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>;
+    isDisabled: boolean
 }
 
 const LocationEditor: React.FC<LocationEditorProps> = ({
     patient,
     setPatient,
-    setIsUnsaved
+    setIsUnsaved,
+    isDisabled
 }) => {
     const [edit, setEdit] = useState(false);
 
@@ -46,6 +48,7 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
                 <Button
                     type="button"
                     icon="pi pi-pencil"
+                    disabled={isDisabled}
                     className="p-button-text p-button-sm"
                     onClick={() => setEdit(!edit)}
                 />
@@ -63,6 +66,7 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
                         icon="pi pi-map-marker"
                         className="p-button-sm"
                         onClick={getCurrentPosition}
+                        disabled={isDisabled}
                     />
                 </div>
             )}

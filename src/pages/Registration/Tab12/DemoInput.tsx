@@ -10,10 +10,12 @@ export default function DemoInput({
   item,
   data,
   handleChange,
+  isDisabled
 }: {
   item: { type: string; data: string[]; field: string };
   handleChange: (type: string, value: string) => void;
   data: DEMOGRAPHIC_INFO;
+  isDisabled: boolean
 }) {
   return (
     // 1. Use <Card> as the main container, removing old styles
@@ -47,6 +49,7 @@ export default function DemoInput({
                       onChange={(e) =>
                         handleChange(item?.field, e.target.value)
                       }
+                      disabled={isDisabled}
                     />
                     <label>Other (Specify)</label>
                   </FloatLabel>
@@ -65,7 +68,8 @@ export default function DemoInput({
                   }
                   onChange={(e) =>
                     handleChange(item?.field, e.checked ? d : "")
-                  }
+                  } 
+                  disabled={isDisabled}
                 />
                 <label htmlFor={`${item?.field}_${index}`}>{d}</label>
               </div>
