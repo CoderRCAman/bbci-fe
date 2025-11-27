@@ -134,9 +134,10 @@ export default function Tab5() {
   const [isUnsaved, setIsUnsaved] = useState(false);
   const [allowNext, setAllowNext] = useState(false);
   const { db, sqlite, tabId } = useSQLite();
-  const [removedIds, setRemovedIds] = useState<string[]>([]); 
-  const [ageLimit , setAgeLimit] = useState(-1) ; 
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
+  const [ageLimit, setAgeLimit] = useState(-1);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDisabled, setIsDisabled] = useState(false);
   const handleAddNewUi = () => {
     if (residentialData.length > 0) setIsUnsaved(true);
     const translator = ShortUUID();
@@ -162,18 +163,19 @@ export default function Tab5() {
     try {
       const query = `
                     select * from residential_history where user_id = '${curId}' ;    
-                    `; 
-      const userQuery = `select * from patients where id = '${curId}' ;`;  
+                    `;
+      const userQuery = `select * from patients where id = '${curId}' ;`;
       const res = await db?.query(query);
-      const res2 = await db?.query(userQuery); 
-      const values = res?.values; 
-      const values2 = res2?.values; 
-      setAgeLimit(differenceInYears(new Date(), new Date(values2?.[0].dob))) 
+      const res2 = await db?.query(userQuery);
+      const values = res?.values;
+      const values2 = res2?.values;
+      setAgeLimit(differenceInYears(new Date(), new Date(values2?.[0].dob)))
       if (values?.length === 0 && residentialData.length === 0) {
         handleAddNewUi();
       } else {
         setAllowNext(true);
         setResidentialData(values || []);
+        setIsDisabled(values2?.[0].tab_id !== tabId)
       }
     } catch (error) {
       console.log(error);
@@ -290,7 +292,7 @@ export default function Tab5() {
   const handleSaveUpdated = () => {
     //for updated records
   };
-  console.log(residentialData.length );
+  console.log(residentialData.length);
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
     await loadExisting(currentId);
@@ -310,7 +312,7 @@ export default function Tab5() {
               refreshingSpinner="circles"
             ></IonRefresherContent>
           </IonRefresher>
-          <RegistrationCrumbs 
+          <RegistrationCrumbs
             currentPageLabel="Residential History"
           />
           <ShowRegisteredTab
@@ -328,7 +330,8 @@ export default function Tab5() {
                 data={item}
                 setResidentialData={setResidentialData}
                 setIsUnsaved={setIsUnsaved}
-                ageLimit = {ageLimit}
+                ageLimit={ageLimit}
+                isDisabled={isDisabled}
               />
             ))}
           </main>
@@ -341,10 +344,12 @@ export default function Tab5() {
               outlined // Use outlined instead of text + raised
               className="font-bold"
               onClick={handleAddNewUi}
+              disabled={isDisabled}
             />
             {editFlag === "yes" ? (
               <Button
                 label="Save"
+
                 icon="pi pi-check" // Added icon
                 raised
                 className="font-bold"
@@ -352,6 +357,7 @@ export default function Tab5() {
               />
             ) : (
               <Button
+                disabled={isDisabled}
                 label="Save"
                 icon="pi pi-check" // Added icon
                 severity="success"

@@ -192,6 +192,7 @@ export default function OtherAlcohol({
             label="REMOVE"
             icon="pi pi-trash"
             severity="danger"
+            disabled={isDisabled}
             onClick={() => handleRemoveUi(data.id, data.type)}
           />
         </div>

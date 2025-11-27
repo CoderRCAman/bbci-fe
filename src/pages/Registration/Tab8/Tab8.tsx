@@ -28,6 +28,7 @@ export default function Tab8() {
   const [id, setId] = useState<string | null>("");
   const [allowNext, setAllowNext] = useState(false);
   const [isUnsaved, setIsUnsaved] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
   const [reading1, setReading1] = useState<{
     height: number | "";
     weight: number | "";
@@ -72,6 +73,7 @@ export default function Tab8() {
       console.log(res);
       if (res?.values?.length) {
         setAllowNext(true);
+        setIsDisabled(res?.values?.[0]?.tab_id !== tabId);
         setReading1({
           height: res?.values?.[0]?.height || 0,
           weight: res?.values?.[0]?.weight || 0,
@@ -223,7 +225,7 @@ export default function Tab8() {
             <IonRefresherContent
               className="spinner-only" // <-- Add this class
               refreshingSpinner="circles"
-              // You can remove the other text props
+            // You can remove the other text props
             ></IonRefresherContent>
           </IonRefresher>
           <RegistrationCrumbs currentPageLabel="Anthropometry" />
@@ -242,7 +244,8 @@ export default function Tab8() {
                   type="number"
                   keyfilter={"num"}
                   id="result_blood"
-                  className="p-2 border"
+                  className="p-2 border" 
+                  disabled = {isDisabled}
                   onChange={(e) => {
                     setIsUnsaved(true);
                     setReading1((prev) => ({
@@ -258,7 +261,8 @@ export default function Tab8() {
                 <InputText
                   id="result_blood"
                   type="number"
-                  keyfilter={"num"}
+                  keyfilter={"num"} 
+                  disabled = {isDisabled}
                   onChange={(e) => {
                     setIsUnsaved(true);
                     setReading1((prev) => ({
@@ -279,7 +283,7 @@ export default function Tab8() {
                 <InputText
                   type="number"
                   keyfilter={"num"}
-                  disabled={isDisabledReading2}
+                  disabled={isDisabledReading2 || isDisabled}
                   id="result_blood"
                   className="p-2 border"
                   onChange={(e) => {
@@ -297,7 +301,7 @@ export default function Tab8() {
                 <InputText
                   type="number"
                   keyfilter={"num"}
-                  disabled={isDisabledReading2}
+                  disabled={isDisabledReading2 || isDisabled}
                   id="result_blood"
                   onChange={(e) => {
                     setIsUnsaved(true);
@@ -314,7 +318,8 @@ export default function Tab8() {
             <div className="flex justify-end gap-2 mt-4 ">
               <Button
                 onClick={handleSave}
-                label="Save"
+                label="Save" 
+                disabled={isDisabled}
                 severity="success"
                 icon="pi pi-check" // Added icon
                 raised // Added for emphasis

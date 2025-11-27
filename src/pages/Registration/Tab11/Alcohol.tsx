@@ -19,7 +19,8 @@ export default function Alcohol({
   handleChangeProds,
   handleRemoveUi,
   addNewOtherUi,
-  ageLimit
+  ageLimit,
+  isDisabled
 }: {
   data: initialState;
   handleChangeMaster: (id: string, field: string, value: any) => void;
@@ -44,7 +45,8 @@ export default function Alcohol({
       | "chewing_without_tobacco"
       | "alcohol"
   ) => void;
-  ageLimit: number
+  ageLimit: number ;
+  isDisabled: boolean
 }) {
   // Helper array for the master radio buttons
   const masterOptions = [
@@ -88,7 +90,8 @@ export default function Alcohol({
                       "consumed",
                       parseInt(e.value)
                     )
-                  }
+                  } 
+                  disabled={isDisabled}
                 />
                 <label htmlFor={`master_alcohol_${option.value}`}>
                   {option.name}
@@ -125,7 +128,7 @@ export default function Alcohol({
                           parseInt(e.value)
                         )
                       }
-                      disabled={data?.consumed !== 1}
+                      disabled={data?.consumed !== 1 || isDisabled}
                     />
                     <label htmlFor={`${item?.id}_consumes_1`}>YES</label>
                   </div>
@@ -143,7 +146,7 @@ export default function Alcohol({
                           parseInt(e.value)
                         )
                       }
-                      disabled={data?.consumed !== 1}
+                      disabled={data?.consumed !== 1 || isDisabled}
                     />
                     <label htmlFor={`${item?.id}_consumes_2`}>NO</label>
                   </div>
@@ -164,7 +167,7 @@ export default function Alcohol({
                           e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
-                      disabled={item?.consumes !== 1}
+                      disabled={item?.consumes !== 1 || isDisabled}
                     />
                     <label>From age</label>
                   </FloatLabel>
@@ -182,7 +185,7 @@ export default function Alcohol({
                           e.target.value === "" ? "" : Math.min(parseInt(e.target.value), ageLimit)
                         )
                       }
-                      disabled={item?.consumes !== 1}
+                      disabled={item?.consumes !== 1 || isDisabled}
                     />
                     <label>To age</label>
                   </FloatLabel>
@@ -202,7 +205,7 @@ export default function Alcohol({
                             : parseInt(e.target.value)
                         )
                       }
-                      disabled={item?.consumes !== 1}
+                      disabled={item?.consumes !== 1 || isDisabled}
                     />
                     <label>Number of times per day</label>
                   </FloatLabel>
@@ -227,7 +230,7 @@ export default function Alcohol({
                               e.target.value === "" ? "" : Math.min(parseInt(e.target.value), 7)
                             )
                           }
-                          disabled={item?.consumes !== 1}
+                          disabled={item?.consumes !== 1 || isDisabled}
                         />
                         <label>Days in a Week</label>
                       </FloatLabel>
@@ -245,7 +248,7 @@ export default function Alcohol({
                               e.target.value === "" ? "" : Math.min(parseInt(e.target.value), 31)
                             )
                           }
-                          disabled={item?.consumes !== 1}
+                          disabled={item?.consumes !== 1 || isDisabled}
                         />
                         <label>Days in a Month</label>
                       </FloatLabel>
@@ -270,7 +273,7 @@ export default function Alcohol({
                             : parseInt(e.target.value)
                         )
                       }
-                      disabled={item?.consumes !== 1}
+                      disabled={item?.consumes !== 1 || isDisabled}
                     />
                     <label>Consumption Unit per day *(ml/ Glass)</label>
                   </FloatLabel>
@@ -291,7 +294,7 @@ export default function Alcohol({
                 handleRemoveUi={handleRemoveUi}
                 addNewOtherUi={addNewOtherUi}
                 handleChangeProds={handleChangeProds}
-                isDisabled={data?.consumed !== 1} // Used optional chaining
+                isDisabled={data?.consumed !== 1 || isDisabled} // Used optional chaining
                 ageLimit = {ageLimit}
               />
             ))}

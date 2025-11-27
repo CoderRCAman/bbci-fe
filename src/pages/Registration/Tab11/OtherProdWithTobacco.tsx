@@ -11,7 +11,7 @@ export default function OtherProdWithTobacco({
   addNewOtherUi,
   handleChangeProds,
   isDisabled,
-  ageLimit
+  ageLimit,
 }: {
   data: TOBACCO_ALCOHOL_CONSUMPION;
   handleChangeProds: (
@@ -227,12 +227,14 @@ export default function OtherProdWithTobacco({
           icon="pi pi-plus" // Added icon
           outlined
           onClick={() => addNewOtherUi(data?.type)}
+          disabled={isDisabled}
         />
         <Button
           label="Remove" // Changed label
           icon="pi pi-trash" // Added icon
           onClick={() => handleRemoveUi(data?.id, data?.type)}
           severity="danger"
+          disabled={isDisabled}
         />
       </div>
     </Fieldset>

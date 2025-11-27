@@ -83,6 +83,7 @@ export default function Tab7() {
   const [removedIds, setRemovedIds] = useState<string[]>([]);
   const [isUnsaved, setIsUnsaved] = useState(false);
   const [ageLimit, setAgeLimit] = useState(-1);
+  const [isDisabled, setIsDisabled] = useState(false);
   const [familyHistoryRelatives, setfamilyHistoryRelatives] = useState(
     initialStateRelatives
   );
@@ -105,6 +106,7 @@ export default function Tab7() {
         setfamilyHistoryMaster(
           res1?.values as FAMILY_HISTORY_OF_CANCER_MASTER[]
         );
+        setIsDisabled(res1?.values[0]?.tab_id !== tabId);
       } else {
         setfamilyHistoryMaster(initialState);
       }
@@ -195,6 +197,12 @@ export default function Tab7() {
           show: true,
         });
       }
+      if (familyHistoryMaster[0].history_of_cancer && familyHistoryRelatives.some(item => !item.relation || !item.code || !item.cancer_site || !item.treatment_received))
+        return setAlert({
+          header: "Required fields",
+          message: "Please fill in all first degree relatives fields",
+          show: true,
+        })
       if (hasMasterData(familyHistoryMaster[0])) {
         const query = `
                     INSERT INTO FAMILY_HISTORY_OF_CANCER_MASTER (
@@ -348,6 +356,7 @@ export default function Tab7() {
                   id="brothers"
                   keyfilter={"int"}
                   type="number"
+                  disabled={isDisabled}
                   placeholder="0" // Placeholder "0" is clearer for number inputs
                   className="p-inputtext-sm w-full" // PrimeReact's small size + full width
                   value={familyHistoryMaster[0]?.brothers.toString()}
@@ -374,6 +383,7 @@ export default function Tab7() {
                   keyfilter={"int"}
                   type="number"
                   placeholder="0"
+                  disabled={isDisabled}
                   className="p-inputtext-sm w-full"
                   value={familyHistoryMaster[0]?.sisters.toString()}
                   onChange={(e) =>
@@ -398,6 +408,7 @@ export default function Tab7() {
                   id="sons"
                   keyfilter={"int"}
                   type="number"
+                  disabled={isDisabled}
                   placeholder="0"
                   className="p-inputtext-sm w-full"
                   value={familyHistoryMaster[0]?.sons.toString()}
@@ -423,6 +434,7 @@ export default function Tab7() {
                   id="daughters"
                   keyfilter={"int"}
                   type="number"
+                  disabled={isDisabled}
                   placeholder="0"
                   className="p-inputtext-sm w-full"
                   value={familyHistoryMaster[0]?.daughters.toString()}
@@ -449,6 +461,7 @@ export default function Tab7() {
                 <input
                   type="radio"
                   value={1}
+                  disabled={isDisabled}
                   checked={familyHistoryMaster?.[0]?.history_of_cancer === 1}
                   onChange={(e) =>
                     setfamilyHistoryMaster([
@@ -465,6 +478,7 @@ export default function Tab7() {
                 <input
                   type="radio"
                   value={2}
+                  disabled={isDisabled}
                   checked={familyHistoryMaster?.[0]?.history_of_cancer === 2}
                   onChange={(e) =>
                     setfamilyHistoryMaster([
@@ -481,6 +495,7 @@ export default function Tab7() {
                 <input
                   type="radio"
                   value={8}
+                  disabled={isDisabled}
                   checked={familyHistoryMaster?.[0]?.history_of_cancer === 8}
                   onChange={(e) =>
                     setfamilyHistoryMaster([
@@ -497,6 +512,7 @@ export default function Tab7() {
                 <input
                   type="radio"
                   value={9}
+                  disabled={isDisabled}
                   checked={familyHistoryMaster?.[0]?.history_of_cancer === 9}
                   onChange={(e) =>
                     setfamilyHistoryMaster([
@@ -524,7 +540,7 @@ export default function Tab7() {
                 const dropdownKey = `${rowData.id}-relatives-${familyHistoryMaster[0].brothers}-${familyHistoryMaster[0].sisters}-${familyHistoryMaster[0].sons}-${familyHistoryMaster[0].daughters}`;
 
                 // Check if the form should be disabled
-                const isDisabled =
+                const isDisabledd =
                   familyHistoryMaster?.[0]?.history_of_cancer !== 1;
 
                 // --- 3. This is the "card" for each relative ---
@@ -539,6 +555,7 @@ export default function Tab7() {
                         Relative #{rowIndex + 1}
                       </h3>
                       <Button
+                        disabled={isDisabled}
                         onClick={() => handleRemoveUi(rowData.id)}
                         icon="pi pi-trash"
                         className="p-button-danger p-button-text"
@@ -555,8 +572,9 @@ export default function Tab7() {
                           Relative code
                         </label>
                         <Dropdown
+
                           key={dropdownKey} // <-- Dynamic key is still here!
-                          disabled={isDisabled}
+                          disabled={isDisabledd || isDisabled}
                           optionLabel="name"
                           value={rowData.code}
                           optionValue="value"
@@ -581,7 +599,7 @@ export default function Tab7() {
                           Age at diagnosis
                         </label>
                         <InputText
-                          disabled={isDisabled}
+                          disabled={isDisabled || isDisabledd}
                           keyfilter={"int"}
                           type="number"
                           className="border-1 p-2 w-full"
@@ -609,7 +627,7 @@ export default function Tab7() {
                           Cancer Site
                         </label>
                         <InputText
-                          disabled={isDisabled}
+                          disabled={isDisabled || isDisabledd}
                           className="border-1 p-2 w-full"
                           value={rowData.cancer_site}
                           placeholder="e.g., Lung"
@@ -631,7 +649,7 @@ export default function Tab7() {
                         <div className="flex gap-4 items-center h-full">
                           <div className="space-x-2">
                             <input
-                              disabled={isDisabled}
+                              disabled={isDisabled || isDisabledd}
                               type="radio"
                               value={1}
                               checked={rowData.treatment_received === 1}
@@ -648,7 +666,7 @@ export default function Tab7() {
                           <div className="space-x-2">
                             <input
                               type="radio"
-                              disabled={isDisabled}
+                              disabled={isDisabled || isDisabledd}
                               value={2}
                               checked={rowData.treatment_received === 2}
                               onChange={(e) =>
@@ -677,13 +695,15 @@ export default function Tab7() {
               label="Add new row"
               severity="help"
               icon="pi pi-plus"
+              disabled={isDisabled}
             />
             <Button
               onClick={() => handleSave()}
               label="Save"
               severity="success"
               icon="pi pi-check" // Added icon
-              raised // Added for emphasis
+              raised // Added for emphasis 
+              disabled={isDisabled}
             />
           </div>
           <div className="pt-10 flex justify-between gap-2">
@@ -727,6 +747,7 @@ export default function Tab7() {
             "--color": "#ffffff",
           }}
         />
+        <div className="pb-[250px]"></div>
       </IonContent>
     </IonPage>
   );

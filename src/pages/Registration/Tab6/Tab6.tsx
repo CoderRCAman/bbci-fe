@@ -108,7 +108,7 @@ export default function Tab6() {
     header: "",
     message: "",
   });
-
+  const [isDisabled, setIsDisabled] = useState(false);
   useEffect(() => {
     if (db === null) return;
     setId(searchParams?.get("id"));
@@ -230,6 +230,7 @@ export default function Tab6() {
           }
         });
       }
+      setIsDisabled(res?.values?.[0]?.tab_id !== tabId);
       setDataState(newState);
     } catch (error) {
       console.log(error);
@@ -364,8 +365,9 @@ export default function Tab6() {
                 mode_of_diagnosis={d.mode_of_diagnosis}
                 mode_of_treatment={d.mode_of_treatment}
                 key={index}
-                updateStateData={updateStateData} 
-                ageLimit = {ageLimit}
+                updateStateData={updateStateData}
+                ageLimit={ageLimit} 
+                isDisabled = {isDisabled}
               />
             ))}
 
@@ -376,7 +378,8 @@ export default function Tab6() {
                 label="SAVE"
                 icon="pi pi-check" // Added icon
                 severity="success"
-                raised // Added for emphasis
+                raised // Added for emphasis 
+                disabled={isDisabled}
               />
             </div>
 

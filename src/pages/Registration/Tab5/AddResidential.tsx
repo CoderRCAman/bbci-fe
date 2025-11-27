@@ -10,13 +10,15 @@ export default function AddResidential({
   data,
   setResidentialData,
   setIsUnsaved,
-  ageLimit
+  ageLimit,
+  isDisabled
 }: {
   handleRemoveUi: any;
   data: RESIDENTIAL_TYPE;
   setResidentialData: React.Dispatch<React.SetStateAction<RESIDENTIAL_TYPE[]>>;
   setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>
-  ageLimit: number
+  ageLimit: number;
+  isDisabled: boolean
 }) {
   const handleUpdate = (field: string, value: any) => {
     setIsUnsaved(true);
@@ -48,6 +50,7 @@ export default function AddResidential({
             type="number"
             value={data["from_age"].toString()}
             max={ageLimit}
+            disabled={isDisabled}
             onChange={(e) => {
               let val = e.target.value;
               if (val === "") {
@@ -68,6 +71,7 @@ export default function AddResidential({
             keyfilter="int"
             type="number"
             value={data["to_age"].toString()}
+            disabled={isDisabled}
             onChange={(e) => {
               let val = e.target.value;
               if (val === "") {
@@ -88,7 +92,8 @@ export default function AddResidential({
           <InputText
             name="city"
             value={data["city"]}
-            disabled={data["village"] !== ""}
+            disabled={data["village"] !== "" || isDisabled}
+
             onChange={(e) => handleUpdate("city", e.target.value)}
           />
           <label>City</label>
@@ -98,7 +103,8 @@ export default function AddResidential({
           <InputText
             name="village"
             value={data["village"]}
-            disabled={data["city"] !== ""}
+            disabled={data["city"] !== "" || isDisabled}
+
             onChange={(e) => handleUpdate("village", e.target.value)}
           />
           <label>Village</label>
@@ -109,6 +115,7 @@ export default function AddResidential({
           <InputText
             name="state"
             value={data["state"]}
+            disabled={isDisabled}
             onChange={(e) => handleUpdate("state", e.target.value)}
           />
           <label>State</label>
@@ -116,6 +123,7 @@ export default function AddResidential({
 
         <FloatLabel>
           <Dropdown
+            disabled={isDisabled}
             optionLabel="name"
             optionValue="value"
             placeholder="Code"

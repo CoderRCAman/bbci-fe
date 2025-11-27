@@ -56,6 +56,7 @@ export default function Tab11() {
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [isUnsaved, setIsUnsaved] = useState(false);
   const [ageLimit, setAgeLimit] = useState(-1);
+  const [isDisabled, setIsDisabled] = useState(false);
   const resetProduct = (
     p: TOBACCO_ALCOHOL_CONSUMPION
   ): TOBACCO_ALCOHOL_CONSUMPION => ({
@@ -89,6 +90,7 @@ export default function Tab11() {
       const values = res?.values as TOBACCO_ALCOHOL_CONSUMPION[];
       const masterValue = res2?.values as initialState[];
       if (values?.length > 0 || masterValue?.length > 0) setAllowNext(true);
+      setIsDisabled(values?.[0]?.tab_id !== tabId);
       console.log(res);
       const result = populateWithBackend(masterValue, values, id, tabId);
       setData(result);
@@ -295,9 +297,9 @@ export default function Tab11() {
       d.map((item) =>
         item.product_type === type
           ? {
-              ...item,
-              products: item.products.filter((x) => x.id !== id),
-            }
+            ...item,
+            products: item.products.filter((x) => x.id !== id),
+          }
           : item
       )
     );
@@ -404,6 +406,7 @@ export default function Tab11() {
                 data={data?.[0]}
                 handleChangeProds={handleChangeProds}
                 ageLimit={ageLimit}
+                isDisabled={isDisabled}
               />
             </AccordionTab>
             <AccordionTab
@@ -417,6 +420,7 @@ export default function Tab11() {
                 addNewOtherUi={addNewOtherUi}
                 handleRemoveUi={handleRemoveUi}
                 ageLimit={ageLimit}
+                isDisabled={isDisabled}
               />
             </AccordionTab>
             <AccordionTab
@@ -430,6 +434,7 @@ export default function Tab11() {
                 handleChangeMaster={handleChangeMaster}
                 handleChangeProds={handleChangeProds}
                 ageLimit={ageLimit}
+                isDisabled={isDisabled}
               />
             </AccordionTab>
             <AccordionTab
@@ -443,6 +448,7 @@ export default function Tab11() {
                 handleChangeMaster={handleChangeMaster}
                 handleChangeProds={handleChangeProds}
                 ageLimit={ageLimit}
+                isDisabled={isDisabled}
               />
             </AccordionTab>
           </Accordion>
@@ -453,6 +459,7 @@ export default function Tab11() {
               severity="success"
               icon="pi pi-check" // Added icon
               raised // Added for emphasis
+              disabled={isDisabled}
             />
           </div>
         </main>

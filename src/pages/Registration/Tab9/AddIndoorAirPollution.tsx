@@ -10,6 +10,7 @@ export default function AddIndoorAirPollution({
   setIndoorAirData,
   setIsUnsaved,
   ageLimit,
+  isDisabled
 }: {
   handleRemoveUi: any;
   data: INDOOR_AIR_POLLUTION;
@@ -17,7 +18,8 @@ export default function AddIndoorAirPollution({
     React.SetStateAction<INDOOR_AIR_POLLUTION[]>
   >;
   setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>;
-  ageLimit: number
+  ageLimit: number;
+  isDisabled: boolean
 }) {
   const handleUpdate = (field: string, value: any) => {
     setIsUnsaved(true);
@@ -29,8 +31,9 @@ export default function AddIndoorAirPollution({
     <div className="border py-10 rounded-md p-4 space-y-8 shadow-md">
       <FloatLabel>
         <InputText
-          keyfilter="int" 
-          type = 'number'
+          keyfilter="int"
+          type='number'
+          disabled={isDisabled}
           className="border-1 w-[50%] p-2"
           value={data["from_age"].toString()}
           onChange={(e) => {
@@ -51,7 +54,8 @@ export default function AddIndoorAirPollution({
       <FloatLabel>
         <InputText
           keyfilter="int"
-          type = "number"
+          type="number"
+          disabled={isDisabled}
           className="border-1 w-[50%] p-2"
           value={data["to_age"].toString()}
           onChange={(e) => {
@@ -74,6 +78,7 @@ export default function AddIndoorAirPollution({
         <Dropdown
           optionLabel="name"
           optionValue="value"
+          disabled={isDisabled}
           className="border-1"
           placeholder="Select Most Common Cooking Fuel"
           value={data["most_common_cooking_fuel"]}
@@ -101,6 +106,7 @@ export default function AddIndoorAirPollution({
           <InputText
             className="border  w-[60px] text-sm text-center"
             keyfilter={"int"}
+            disabled={isDisabled}
             type="number"
             value={data["hours"] == -1 ? "" : data["hours"].toString()}
             onChange={(e) => handleUpdate("hours", e.target.value)}
@@ -109,7 +115,8 @@ export default function AddIndoorAirPollution({
 
           <InputText
             className="border  w-[60px] text-center"
-            keyfilter={"int"} 
+            keyfilter={"int"}
+            disabled={isDisabled}
             type="number"
             value={data["minutes"] == -1 ? "" : data["minutes"].toString()}
             onChange={(e) => handleUpdate("minutes", e.target.value)}
@@ -122,6 +129,7 @@ export default function AddIndoorAirPollution({
         <Dropdown
           optionLabel="name"
           optionValue="value"
+          disabled={isDisabled}
           className="border-1"
           placeholder="Select Ventilation in Kitchen"
           value={data["ventilation"]}
@@ -139,6 +147,7 @@ export default function AddIndoorAirPollution({
       <div className="space-y-2">
         <p className="text-slate-500">Level of smokiness</p>
         <Dropdown
+          disabled={isDisabled}
           optionLabel="name"
           optionValue="value"
           className="border-1"
@@ -156,6 +165,7 @@ export default function AddIndoorAirPollution({
       <div className="space-y-2">
         <p className="text-slate-500">Where do you do most of your cooking?</p>
         <Dropdown
+          disabled={isDisabled}
           optionLabel="name"
           optionValue="value"
           className="border-1"
@@ -173,6 +183,7 @@ export default function AddIndoorAirPollution({
 
       <div>
         <Button
+          disabled={isDisabled}
           label="- Remove"
           raised
           severity="danger"
