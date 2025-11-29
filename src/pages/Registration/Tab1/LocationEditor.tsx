@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { Geolocation } from "@capacitor/geolocation";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
@@ -17,17 +17,37 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
     isDisabled
 }) => {
     const [edit, setEdit] = useState(false);
-
+    const [locationSpinner, setLocationSpinner] = useState(false);
+    const [error, setError] = useState("");
+    useEffect(() => {
+        return () => {
+            setError("");
+        }
+    },[])
     const getCurrentPosition = async () => {
         try {
+            setLocationSpinner(true);
+
             const result = await Geolocation.getCurrentPosition({
                 maximumAge: 0,
-                timeout: 1000,
+                // Extended timeout to allow GPS time to lock (20 seconds is a good start)
+                timeout: 20000,
                 enableHighAccuracy: true,
             });
 
-            const { latitude, longitude } = result.coords;
+            const { latitude, longitude, accuracy } = result.coords;
 
+            // --- ACCURACY CHECK FIX ---
+            // Discard result if accuracy is poor (e.g., greater than 50 meters), 
+            // as this indicates a network-based fix (the source of your 2km error).
+            if (accuracy > 50) {
+                setLocationSpinner(false);
+                // Throw a custom error to enter the catch block
+                throw new Error(`Location accuracy is poor (${accuracy.toFixed(1)}m). Please try again or manually enter gps coordinates.`);
+            }
+
+            // If execution reaches here, the position is accurate
+            setLocationSpinner(false);
             setPatient((prev: any) => ({
                 ...prev,
                 lat: latitude,
@@ -35,16 +55,54 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
             }));
 
             setIsUnsaved(true);
-        } catch (err) {
-            console.error("GPS error:", err);
-        }
-    };
 
+        } catch (err: any) { // Type the error as 'any' for initial handling
+            setLocationSpinner(false);
+
+            // --- TYPESCRIPT ERROR HANDLING FIX ---
+            let errorMessage: string;
+
+            // Check if the error is a standard GeolocationPositionError
+            if (err.code !== undefined && err.message !== undefined) {
+                // This is the standard W3C Geolocation error object
+                const geoError = err as GeolocationPositionError;
+
+                switch (geoError.code) {
+                    case GeolocationPositionError.PERMISSION_DENIED:
+                        errorMessage = "Location access was denied. Please check your app permissions.";
+                        break;
+                    case GeolocationPositionError.TIMEOUT:
+                        errorMessage = "Location request timed out. Try again or manually enter";
+                        break;
+                    case GeolocationPositionError.POSITION_UNAVAILABLE:
+                        errorMessage = "Location is unavailable. Ensure GPS is enabled and try again.";
+                        break;
+                    default:
+                        errorMessage = `GPS Error (${geoError.code}): ${geoError.message}`;
+                }
+            } else if (err instanceof Error) {
+                // Handle custom errors (like the accuracy check above) or general JS errors
+                errorMessage = err.message;
+            } else {
+                // Fallback for unknown error types
+                errorMessage = "An unexpected location error occurred.";
+            }
+
+            console.error("GPS error:", errorMessage);
+            setError(errorMessage);
+        }
+    }
+    console.log(error) ;
     return (
         <div className="p-4 border rounded-md space-y-3 bg-gray-50">
 
             <div className="flex justify-between items-center">
-                <h3 className="text-sm font-medium text-gray-700">Location</h3>
+                <div>
+                    <h3 className="text-sm font-medium text-gray-700">Location</h3>
+                    {
+                        error && <p className="text-sm text-red-500">{error}</p>
+                    }
+                </div>
 
                 <Button
                     type="button"
@@ -60,15 +118,17 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
                 <div className="space-y-1 text-gray-700">
                     <p><strong>Latitude:</strong> {patient.lat}</p>
                     <p><strong>Longitude:</strong> {patient.long}</p>
-
-                    <Button
-                        type="button"
-                        label="Use Current Location"
-                        icon="pi pi-map-marker"
-                        className="p-button-sm"
-                        onClick={getCurrentPosition}
-                        disabled={isDisabled}
-                    />
+                    {
+                        locationSpinner ? <p>Loading...</p> :
+                            <Button
+                                type="button"
+                                label="Use Current Location"
+                                icon="pi pi-map-marker"
+                                className="p-button-sm"
+                                onClick={getCurrentPosition}
+                                disabled={isDisabled}
+                            />
+                    }
                 </div>
             )}
 
