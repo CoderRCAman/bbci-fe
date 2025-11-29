@@ -23,6 +23,7 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
             const result = await Geolocation.getCurrentPosition({
                 maximumAge: 0,
                 timeout: 1000,
+                enableHighAccuracy: true,
             });
 
             const { latitude, longitude } = result.coords;

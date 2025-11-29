@@ -176,21 +176,23 @@ export default function Tab5() {
         setAllowNext(true);
         setResidentialData(values || []);
         if (values?.[0].tab_id)
-          setIsDisabled(values2?.[0].tab_id !== tabId)
+          setIsDisabled(values?.[0].tab_id !== tabId)
       }
     } catch (error) {
       console.log(error);
     }
   };
+  console.log(residentialData, isDisabled)
   useEffect(() => {
     if (!db) return;
     const curId = searchParams?.get("id") || "";
     setId(curId);
     setEditFlag(searchParams?.get("edit"));
-    loadExisting(curId);
     setIsUnsaved(false);
     setIsDisabled(false);
+    loadExisting(curId);
   }, [db, location.pathname]);
+
   useBlockNavigation(isUnsaved, () => {
     setAlert({
       show: true,

@@ -89,9 +89,10 @@ export default function Tab11() {
                     `);
       const values = res?.values as TOBACCO_ALCOHOL_CONSUMPION[];
       const masterValue = res2?.values as initialState[];
+      
       if (values?.length > 0 || masterValue?.length > 0) setAllowNext(true);
-      if (values?.[0]?.tab_id)
-        setIsDisabled(values?.[0]?.tab_id !== tabId);
+      if (masterValue?.[0]?.tab_id) 
+        setIsDisabled(masterValue?.[0]?.tab_id !== tabId);
       console.log(res);
       const result = populateWithBackend(masterValue, values, id, tabId);
       setData(result);

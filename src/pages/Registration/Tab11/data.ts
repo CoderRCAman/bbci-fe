@@ -201,6 +201,7 @@ export const generateDefaultState = (
   return initialState;
 };
 
+
 export const populateWithBackend = (
   masterData: initialState[],
   backendData: TOBACCO_ALCOHOL_CONSUMPION[],
@@ -292,6 +293,8 @@ export const populateWithBackend = (
     }
   });
 };
+
+
 
 export const checkElibleToSave = async (
   db: SQLiteDBConnection,

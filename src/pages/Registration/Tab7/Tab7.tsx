@@ -198,9 +198,9 @@ export default function Tab7() {
           message: "This user was registered with a different tab id.",
           show: true,
         });
-      } 
+      }
       console.log(familyHistoryRelatives)
-      if (familyHistoryMaster[0].history_of_cancer && familyHistoryRelatives.some(item =>  !item.code || !item.cancer_site || !item.treatment_received))
+      if (familyHistoryMaster[0].history_of_cancer === 1 && familyHistoryRelatives.some(item => !item.code || !item.cancer_site || !item.treatment_received))
         return setAlert({
           header: "Required fields",
           message: "Please fill in all first degree relatives fields",
@@ -617,7 +617,7 @@ export default function Tab7() {
                             }
                             let num = parseInt(raw);
                             // Enforce max
-                            
+
                             handleChangeRelative(rowData.id, "age_at_diagnosis", num);
                           }
                           }

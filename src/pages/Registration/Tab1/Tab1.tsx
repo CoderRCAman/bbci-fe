@@ -56,13 +56,13 @@ interface Patient {
 }
 
 const employeeNameOptions = [
-  { name: "Ampi Landi", value: "Ampi Lamdi" },
+  { name: "Ampi Landi", value: "Ampi Landi" },
   { name: "Miyum Tally", value: "Miyum Tally" },
 ];
 
 const employeeCodeOptions = [
-  { name: "146681", value: "146681" },
-  { name: "146682", value: "146682" },
+  { name: "146781", value: "146781" },
+  { name: "146782", value: "146782" },
 ];
 
 const genderOptions = [

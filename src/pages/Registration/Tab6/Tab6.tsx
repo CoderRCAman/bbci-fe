@@ -113,7 +113,8 @@ export default function Tab6() {
     if (db === null) return;
     setId(searchParams?.get("id"));
     setIsDisabled(false);
-    fetchExistingData();
+    fetchExistingData(); 
+    
   }, [db, location.pathname]);
   useBlockNavigation(isUnsaved, () => {
     setAlert({
