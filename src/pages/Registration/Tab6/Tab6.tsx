@@ -14,13 +14,14 @@ import PMHInput from "./PMHInput";
 import { Button } from "primereact/button";
 import { Link } from "react-router-dom";
 import { useSQLite } from "../../../utils/Sqlite";
-import ShortUUID from "short-uuid";
+import ShortUUID, { generate } from "short-uuid";
 import { saveToStore } from "../../../utils/helper";
 import { checkElibleToSave } from "../Tab11/data";
 import ShowRegisteredTab from "../../../components/ShowRegisteredTab";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 import RegistrationCrumbs from "../../../components/RegistrationCrumbs";
 import { differenceInYears } from "date-fns";
+import PMHInputOther from "./PMHInputOther";
 const translator = ShortUUID();
 export interface PERSONAL_MEDICAL_HISTORY {
   diagnoss: string;
@@ -31,6 +32,7 @@ export interface PERSONAL_MEDICAL_HISTORY {
   mode_of_treatment?: string;
   mode_of_diagnosis?: string;
   user_id?: string;
+  is_other?: number
 }
 export interface PERSONAL_MEDICAL_HISTORY_DB {
   id: string;
@@ -43,6 +45,7 @@ export interface PERSONAL_MEDICAL_HISTORY_DB {
   mode_of_diagnosis?: string;
   mode_of_diagnosis_other?: string;
   user_id?: string;
+  is_other?: number
 }
 
 export function validateDiagnosisAge(
@@ -103,18 +106,20 @@ export default function Tab6() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isUnsaved, setIsUnsaved] = useState(false);
   const [ageLimit, setAgeLimit] = useState(-1);
+  const [dob, setDob] = useState("");
   const [alert, setAlert] = useState({
     show: false,
     header: "",
     message: "",
   });
   const [isDisabled, setIsDisabled] = useState(false);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   useEffect(() => {
     if (db === null) return;
     setId(searchParams?.get("id"));
     setIsDisabled(false);
-    fetchExistingData(); 
-    
+    fetchExistingData();
+
   }, [db, location.pathname]);
   useBlockNavigation(isUnsaved, () => {
     setAlert({
@@ -214,6 +219,7 @@ export default function Tab6() {
       const userQuery = `select * from patients where id = '${id}' ;`;
       const res2 = await db?.query(userQuery);
       setAgeLimit(differenceInYears(new Date(), new Date(res2?.values?.[0].dob)))
+      setDob(res2?.values?.[0].dob)
       console.log(res?.values as PERSONAL_MEDICAL_HISTORY_DB[]);
       if (res?.values && res?.values.length === 0) {
         const defaultData = generateDefaultData(id || "");
@@ -232,9 +238,13 @@ export default function Tab6() {
           }
         });
       }
-       if (res?.values?.[0]?.tab_id)
-            setIsDisabled(res?.values[0]?.tab_id !== tabId);
-      
+      const otherDiagnosis = res?.values?.filter(item => item?.is_other === 1) || [];
+      if (otherDiagnosis?.length > 0) {
+        newState.push(...otherDiagnosis)
+      }
+      if (res?.values?.[0]?.tab_id)
+        setIsDisabled(res?.values[0]?.tab_id !== tabId);
+
       setDataState(newState);
     } catch (error) {
       console.log(error);
@@ -285,8 +295,9 @@ export default function Tab6() {
             mode_of_diagnosis_other,
             user_id,
             tab_id ,
-            created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ?)
+            created_at,
+            is_other
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ?)
           ON CONFLICT(id) DO UPDATE SET
             diagnoss = excluded.diagnoss,
             diagnosed = excluded.diagnosed,
@@ -296,7 +307,7 @@ export default function Tab6() {
             mode_of_treatment = excluded.mode_of_treatment,
             mode_of_diagnosis = excluded.mode_of_diagnosis,
             mode_of_diagnosis_other = excluded.mode_of_diagnosis_other,
-            user_id = excluded.user_id;
+            user_id = excluded.user_id; 
         `;
 
         const values = [
@@ -312,8 +323,12 @@ export default function Tab6() {
           item.user_id,
           tabId,
           new Date().toLocaleString("sv-SE").replace("T", " "),
+          item?.is_other || 0
         ];
         await db?.run(query, values);
+      }
+      for (const id of deletedIds) {
+        await db?.run(`DELETE FROM personal_medical_history WHERE id = ?`, [id])
       }
       await saveToStore(sqlite);
       setAllowNext(true);
@@ -332,6 +347,27 @@ export default function Tab6() {
       });
     }
   };
+  function handleAddOther() {
+    setDataState(data => [...data,
+    {
+      id: translator.new(),
+      diagnosed: 1,
+      diagnoss: '',
+      age_first_diagnosis: 0,
+      year_of_first_diagnosis: '',
+      treatment_received: 0,
+      mode_of_treatment: '',
+      mode_of_diagnosis: '',
+      is_other: 1,
+      user_id: id || ''
+    }
+    ])
+  }
+  function handleRemoveOther(id: string) {
+    setDataState(data => data.filter(x => x.id !== id))
+    setDeletedIds(ids => [...ids, id])
+  }
+  console.log(dataState)
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     await fetchExistingData();
     setIsUnsaved(false);
@@ -370,10 +406,34 @@ export default function Tab6() {
                 mode_of_treatment={d.mode_of_treatment}
                 key={index}
                 updateStateData={updateStateData}
-                ageLimit={ageLimit} 
-                isDisabled = {isDisabled}
+                ageLimit={ageLimit}
+                isDisabled={isDisabled}
+                dob={dob}
               />
             ))}
+
+            {
+              dataState.filter((item) => item.is_other).map(item => (
+                <PMHInputOther
+                  key={item.id}
+                  data={item}
+                  ageLimit={ageLimit}
+                  isDisabled={isDisabled}
+                  onRemove={handleRemoveOther}
+                  updateStateData={updateStateData}
+                  dob={dob}
+                />
+              ))
+            }
+            <div>
+              <Button
+                label="Add other diagnosis"
+                severity="warning"
+                disabled={isDisabled}
+                icon="pi pi-plus"
+                onClick={() => { handleAddOther() }}
+              />
+            </div>
 
             {/* Grouped all action buttons at the bottom */}
             <div className="flex justify-end gap-2 pt-4">
@@ -416,7 +476,7 @@ export default function Tab6() {
             message={alert.message}
             buttons={["OK"]}
           />
-
+          
           {/* Fixed broken className and used p-button-rounded */}
           <Button
             icon="pi pi-arrow-up"

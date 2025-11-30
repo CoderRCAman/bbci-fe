@@ -665,7 +665,7 @@ export default function FoodHabitPage() {
               <div className="mt-3">
                 <label className="block text-sm font-medium">Do you add any of the following to cooked food?</label>
                 <div className="flex flex-wrap gap-3 mt-2 text-sm">
-                  {["Salt", "Sugar", "Jaggery", "Ghee", "Pickled Vegetables", "Mustard Oil", "Khar/Tapigo", "None"].map((item) => {
+                  {["Salt", "Sugar", "Jaggery", "Ghee", "Pickled Vegetables", "Mustard Oil", "Khar/Tapiyo", "None"].map((item) => {
                     const checked = additives.includes(item);
                     return (
                       <label key={item} className="inline-flex items-center gap-2">

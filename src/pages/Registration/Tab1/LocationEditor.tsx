@@ -23,7 +23,7 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
         return () => {
             setError("");
         }
-    },[])
+    }, [])
     const getCurrentPosition = async () => {
         try {
             setLocationSpinner(true);
@@ -92,7 +92,7 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
             setError(errorMessage);
         }
     }
-    console.log(error) ;
+    console.log(error);
     return (
         <div className="p-4 border rounded-md space-y-3 bg-gray-50">
 
@@ -119,15 +119,15 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
                     <p><strong>Latitude:</strong> {patient.lat}</p>
                     <p><strong>Longitude:</strong> {patient.long}</p>
                     {
-                        locationSpinner ? <p>Loading...</p> :
-                            <Button
-                                type="button"
-                                label="Use Current Location"
-                                icon="pi pi-map-marker"
-                                className="p-button-sm"
-                                onClick={getCurrentPosition}
-                                disabled={isDisabled}
-                            />
+                        <Button
+                            type="button"
+                            label="Use Current Location"
+                            icon="pi pi-map-marker"
+                            className="p-button-sm"
+                            onClick={getCurrentPosition}
+                            disabled={isDisabled || locationSpinner} // Disable if overall form disabled OR spinner is active
+                            loading={locationSpinner} // This automatically shows the spinner and overrides the icon
+                        />
                     }
                 </div>
             )}

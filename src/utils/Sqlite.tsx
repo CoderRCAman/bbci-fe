@@ -453,11 +453,6 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         const query17 = trackTableInsertTriggers;
         const query18 = trackTableUpdateTriggers;
         const query19 = trackTableDeleteTriggers;
-        //synch flag -> 0 1 2
-        // 0 -> never synched
-        // 1 -> synched
-        // 2 -> updated
-
         await newDb.execute(query);
         await newDb.execute(query2);
         await newDb.execute(query3);
@@ -479,6 +474,10 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query17);
         await newDb.execute(query18);
         await newDb.execute(query19);
+        try { await newDb.execute("ALTER TABLE personal_medical_history ADD COLUMN is_other INTEGER DEFAULT 0;"); } catch {  }
+        try { await newDb.execute("ALTER TABLE patients ADD COLUMN phone text DEFAULT '';"); } catch {  }
+
+
         setDb(newDb);
         setIsLoading(false);
       } catch (err: any) {

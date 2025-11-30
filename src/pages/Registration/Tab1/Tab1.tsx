@@ -53,6 +53,7 @@ interface Patient {
   i_emp_code: string;
   dob: string;
   tab_id?: string;
+  phone?: string;
 }
 
 const employeeNameOptions = [
@@ -95,6 +96,7 @@ const Tab1: React.FC = () => {
     i_name: "",
     i_emp_code: "",
     dob: "",
+    phone: ""
   });
   const [id, setId] = useState<string | null>(null);
   const [editFlag, setEditFlag] = useState<string | null>(null);
@@ -126,6 +128,7 @@ const Tab1: React.FC = () => {
       age: patient.age,
       gender: patient.gender,
       dob: patient.dob,
+      phone: patient.phone
     },
   });
   const [strokes, setStrokes] = useState<number[][][]>([]);
@@ -180,16 +183,19 @@ const Tab1: React.FC = () => {
             setIsDisabled(res?.values[0]?.tab_id !== tabId);
         }
       }
+      else {
+        setPatient(p => ({ ...p, lat: 0, long: 0 }))
+      }
       reset((res as any)?.values[0]);
     } catch (error) { }
   }
-  useEffect(() => { 
+  useEffect(() => {
     console.log('excuted')
     const id = searchParams.get("id");
     const flag = searchParams.get("edit");
     setId(id);
     setEditFlag(flag);
-    setIsUnsaved(false); 
+    setIsUnsaved(false);
     setIsDisabled(false);
     if (!db) return;
     console.log(id);
@@ -265,7 +271,7 @@ const Tab1: React.FC = () => {
       await db?.run(
         `UPDATE patients SET name = ?,  gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
-         DOB = ? , updated_at = ? , signature = ? , card_type = ? , card_no = ? , updated_at = ?
+         DOB = ? , updated_at = ? , signature = ? , card_type = ? , card_no = ? , updated_at = ? , phone = ?
          WHERE id = ?`,
         [
           data.name,
@@ -280,6 +286,7 @@ const Tab1: React.FC = () => {
           cardType,
           cardInput,
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
+          data.phone,
           id,
         ]
       );
@@ -297,8 +304,8 @@ const Tab1: React.FC = () => {
       const uniqueId = generateUniqueId();
       await db?.run(
         `INSERT INTO patients (id, i_name, i_emp_code, name,  gender,
-         lat, long, time, dob, date , created_at , updated_at , tab_id,signature , card_type , card_no)
-         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ?,?,? )`,
+         lat, long, time, dob, date , created_at , updated_at , tab_id,signature , card_type , card_no , phone)
+         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ?,?,? , ?)`,
         [
           uniqueId,
           data.i_name,
@@ -316,6 +323,7 @@ const Tab1: React.FC = () => {
           JSON.stringify(strokes.map((stroke) => stroke.map(roundPoint))),
           cardType,
           cardInput,
+          data.phone
         ]
       );
       const params = new URLSearchParams(location.search);
@@ -437,6 +445,24 @@ const Tab1: React.FC = () => {
                   <FloatLabel>
                     <InputText {...field} className="w-full" disabled={isDisabled} />
                     <label>Participant's name</label>
+                  </FloatLabel>
+                )}
+              />
+              <ControlledFormField
+                name="phone"
+                control={control}
+                errors={errors}
+                rules={{
+                  required: "Phone no. is required",
+                  pattern: {
+                    value: /^[0-9]{10}$/,
+                    message: "Phone number must be 10 digits"
+                  }
+                }}
+                render={({ field }: any) => (
+                  <FloatLabel>
+                    <InputText {...field} className="w-full" disabled={isDisabled} />
+                    <label>Participant's phone</label>
                   </FloatLabel>
                 )}
               />

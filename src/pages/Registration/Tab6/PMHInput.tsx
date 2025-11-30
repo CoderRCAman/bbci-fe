@@ -13,7 +13,8 @@ export default function PMHInput({
   data,
   updateStateData,
   ageLimit,
-  isDisabled
+  isDisabled,
+  dob
 }: {
   condition: string;
   mode_of_treatment: string[];
@@ -21,9 +22,9 @@ export default function PMHInput({
   data: PERSONAL_MEDICAL_HISTORY_DB;
   updateStateData: (id: string, field: string, value: any) => void;
   ageLimit: number;
-  isDisabled: boolean
+  isDisabled: boolean;
+  dob: string
 }) {
-  console.log(data);
 
   // Helper for checkbox logic with correct types
   const handleCheckboxChange = (
@@ -81,7 +82,7 @@ export default function PMHInput({
                 checked={data?.["diagnosed"] === option.value}
                 onChange={(e) =>
                   updateStateData(data?.id, "diagnosed", parseInt(e.value))
-                } 
+                }
                 disabled={isDisabled}
               />
               <label htmlFor={`${data?.id}_${option.value}`}>
@@ -96,8 +97,8 @@ export default function PMHInput({
           <InputText
             disabled={data?.diagnosed !== 1 || isDisabled}
             keyfilter="int"
-            type="number" 
-            
+            type="number"
+
             value={data?.age_first_diagnosis?.toString() || ""}
             // Removed custom classes
             onChange={(e) => {
@@ -115,6 +116,12 @@ export default function PMHInput({
               if (num > ageLimit) num = ageLimit;
 
               updateStateData(data.id, "age_first_diagnosis", num);
+              if (dob) {
+                const dobDate = new Date(dob);
+                const dobYear = dobDate.getFullYear();
+                const diagnosisYear = dobYear + num;
+                updateStateData(data.id, "year_of_first_diagnosis", diagnosisYear);
+              }
             }
             }
           />
