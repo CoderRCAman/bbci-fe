@@ -7,18 +7,21 @@ interface LocationEditorProps {
     patient: any;
     setPatient: React.Dispatch<React.SetStateAction<any>>;
     setIsUnsaved: React.Dispatch<React.SetStateAction<boolean>>;
-    isDisabled: boolean
+    isDisabled: boolean;
+    error: string;
+    setError: React.Dispatch<React.SetStateAction<string>>
 }
 
 const LocationEditor: React.FC<LocationEditorProps> = ({
     patient,
     setPatient,
     setIsUnsaved,
-    isDisabled
+    isDisabled,
+    error,
+    setError
 }) => {
     const [edit, setEdit] = useState(false);
     const [locationSpinner, setLocationSpinner] = useState(false);
-    const [error, setError] = useState("");
     useEffect(() => {
         return () => {
             setError("");
@@ -27,7 +30,7 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
     const getCurrentPosition = async () => {
         try {
             setLocationSpinner(true);
-
+            setError("");
             const result = await Geolocation.getCurrentPosition({
                 maximumAge: 0,
                 // Extended timeout to allow GPS time to lock (20 seconds is a good start)

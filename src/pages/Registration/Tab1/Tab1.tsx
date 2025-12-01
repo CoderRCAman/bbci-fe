@@ -105,6 +105,7 @@ const Tab1: React.FC = () => {
   const listenerHandle = useRef<PluginListenerHandle | null>(null);
   const [isUnsaved, setIsUnsaved] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [error, setError] = useState("");
   const [alert, setAlert] = useState({
     show: false,
     header: "",
@@ -185,6 +186,15 @@ const Tab1: React.FC = () => {
       }
       else {
         setPatient(p => ({ ...p, lat: 0, long: 0 }))
+        reset({
+          name: "",
+          age: 0,
+          gender: "",
+          i_name: "",
+          i_emp_code: "",
+          dob: "",
+          phone: ""
+        });
       }
       reset((res as any)?.values[0]);
     } catch (error) { }
@@ -349,15 +359,17 @@ const Tab1: React.FC = () => {
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     const currentId = searchParams?.get("id") || "";
 
+
     await fetchPatient(currentId);
     setIsUnsaved(false);
+    setError("");
     event.detail.complete();
   };
   const onSubmit = (data: any) => {
     console.log(data);
     savePatient(data);
   };
-  console.log(isUnsaved);
+  console.log(isUnsaved, formState.isDirty);
   return (
     <IonPage>
       <Header title={id ? "Edit participants" : "Register Participant"} />
@@ -433,6 +445,8 @@ const Tab1: React.FC = () => {
                 setPatient={setPatient}
                 setIsUnsaved={setIsUnsaved}
                 isDisabled={isDisabled}
+                setError={setError}
+                error={error}
               />
 
               {/* --- 4. Participant Name --- */}
