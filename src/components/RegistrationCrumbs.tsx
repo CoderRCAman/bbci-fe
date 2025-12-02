@@ -21,8 +21,9 @@ const RegistrationCrumbs: FC<RegistrationCrumbsProps> = ({ currentPageLabel }) =
   const location = useLocation() ; 
   useEffect(()=>{
     const searchParams = new URLSearchParams(location.search);
+    console.log(searchParams?.get('id'))
     setId(searchParams?.get('id') || '');
-  },[location.pathname])
+  },[location.search])
   
 
 

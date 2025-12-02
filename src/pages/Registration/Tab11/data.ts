@@ -8,10 +8,10 @@ export interface TOBACCO_ALCOHOL_CONSUMPION {
   id: string;
   user_id: string;
   type:
-  | "smoking_tobacco"
-  | "chewing_tobacco"
-  | "chewing_without_tobacco"
-  | "alcohol";
+    | "smoking_tobacco"
+    | "chewing_tobacco"
+    | "chewing_without_tobacco"
+    | "alcohol";
   product?: string;
   consumes?: number;
   from_age?: number;
@@ -33,11 +33,11 @@ export interface TOBACCO_ALCOHOL_CONSUMPION {
 }
 
 export interface initialState {
-  product_type:
-  | "smoking_tobacco"
-  | "chewing_tobacco"
-  | "chewing_without_tobacco"
-  | "alcohol";
+  type:
+    | "smoking_tobacco"
+    | "chewing_tobacco"
+    | "chewing_without_tobacco"
+    | "alcohol";
   consumed: number;
   products: TOBACCO_ALCOHOL_CONSUMPION[];
   id: string;
@@ -169,38 +169,76 @@ export const generateDefaultState = (
     })
   );
 
-  const findExisting = (type: initialState["product_type"]) =>
-    masterData?.find((item) => item.product_type === type);
+  const findExisting = (type: initialState["type"]) =>
+    masterData?.find((item) => item.type === type);
 
   const initialState: initialState[] = [
-    findExisting("smoking_tobacco") || {
-      product_type: "smoking_tobacco",
-      consumed: 2,
-      products: smokingProds,
-      id: translator.generate(),
-    },
-    findExisting("chewing_tobacco") || {
-      product_type: "chewing_tobacco",
-      consumed: 2,
-      products: chewingTobaccoProds,
-      id: translator.generate(),
-    },
-    findExisting("chewing_without_tobacco") || {
-      product_type: "chewing_without_tobacco",
-      consumed: 2,
-      products: chewing_without_tobaccoProds,
-      id: translator.generate(),
-    },
-    findExisting("alcohol") || {
-      product_type: "alcohol",
-      consumed: 2,
-      products: alcoholProds,
-      id: translator.generate(),
-    },
+    // 1. Smoking Tobacco
+    findExisting("smoking_tobacco")
+      ? {
+          // Preserve existing ID, consumed status, and other fields
+          ...findExisting("smoking_tobacco")!,
+          // Safely overwrite the products list with the new default array
+          products: smokingProds,
+        }
+      : {
+          // If no existing data, create a new default master record
+          type: "smoking_tobacco",
+          consumed: 2,
+          products: smokingProds,
+          id: translator.generate(),
+        },
+
+    // 2. Chewing Tobacco
+    findExisting("chewing_tobacco")
+      ? {
+          // Preserve existing properties
+          ...findExisting("chewing_tobacco")!,
+          // Safely overwrite the products list
+          products: chewingTobaccoProds,
+        }
+      : {
+          // New default master record
+          type: "chewing_tobacco",
+          consumed: 2,
+          products: chewingTobaccoProds,
+          id: translator.generate(),
+        },
+
+    // 3. Chewing Without Tobacco
+    findExisting("chewing_without_tobacco")
+      ? {
+          // Preserve existing properties
+          ...findExisting("chewing_without_tobacco")!,
+          // Safely overwrite the products list
+          products: chewing_without_tobaccoProds,
+        }
+      : {
+          // New default master record
+          type: "chewing_without_tobacco",
+          consumed: 2,
+          products: chewing_without_tobaccoProds,
+          id: translator.generate(),
+        },
+
+    // 4. Alcohol
+    findExisting("alcohol")
+      ? {
+          // Preserve existing properties
+          ...findExisting("alcohol")!,
+          // Safely overwrite the products list
+          products: alcoholProds,
+        }
+      : {
+          // New default master record
+          type: "alcohol",
+          consumed: 2,
+          products: alcoholProds,
+          id: translator.generate(),
+        },
   ];
   return initialState;
 };
-
 
 export const populateWithBackend = (
   masterData: initialState[],
@@ -219,15 +257,15 @@ export const populateWithBackend = (
   });
 
   return defaultState.map((defaultGroup) => {
-    const type = defaultGroup.product_type;
+    const type = defaultGroup.type;
     const backendProducts = backendByType[type] || [];
 
     let mergedProducts: TOBACCO_ALCOHOL_CONSUMPION[] = [];
 
-    const defaultProducts = defaultGroup.products.filter(
+    const defaultProducts = defaultGroup?.products?.filter(
       (p) => !p.is_other_product
     );
-    const hasBackendOther = backendProducts.some(
+    const hasBackendOther = backendProducts?.some(
       (p) => p.is_other_product === 1
     );
 
@@ -249,9 +287,8 @@ export const populateWithBackend = (
 
       // Handle other product
       if (hasBackendOther) {
-        const other = backendProducts.filter((p) => p.is_other_product === 1);
-        console.log(other)
-        if (other.length > 0) mergedProducts = [...mergedProducts, ...other]
+        const other = backendProducts?.filter((p) => p.is_other_product === 1);
+        if (other.length > 0) mergedProducts = [...mergedProducts, ...other];
       } else {
         mergedProducts.push(
           new TobaccoAlcoholConsumption({
@@ -264,8 +301,8 @@ export const populateWithBackend = (
         );
       }
       return {
-        product_type: type,
-        consumed: 1, // ✅ Mark as consumed
+        type: type,
+        consumed: defaultGroup.consumed, // ✅ Mark as consumed
         products: mergedProducts,
         id: defaultGroup.id,
       };
@@ -285,16 +322,14 @@ export const populateWithBackend = (
       );
 
       return {
-        product_type: type,
-        consumed: 2, // ✅ Mark as NOT consumed
+        type: type,
+        consumed: defaultGroup.consumed,
         products,
         id: defaultGroup.id,
       };
     }
   });
 };
-
-
 
 export const checkElibleToSave = async (
   db: SQLiteDBConnection,
@@ -326,6 +361,7 @@ export const saveToDBAlcohol = async (
   user_id: string,
   tab_id: string
 ) => {
+  console.log(dirtyMaster);
   try {
     const queryM = `
     INSERT INTO TOBACCO_ALCOHOL_CONSUMPTION_MASTER (
@@ -346,7 +382,7 @@ export const saveToDBAlcohol = async (
     for (const data of dirtyMaster) {
       const values = [
         data.id,
-        data.product_type,
+        data.type,
         user_id,
         data.consumed,
         tab_id,
@@ -415,14 +451,17 @@ export const saveToDBAlcohol = async (
 
       await db.run(query, values);
     }
-    await db?.run(`delete from TOBACCO_ALCOHOL_CONSUMPTION where id in ('${deletedIds.join("','")}')`);
+    await db?.run(
+      `delete from TOBACCO_ALCOHOL_CONSUMPTION where id in ('${deletedIds.join(
+        "','"
+      )}')`
+    );
     await saveToStore(sqlite);
   } catch (error) {
     console.log(error);
     throw error;
   }
 };
-
 
 export function validateTobaccoAlcohol(
   dirtyValuesMaster: initialState[],
@@ -431,30 +470,43 @@ export function validateTobaccoAlcohol(
 ) {
   const birthYear = new Date(userDob).getFullYear();
   const currentYear = new Date().getFullYear();
-  const userAge = currentYear - birthYear;
+  const userAge = currentYear - birthYear; 
 
-  // --------------------------
-  // 1️⃣ MASTER vs PRODUCT TYPE MATCH
-  // --------------------------
-  const masterTypes = new Set(
-    dirtyValuesMaster.map(m => m.product_type)
-  );
+  const productsByType = dirtyValuesProduct.reduce((acc, product) => {
+    acc[product.type] = acc[product.type] || [];
+    acc[product.type].push(product);
+    return acc;
+  }, {} as Record<string, TOBACCO_ALCOHOL_CONSUMPION[]>); 
 
-  const productTypes = new Set(
-    dirtyValuesProduct.map(p => p.type)
-  );
+  for (const masterItem of dirtyValuesMaster) {
+    // Only check if the master item is marked as consumed
+    if (masterItem.consumed === 1) {
+      const productType = masterItem.type;
+      const associatedProducts = productsByType[productType]; 
 
-  for (const mt of masterTypes) {
-    if (!productTypes.has(mt)) {
-      throw new Error(
-        `Product details missing for type: ${mt}.`
-      );
+      if (!associatedProducts || associatedProducts.length === 0) {
+        throw new Error(
+          `Consumption details are required for ${productType}. Please add product details.`
+        );
+      } 
+
+      for (const product of associatedProducts) {
+        
+        if (!product.product || product.product.trim() === "") {
+          throw new Error(
+            `Product name cannot be empty for ${productType} when consumption is active.`
+          );
+        } 
+
+        if (typeof product.to_age !== "number" || product.to_age <= 0) {
+          throw new Error(
+            `To age must be greater than 0 for ${productType} consumption.`
+          );
+        }
+      }
     }
-  }
+  } 
 
-  // --------------------------
-  // 2️⃣ AGE VALIDATION
-  // --------------------------
   for (const item of dirtyValuesProduct) {
     const { from_age, to_age } = item;
 
@@ -470,6 +522,7 @@ export function validateTobaccoAlcohol(
     }
 
     if (to_age !== undefined) {
+      
       if (to_age < 0) {
         throw new Error(`To age cannot be negative.`);
       }
@@ -480,11 +533,7 @@ export function validateTobaccoAlcohol(
       }
     }
 
-    if (
-      from_age !== undefined &&
-      to_age !== undefined &&
-      from_age > to_age
-    ) {
+    if (from_age !== undefined && to_age !== undefined && from_age > to_age) {
       throw new Error(
         `From age (${from_age}) cannot be greater than to age (${to_age}).`
       );

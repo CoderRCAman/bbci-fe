@@ -87,13 +87,15 @@ export default function Tab11() {
       const res2 = await db?.query(`
                        select * from TOBACCO_ALCOHOL_CONSUMPTION_MASTER where user_id = '${id}'
                     `);
-      const values = res?.values as TOBACCO_ALCOHOL_CONSUMPION[];
-      const masterValue = res2?.values as initialState[];
-      
+      const values = (res?.values as TOBACCO_ALCOHOL_CONSUMPION[]) || [];
+      const masterValue = (res2?.values as initialState[]) || [];
+      console.log(res, res2);
       if (values?.length > 0 || masterValue?.length > 0) setAllowNext(true);
-      if (masterValue?.[0]?.tab_id) 
+      if (masterValue?.[0]?.tab_id) {
+        console.log(tabId);
         setIsDisabled(masterValue?.[0]?.tab_id !== tabId);
-      console.log(res);
+      }
+
       const result = populateWithBackend(masterValue, values, id, tabId);
       setData(result);
       const res3 = await db?.query(
@@ -107,7 +109,7 @@ export default function Tab11() {
     }
   }
   useEffect(() => {
-    if (isUnsaved) return; 
+    if (isUnsaved) return;
     setIsDisabled(false);
     fetchInitialData();
   }, [db, location.pathname]);
@@ -167,7 +169,7 @@ export default function Tab11() {
             );
 
             // 2️⃣ Remove all products of this type (since master reset)
-            cleaned = cleaned.filter((p) => p.type !== item.product_type);
+            cleaned = cleaned.filter((p) => p.type !== item.type);
 
             // 3️⃣ Add only changed products (not all resetProducts)
             const productsToDirty: any[] = [];
@@ -214,7 +216,7 @@ export default function Tab11() {
 
     setData((prev) =>
       prev.map((stateItem) => {
-        if (stateItem.product_type !== type) return stateItem;
+        if (stateItem.type !== type) return stateItem;
 
         const updatedProducts = stateItem.products.map((prod) => {
           if (prod.id !== id) return prod;
@@ -274,7 +276,7 @@ export default function Tab11() {
     setIsUnsaved(true);
     setData((d) =>
       d.map((item) =>
-        item.product_type === type
+        item.type === type
           ? { ...item, products: [...item.products, newProd] }
           : item
       )
@@ -290,7 +292,7 @@ export default function Tab11() {
   ) => {
     if (
       data
-        .find((x) => x.product_type === type)
+        .find((x) => x.type === type)
         ?.products.filter((x) => x.is_other_product).length === 1
     )
       return;
@@ -298,11 +300,11 @@ export default function Tab11() {
     setDeletedIds((ids) => [...ids, id]);
     setData((d) =>
       d.map((item) =>
-        item.product_type === type
+        item.type === type
           ? {
-            ...item,
-            products: item.products.filter((x) => x.id !== id),
-          }
+              ...item,
+              products: item.products.filter((x) => x.id !== id),
+            }
           : item
       )
     );
@@ -333,11 +335,7 @@ export default function Tab11() {
           id,
         ]);
         const userData = userRes?.values?.[0];
-        validateTobaccoAlcohol(
-          dirtyValuesMaster,
-          dirtyValuesProduct,
-          userData.dob
-        );
+        validateTobaccoAlcohol(data, dirtyValuesProduct, userData.dob);
       } catch (error: any) {
         return setAlert({
           show: true,
@@ -374,7 +372,7 @@ export default function Tab11() {
     setIsUnsaved(false);
     event.detail.complete();
   };
-
+  console.log(data);
   console.log(dirtyValuesMaster, dirtyValuesProduct, deletedIds);
   return (
     <IonPage>
