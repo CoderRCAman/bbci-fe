@@ -361,7 +361,7 @@ export const saveToDBAlcohol = async (
   user_id: string,
   tab_id: string
 ) => {
-  console.log(dirtyMaster);
+
   try {
     const queryM = `
     INSERT INTO TOBACCO_ALCOHOL_CONSUMPTION_MASTER (
