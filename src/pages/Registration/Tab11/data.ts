@@ -361,7 +361,6 @@ export const saveToDBAlcohol = async (
   user_id: string,
   tab_id: string
 ) => {
-
   try {
     const queryM = `
     INSERT INTO TOBACCO_ALCOHOL_CONSUMPTION_MASTER (
@@ -470,42 +469,46 @@ export function validateTobaccoAlcohol(
 ) {
   const birthYear = new Date(userDob).getFullYear();
   const currentYear = new Date().getFullYear();
-  const userAge = currentYear - birthYear; 
+  const userAge = currentYear - birthYear;
 
   const productsByType = dirtyValuesProduct.reduce((acc, product) => {
     acc[product.type] = acc[product.type] || [];
     acc[product.type].push(product);
     return acc;
-  }, {} as Record<string, TOBACCO_ALCOHOL_CONSUMPION[]>); 
+  }, {} as Record<string, TOBACCO_ALCOHOL_CONSUMPION[]>);
 
   for (const masterItem of dirtyValuesMaster) {
     // Only check if the master item is marked as consumed
     if (masterItem.consumed === 1) {
       const productType = masterItem.type;
-      const associatedProducts = productsByType[productType]; 
+      const associatedProducts = productsByType[productType];
 
       if (!associatedProducts || associatedProducts.length === 0) {
         throw new Error(
           `Consumption details are required for ${productType}. Please add product details.`
         );
-      } 
+      }
 
       for (const product of associatedProducts) {
-        
         if (!product.product || product.product.trim() === "") {
           throw new Error(
             `Product name cannot be empty for ${productType} when consumption is active.`
           );
-        } 
+        }
 
-        if (typeof product.to_age !== "number" || product.to_age <= 0) {
-          throw new Error(
-            `To age must be greater than 0 for ${productType} consumption.`
-          );
+        if (
+          typeof product.to_age === "number" &&
+          typeof product.from_age === "number"
+        ) {
+          if (product.to_age <= product.from_age) {
+            throw new Error(
+              `To age must be greater than From age for ${productType} consumption.`
+            );
+          }
         }
       }
     }
-  } 
+  }
 
   for (const item of dirtyValuesProduct) {
     const { from_age, to_age } = item;
@@ -522,7 +525,6 @@ export function validateTobaccoAlcohol(
     }
 
     if (to_age !== undefined) {
-      
       if (to_age < 0) {
         throw new Error(`To age cannot be negative.`);
       }
