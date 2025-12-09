@@ -147,7 +147,7 @@ export default function Tab12() {
     setIsUnsaved(false); 
     setIsDisabled(false);
     fetchExisting();
-  }, [db, location.pathname]);
+  }, [db, location.pathname , location.search]);
   useBlockNavigation(isUnsaved, () => {
     setAlert({
       show: true,

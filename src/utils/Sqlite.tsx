@@ -476,6 +476,7 @@ export const SQLiteProvider: React.FC<PropsWithChildren<{}>> = ({
         await newDb.execute(query19);
         try { await newDb.execute("ALTER TABLE personal_medical_history ADD COLUMN is_other INTEGER DEFAULT 0;"); } catch {  }
         try { await newDb.execute("ALTER TABLE patients ADD COLUMN phone text DEFAULT '';"); } catch {  }
+        try { await newDb.execute("ALTER TABLE patients ADD COLUMN father_name text DEFAULT '';"); } catch {  }
 
 
         setDb(newDb);

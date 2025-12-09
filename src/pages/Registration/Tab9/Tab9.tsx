@@ -163,11 +163,11 @@ export default function Tab9() {
   useEffect(() => {
     const curId = searchParams?.get("id");
     setId(curId);
-    setEditFlag(searchParams?.get("edit") === "YES"); 
+    setEditFlag(searchParams?.get("edit") === "YES");
     setIsDisabled(false);
     if (isUnsaved) return;
     fetchExisting(curId || "");
-  }, [location.pathname, db]);
+  }, [location.pathname, db, location.search]);
   useBlockNavigation(isUnsaved, () => {
     setAlert({
       show: true,

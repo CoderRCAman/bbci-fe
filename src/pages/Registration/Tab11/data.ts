@@ -490,19 +490,13 @@ export function validateTobaccoAlcohol(
       }
 
       for (const product of associatedProducts) {
-        if (!product.product || product.product.trim() === "") {
-          throw new Error(
-            `Product name cannot be empty for ${productType} when consumption is active.`
-          );
-        }
-
         if (
           typeof product.to_age === "number" &&
           typeof product.from_age === "number"
         ) {
-          if (product.to_age <= product.from_age) {
+          if (product.to_age < product.from_age) {
             throw new Error(
-              `To age must be greater than From age for ${productType} consumption.`
+              `To age must be greater than or equal to From age for ${productType} consumption.`
             );
           }
         }
