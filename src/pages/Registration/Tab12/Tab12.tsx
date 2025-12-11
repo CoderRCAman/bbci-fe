@@ -121,7 +121,7 @@ export default function Tab12() {
   useEffect(() => {
     setId(searchParams?.get("id"));
   }, []);
-  async function fetchExisting() {
+  async function fetchExisting(id:string) {
     try {
       const res = await db?.query(
         `
@@ -146,7 +146,7 @@ export default function Tab12() {
     setId(id); 
     setIsUnsaved(false); 
     setIsDisabled(false);
-    fetchExisting();
+    fetchExisting(id);
   }, [db, location.pathname , location.search]);
   useBlockNavigation(isUnsaved, () => {
     setAlert({
@@ -220,7 +220,7 @@ export default function Tab12() {
     }
   }
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
-    await fetchExisting();
+    await fetchExisting(id || "");
     setIsUnsaved(false);
     event.detail.complete();
   };
