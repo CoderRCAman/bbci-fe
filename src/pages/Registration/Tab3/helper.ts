@@ -12,9 +12,9 @@ import { Capacitor } from "@capacitor/core";
 const queue = new PQueue({ concurrency: 1 });
 // Create an axios instance
 const api = axios.create({
-  // baseURL: "http://14.139.205.198/api",
+  baseURL: "http://14.139.205.198/api",
   // baseURL : "http://localhost:11142/api", 
-  baseURL: "https://ziro.devetc.site/api",
+  // baseURL: "https://ziro.devetc.site/api",
   timeout: 5000,
 });
 

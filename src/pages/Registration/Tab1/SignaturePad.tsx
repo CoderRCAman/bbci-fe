@@ -197,7 +197,7 @@ export default function SignaturePad({
   function handlePointerDown(e: React.PointerEvent<SVGSVGElement>) {
     e.preventDefault();
     if (viewMode) return;
-    // if (e.pointerType !== "pen") return;
+    if (e.pointerType !== "pen") return;
     e.currentTarget.setPointerCapture(e.pointerId);
 
     // Start a new stroke in our ref

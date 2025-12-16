@@ -35,9 +35,12 @@ export default function SampleCollectionType({
           style={{ width: "250px" }}
           disabled={!isSampleCollected}
           options={[
-            { name: "EDTA", value: "EDTA" },
-            { name: "SST", value: "SST" },
-            { name: "SST-With Gel", value: "SST-With Gel" },
+            { name: "EDTA", value: "EDTA-ETZ" },
+            { name: "SST", value: "SST-STZ" },
+            { name: "SST-With Gel", value: "SST-WITH-GEL" },
+            { name: "Plasma", value: "PLASMA-PLZ" },
+            { name: "Buffy", value: "BUFFY-BFZ" },
+            { name: "Serum", value: "SERUM-SEZ" },
             { name: "Other", value: "Other" },
           ]}
           onChange={(e) => {

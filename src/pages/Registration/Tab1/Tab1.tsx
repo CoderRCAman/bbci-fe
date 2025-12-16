@@ -55,7 +55,8 @@ interface Patient {
   tab_id?: string;
   phone?: string;
   signature?: string;
-  father_name?:string ;
+  father_name?:string ; 
+  icz ?: string ; 
 }
 
 const employeeNameOptions = [
@@ -100,6 +101,7 @@ const Tab1: React.FC = () => {
     dob: "",
     phone: "",
     father_name: "",
+    icz : "" , 
   });
   const [id, setId] = useState<string | null>(null);
   const [editFlag, setEditFlag] = useState<string | null>(null);
@@ -133,7 +135,8 @@ const Tab1: React.FC = () => {
       gender: patient.gender,
       dob: patient.dob,
       phone: patient.phone,
-      father_name: patient.father_name
+      father_name: patient.father_name , 
+      icz : patient.icz 
     },
   });
   const [strokes, setStrokes] = useState<number[][][]>([]);
@@ -198,7 +201,8 @@ const Tab1: React.FC = () => {
           i_emp_code: "",
           dob: "",
           phone: "" ,
-          father_name: ""
+          father_name: "",
+          icz : '' ,
         });
       }
       reset((res as any)?.values[0]);
@@ -227,7 +231,8 @@ const Tab1: React.FC = () => {
         i_name: "",
         dob: "",
         phone: "",
-        father_name: ""
+        father_name: "" ,
+        icz : '' ,
       });
       setStrokes([]);
       setCardInput("");
@@ -288,7 +293,7 @@ const Tab1: React.FC = () => {
       await db?.run(
         `UPDATE patients SET name = ?,  gender = ? , i_name = ? , 
          i_emp_code = ? , lat = ? , long = ?,
-         DOB = ? , updated_at = ? , signature = ? , card_type = ? , card_no = ? , updated_at = ? , phone = ? , father_name = ?
+         DOB = ? , updated_at = ? , signature = ? , card_type = ? , card_no = ? , updated_at = ? , phone = ? , father_name = ? , icz = ?
          WHERE id = ?`,
         [
           data.name,
@@ -304,7 +309,8 @@ const Tab1: React.FC = () => {
           cardInput,
           format(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"),
           data.phone,
-          data.father_name,
+          data.father_name, 
+          data.icz, 
           id,
         ]
       );
@@ -322,8 +328,8 @@ const Tab1: React.FC = () => {
       const uniqueId = generateUniqueId();
       await db?.run(
         `INSERT INTO patients (id, i_name, i_emp_code, name,  gender,
-         lat, long, time, dob, date , created_at , updated_at , tab_id,signature , card_type , card_no , phone,father_name)
-         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ?,?,? , ? , ?)`,
+         lat, long, time, dob, date , created_at , updated_at , tab_id,signature , card_type , card_no , phone,father_name ,icz)
+         VALUES (?,?, ?, ?,?,?,?,?,?,?,?,?,? , ?,?,? , ? , ? , ?)`,
         [
           uniqueId,
           data.i_name,
@@ -342,7 +348,8 @@ const Tab1: React.FC = () => {
           cardType,
           cardInput, 
           data.phone,
-          data.father_name
+          data.father_name , 
+          data.icz
         ]
       );
       const params = new URLSearchParams(location.search);
@@ -478,6 +485,18 @@ const Tab1: React.FC = () => {
                   <FloatLabel>
                     <InputText {...field} className="w-full" disabled={isDisabled} />
                     <label>Father's name</label>
+                  </FloatLabel>
+                )}
+              />
+              <ControlledFormField
+                name="icz"
+                control={control}
+                errors={errors}
+                rules={{ required: "Patient's consent barcode is required" }}
+                render={({ field }: any) => (
+                  <FloatLabel>
+                    <InputText {...field} className="w-full" disabled={isDisabled} />
+                    <label>Patient's consent barcode</label>
                   </FloatLabel>
                 )}
               />
