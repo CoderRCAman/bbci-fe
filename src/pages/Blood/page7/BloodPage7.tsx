@@ -144,7 +144,7 @@ export default function BloodPage7() {
       setAlert({
         show: true,
         header: "Success",
-        message: "Renal Function Test (RFT) saved successfully",
+        message: "Transfusion-Transmissible Infections (TTIs) & Sugar saved successfully",
       });
     } catch (error) {
       console.log(error);

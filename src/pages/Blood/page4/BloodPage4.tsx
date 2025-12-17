@@ -132,7 +132,7 @@ export default function BloodPage4() {
       setAlert({
         show: true,
         header: "Success",
-        message: "Renal Function Test (RFT) saved successfully",
+        message: "Liver Function Test (LFT) saved successfully",
       });
     } catch (error) {
       console.log(error);

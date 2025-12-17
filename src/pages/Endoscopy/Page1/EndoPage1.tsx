@@ -120,16 +120,15 @@ export default function EndoPage1() {
                 <Column
                   field="id"
                   sortable
-                  header="Id"
+                  header="User Id"
                   body={(rowData) => (
                     <Link
                       to={`/endo4?endoId=${rowData.id}&id=${rowData.user_id}&edit=yes`}
                     >
-                      {rowData.id}
+                      {rowData.user_id}
                     </Link>
                   )}
                 ></Column>
-                <Column field="user_id" sortable header="User Id"></Column>
                 <Column field="name" sortable header="Name"></Column>
                 <Column field="date" sortable header="Date"></Column>
               </DataTable>

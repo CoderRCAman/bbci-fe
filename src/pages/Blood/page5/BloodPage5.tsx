@@ -115,13 +115,13 @@ export default function BloodPage5() {
       }
 
       const query = `
-        INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type,user_id, created)
-        VALUES (?, ?, ?, ?, ?,  ? , ? , ?)   
+        INSERT INTO gtgh_blood_report (id, sampleId, test_name, result,  unit, test_type,user_id , created_at)
+        VALUES (?, ?, ?, ?, ?,  ? , ? , ?  )   
         ON CONFLICT(id) DO UPDATE SET
           sampleId=excluded.sampleId,
           test_name=excluded.test_name,   
           result=excluded.result,         
-          unit=excluded.unit,
+          unit=excluded.unit, 
           test_type=excluded.test_type
       `;
       const values = cbcs.map((rft) => [
@@ -131,7 +131,7 @@ export default function BloodPage5() {
         rft.result,
         rft.unit,
         rft.test_type || "CBC",
-        id,
+        id, 
         new Date().toLocaleString("sv-SE").replace("T", " "),
       ]);
       for (let i = 0; i < values.length; i++) {
@@ -143,7 +143,7 @@ export default function BloodPage5() {
       setAlert({
         show: true,
         header: "Success",
-        message: "Renal Function Test (RFT) saved successfully",
+        message: "CBC saved successfully",
       });
     } catch (error) {
       console.log(error);

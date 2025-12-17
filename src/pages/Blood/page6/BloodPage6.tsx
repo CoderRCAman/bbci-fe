@@ -158,7 +158,7 @@ export default function BloodPage6() {
       setAlert({
         show: true,
         header: "Success",
-        message: "Renal Function Test (RFT) saved successfully",
+        message: "Biochemistry test saved successfully",
       });
     } catch (error) {
       console.log(error);

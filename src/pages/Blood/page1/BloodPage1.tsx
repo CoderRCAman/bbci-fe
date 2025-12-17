@@ -101,18 +101,18 @@ export default function BloodPage1() {
               <DataTable value={bloodSample}
                 tableStyle={{ minWidth: '6rem' }}
                 // tableClassName="p-datatable-gridlines" 
-                globalFilter={globalFilterValue}
+                globalFilter={globalFilterValue1}
                 header={header2}
                 paginator
                 rows={10}
                 showGridlines
                 size='normal'
               >
-                <Column field="id" sortable header="Sample Id"
-                  body={(rowData) => <Link to={`/blood2?id=${rowData.user_id}&sampleId=${rowData.id}&edit=yes`}>{rowData.id}</Link>}
+                <Column field="user_id" sortable header="User Id"
+                  body={(rowData) => <Link to={`/blood2?id=${rowData.user_id}&sampleId=${rowData.id}&edit=yes`}>{rowData.user_id}</Link>}
                 ></Column>
                 <Column field="name" sortable header="Name"></Column>
-                <Column field="user_id" sortable header="User Id"></Column>
+                <Column field="created_at" sortable header="Date"></Column>
                 {/* <Column field="date_collected" sortable header="Collected Date" 
                   body = {(rowData) => format(new Date(rowData.date_collected , 'yyy'))}
                 ></Column> */}
