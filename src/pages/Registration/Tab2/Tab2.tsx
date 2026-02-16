@@ -10,13 +10,15 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { format } from 'date-fns';
+import { Chip } from 'primereact/chip';
 interface Patient {
   id?: string;
   name: string;
   age: number;
   gender: string;
   lat: number;
-  long: number;
+  long: number; 
+
 }
 const Tab2: React.FC = () => {
   const { db } = useSQLite();
@@ -25,7 +27,19 @@ const Tab2: React.FC = () => {
   const [globalFilterValue, setGlobalFilterValue] = useState('');
   useEffect(() => {
     const fetchPatients = async () => {
-      const res = await db?.query('SELECT * FROM patients order by Date(created_at) desc');
+      const res = await db?.query(`
+         SELECT p.id , p.tab_id , p.name, p.dob , p.gender , p.created_at , 
+          GROUP_CONCAT(
+              CASE 
+                  WHEN e.date IS NOT NULL 
+                  THEN 'ENDOSCOPY(' || DATE(e.date) || ')'
+              END,
+              ', '
+          ) AS endoscopy_info,
+         p.updated_at FROM patients p 
+         LEFT JOIN endoscopy e on p.id = e.user_id
+         GROUP BY p.id , p.tab_id , p.name , p.dob , p.gender , p.created_at 
+         order by Date(p.created_at) desc`);
       console.log(res);
       setPatients(res?.values || []);
     };
@@ -39,7 +53,8 @@ const Tab2: React.FC = () => {
     { data: 'age', title: 'Age' },
     { data: 'lat', title: 'Lat' },
     { data: 'long', title: 'Long' },
-    { data: 'tab_id', title: 'Tab ID' }
+    { data: 'tab_id', title: 'Tab ID' } 
+
   ];
 
 
@@ -87,9 +102,14 @@ const Tab2: React.FC = () => {
               }}
             ></Column>
             <Column field="gender" sortable header="Gender"></Column>
-            <Column field="created_at" header="Created Date"></Column>
-            <Column field="updated_at" header="last Updated"></Column>
-
+            <Column field="created_at" header="Registered Date"></Column>
+            <Column field='endoscopy_info' header='Endoscopy Info' 
+              body = {(rowData) => {
+                return <> 
+                  {rowData.endoscopy_info?.split(",").map((item:string)=> <Chip className='text-xs mt-1' label={item} />)}
+                </>
+              }}
+            />
           </DataTable>
         </main>
 

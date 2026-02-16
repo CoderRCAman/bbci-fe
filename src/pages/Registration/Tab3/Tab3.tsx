@@ -60,6 +60,12 @@ const initialPullState = {
       error: false,
     },
     {
+      table_name: "ENDOSCOPY",
+      display_name: "Endoscopy",
+      status: false,
+      error: false,
+    },
+    {
       table_name: "blood_sample",
       display_name: "Blood Sample",
       status: false,
@@ -265,14 +271,21 @@ export default function Tab3() {
       for (const { table_name, table_data } of pulled) {
         console.log(`⬇️ Syncing table: ${table_name}`);
         if (table_name === "deletedRecords" && table_data.length > 0) {
-          //delete from db
-          let deleteQueries = table_data
-            .map(
-              (row) =>
-                `DELETE FROM ${row.table_name} WHERE id = '${row.rowId}';`
-            )
-            .join(" ");
-          await db?.execute(deleteQueries);
+          // 1. Map to an array of objects, NOT a single string
+          const deleteBatch = table_data.map((row) => ({
+            statement: `DELETE FROM ${row.table_name} WHERE id = ?`,
+            values: [row.rowId]
+          }));
+
+          console.log("Deleting rows:", deleteBatch);
+
+          try {
+            // 2. Use executeSet to run all deletes together
+            await db?.executeSet(deleteBatch);
+            console.log("✅ Deletion successful");
+          } catch (err) {
+            console.error("❌ Delete failed:", err);
+          }
           continue;
         }
         if (!table_data || table_data.length === 0) continue;

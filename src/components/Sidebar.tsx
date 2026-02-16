@@ -26,8 +26,8 @@ import { useSQLite } from '../utils/Sqlite';
 const menuItems = [
     { text: 'Registration', path: '/tab1', icon: personAddOutline },
     { text: 'Participants list', path: '/tab2', icon: listOutline },
-    { text: 'Blood Test / Physical', path: '/blood1', icon: medkitOutline },
-    { text: 'Endoscopy', path: '/endo1', icon: cameraOutline },
+    { text: 'Blood Test / Physical', path: '/blood-landing', icon: medkitOutline },
+    { text: 'Endoscopy', path: '/endo-landing', icon: cameraOutline },
     { text: 'Food Recall', path: '/food1', icon: fastFoodOutline },
     { text: 'Sync To Database', path: '/tab3', icon: syncOutline },
 ];

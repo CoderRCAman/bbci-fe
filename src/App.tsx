@@ -60,6 +60,12 @@ import EndoPage4 from "./pages/Endoscopy/Page4/EndoPage4";
 import EndoPage3 from "./pages/Endoscopy/Page3/EndoPage3";
 import FoodHabitPage from "./pages/FoodRecall/Page2/FoodRecallPage2";
 import FoodRecallEntryPage from "./pages/FoodRecall/Page3/FoodRecallPage3";
+import BloodLanding from "./pages/Blood/Landing/BloodLanding";
+import NewBloodTest from "./pages/Blood/Landing/NewBloodTest";
+import UpdateBloodTest from "./pages/Blood/Landing/UpdateBloodTest";
+import EndoscopyLanding from "./pages/Endoscopy/Landing/EndoLanding";
+import NewEndo from "./pages/Endoscopy/Landing/NewEndo";
+import UpdateEndo from "./pages/Endoscopy/Landing/UpdateEndo";
 
 setupIonicReact();
 
@@ -121,8 +127,15 @@ const App: React.FC = () => {
               </Route>
 
               {/* ENDOSCOPY PAGES STARTS FROM HERE  */}
-              <Route path="/endo1">
-                <EndoPage1 />
+
+              <Route path="/endo-landing">
+                <EndoscopyLanding />
+              </Route>
+              <Route path="/new-endo">
+                <NewEndo />
+              </Route>
+              <Route path="/update-endo">
+                <UpdateEndo />
               </Route>
               <Route path="/endo2">
                 <EndoPage2 />
@@ -136,9 +149,16 @@ const App: React.FC = () => {
               {/* {--------------------------------------} */}
 
               {/* BLOOD PAGES STARTS FROM HERE  */}
-              <Route path="/blood1">
-                <BloodPage1 />
+              <Route path="/blood-landing">
+                <BloodLanding />
               </Route>
+              <Route path="/new-blood-test">
+                <NewBloodTest />
+              </Route>
+              <Route path="/update-blood-test">
+                <UpdateBloodTest />
+              </Route>
+
               <Route path="/blood2">
                 <BloodPage2 />
               </Route>

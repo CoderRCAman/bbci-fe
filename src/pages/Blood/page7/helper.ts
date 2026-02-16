@@ -12,7 +12,7 @@ const testNames = [
 export const getInitialDataSet = (sampleId: string): RFTType[] => {
   const CBCData: RFTType[] = testNames.map((item) => ({
     test_name: item.name,
-    result: 0,
+    result: '',
     hl_flag: "",
     unit: item.unit,
     bio_ref_interval: "",

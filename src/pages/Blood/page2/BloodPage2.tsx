@@ -580,7 +580,7 @@ export default function BloodPage2() {
                 </div>
 
                 <div className="flex justify-between gap-2 mt-10">
-                  <Link to="/blood1">
+                  <Link to="/blood-landing">
                     <Button
                       label="PREV"
                       icon="pi pi-arrow-left" // Added icon

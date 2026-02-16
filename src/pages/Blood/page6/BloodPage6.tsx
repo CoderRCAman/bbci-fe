@@ -212,7 +212,7 @@ export default function BloodPage6() {
                   header="Result"
                   body={(rowData) => (
                     <InputText
-                      placeholder="Modify"
+                      placeholder=""
                       value={parseFloat(rowData.result).toString()}
                       className="p-2 border"
                       type="number"

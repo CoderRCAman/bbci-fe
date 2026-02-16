@@ -196,7 +196,7 @@ export default function BloodPage5() {
                   header="Result"
                   body={(rowData) => (
                     <InputText
-                      placeholder="Modify"
+                      placeholder=""
                        value={parseFloat(rowData.result).toString()}
                       type="number"
                       className="p-2 border"

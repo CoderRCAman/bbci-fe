@@ -221,9 +221,7 @@ export default function EndoPage4() {
             </div>
             <div className="flex justify-between mt-20 gap-2 ">
               <Link
-                to={`/endo1?id=${id}&endoId=${endoId}&edit=${
-                  editFlag ? "yes" : "no"
-                }`}
+                to={`/endo-landing`}
                 onClick={(e) => {
                   if (isUnsaved) {
                     e.preventDefault();

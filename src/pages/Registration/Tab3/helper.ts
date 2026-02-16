@@ -9,7 +9,7 @@ import ExcelJS from "exceljs";
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from "@capacitor/core";
 // Limit to 5 concurrent requests
-const queue = new PQueue({ concurrency: 1 });
+const queue = new PQueue({ concurrency: 1 }); 
 // Create an axios instance
 const api = axios.create({
   baseURL: "http://14.139.205.198/api",
@@ -37,7 +37,9 @@ const Tables = [
   "FOOD_HABITS_MASTER",
   "FOOD_HABITS_FAT_USAGE",
   "FOOD_RECALL_ENTRY",
-  "FOOD_RECALL_INGREDIENT",
+  "FOOD_RECALL_INGREDIENT", 
+  "endo_reports",
+  "stomach_lesions"
 ];
 
 // Retry failed requests up to 3 times
