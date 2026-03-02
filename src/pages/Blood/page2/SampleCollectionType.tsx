@@ -104,7 +104,7 @@ export default function SampleCollectionType({
                 );
                 if (index === -1) return;
                 draft.collection_tubes![index]!.identification_code_tube =
-                  e.target.value;
+                  e.target.value.toUpperCase();
               })
             );
           }}

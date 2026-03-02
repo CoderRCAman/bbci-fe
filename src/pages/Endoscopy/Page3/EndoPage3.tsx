@@ -19,7 +19,14 @@ import { Card } from "primereact/card";
 import { FloatLabel } from "primereact/floatlabel";
 import { Calendar } from "primereact/calendar";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
-
+const formatBarcode = (value: string, prefix: string) => {
+  if (!value) return "";
+  const digits = value.replace(/\D/g, "");
+  if (digits) {
+    return `${prefix.toUpperCase()}${digits.padStart(3, "0")}`;
+  }
+  return value.toUpperCase();
+};
 export default function EndoPage3() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -127,12 +134,23 @@ export default function EndoPage3() {
           message: "Please scan at least one biopsy barcode.",
         });
       }
-
+      const finalBhzToSave = formatBarcode(bhz, "BHZ");
+      const finalBgzToSave = formatBarcode(bgz, "BGZ");
+      const ifExistCode = `SELECT p.name, p.id FROM endoscopy e JOIN patients p ON e.user_id = p.id WHERE (e.bhz = ? COLLATE NOCASE OR e.bgz = ? COLLATE NOCASE) and e.id <> ? limit 1`;
+      const queryValues = [finalBhzToSave, finalBgzToSave , endoId];
+      const res = await db?.query(ifExistCode, queryValues);
+      if (res?.values && res.values.length > 0) {
+        return setAlert({
+          show: true,
+          header: 'Failed',
+          message: `This BHZ/BGZ codes already exist for user (${res.values[0].name}):(${res.values[0].id})`
+        })
+      }
       const query = `
         UPDATE ENDOSCOPY
         SET
-          bhz = '${bhz}',
-          bgz = '${bgz}',
+          bhz = '${finalBhzToSave}',
+          bgz = '${finalBgzToSave}',
           biopsy_collection_date = '${collection_date}'
         WHERE id = '${endoId}'
       `;
@@ -206,8 +224,12 @@ export default function EndoPage3() {
                   setBhz(e.target.value);
                   setIsUnsaved(true);
                 }}
+                onBlur={(e) => {
+                  const formatted = formatBarcode(e.target.value, "BHZ");
+                  setBhz(formatted);
+                }}
                 className="w-full mt-1 p-2 border rounded"
-                placeholder="Enter or scan BHZ barcode"
+                placeholder="Enter number (e.g., 1) or scan barcode"
               />
             </div>
 
@@ -221,10 +243,13 @@ export default function EndoPage3() {
                   setBgz(e.target.value);
                   setIsUnsaved(true);
                 }}
+                onBlur={(e) => {
+                  const formatted = formatBarcode(e.target.value, "BGZ");
+                  setBgz(formatted);
+                }}
                 className="w-full mt-1 mb-5 p-2 border rounded"
-                placeholder="Enter or scan BGZ barcode"
+                placeholder="Enter number (e.g., 1) or scan barcode"
               />
-
             </div>
 
             <FloatLabel >

@@ -8,13 +8,13 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 export default function NewBloodTest() {
   const { db, sqlite } = useSQLite();
   const [globalFilterValue, setGlobalFilterValue] = useState('');
   const [globalFilterValue1, setGlobalFilterValue1] = useState('');
   const [participants, setParticipants] = useState<any[]>([]);
   const [bloodSample, setBloodSample] = useState<any[]>([]);
-
   const location = useLocation();
   useEffect(() => {
     async function fetchUsers() {
@@ -64,7 +64,7 @@ export default function NewBloodTest() {
       </span>
     </div>
   );
-
+  useBlockNavigation(false, () => { });
   return (
     <>
       <IonPage>

@@ -11,13 +11,14 @@ import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { format } from 'date-fns';
 import { Chip } from 'primereact/chip';
+import { useBlockNavigation } from '../../../utils/blockBackNavigation';
 interface Patient {
   id?: string;
   name: string;
   age: number;
   gender: string;
   lat: number;
-  long: number; 
+  long: number;
 
 }
 const Tab2: React.FC = () => {
@@ -53,7 +54,7 @@ const Tab2: React.FC = () => {
     { data: 'age', title: 'Age' },
     { data: 'lat', title: 'Lat' },
     { data: 'long', title: 'Long' },
-    { data: 'tab_id', title: 'Tab ID' } 
+    { data: 'tab_id', title: 'Tab ID' }
 
   ];
 
@@ -71,7 +72,7 @@ const Tab2: React.FC = () => {
       </span>
     </div>
   );
-
+  useBlockNavigation(false, () => { });
   return (
     <IonPage>
       <Header
@@ -103,10 +104,10 @@ const Tab2: React.FC = () => {
             ></Column>
             <Column field="gender" sortable header="Gender"></Column>
             <Column field="created_at" header="Registered Date"></Column>
-            <Column field='endoscopy_info' header='Endoscopy Info' 
-              body = {(rowData) => {
-                return <> 
-                  {rowData.endoscopy_info?.split(",").map((item:string)=> <Chip className='text-xs mt-1' label={item} />)}
+            <Column field='endoscopy_info' header='Endoscopy Info'
+              body={(rowData) => {
+                return <>
+                  {rowData.endoscopy_info?.split(",").map((item: string) => <Chip className='text-xs mt-1' label={item} />)}
                 </>
               }}
             />

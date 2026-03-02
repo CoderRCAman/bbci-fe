@@ -211,6 +211,17 @@ export default function BloodPage2() {
           show: true,
         });
       }
+      console.log(bloodSample);
+      const identificationCode = "(" + bloodSample.collection_tubes.map(item => "'" + item.identification_code_tube + "'").join(",") + ")";
+      const ifExistCode = `SELECT p.name, p.id FROM blood_tube_collection e JOIN patients p ON e.user_id = p.id WHERE  e.identification_code_tube in ${identificationCode} and e.blood_sample_id<> '${bloodSample.id}'`;
+      const res = await db?.query(ifExistCode);
+      if (res?.values && res.values.length > 0) {
+        return setAlert({
+          show: true,
+          header: 'Failed',
+          message: `This Identific code of the Blood collection tube exist for user: ${res.values.map(item => item.name).join(",")}`
+        })
+      }
       await saveBloodSampleRecord(bloodSample, db, sqlite, tabId);
       console.log(removedIds);
       for (const removedId of removedIds) {

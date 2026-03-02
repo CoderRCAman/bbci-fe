@@ -7,6 +7,7 @@ import { useLocation } from "react-router";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Link } from "react-router-dom";
+import { useBlockNavigation } from "../../../utils/blockBackNavigation";
 export default function NewEndo() {
   const [searchTerm, setSearchTerm] = useState("");
   const { db, sqlite } = useSQLite();
@@ -63,7 +64,7 @@ export default function NewEndo() {
       </span>
     </div>
   );
-
+  useBlockNavigation(false, () => { });
   return (
     <>
       <IonPage>

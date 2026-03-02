@@ -1,12 +1,12 @@
 import React from 'react';
-import { 
-  IonContent, 
-  IonPage, 
-  IonButton, 
-  IonGrid, 
-  IonRow, 
-  IonCol, 
-  IonText, 
+import {
+  IonContent,
+  IonPage,
+  IonButton,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonText,
   IonIcon,
   IonCard,
   IonCardContent
@@ -14,10 +14,11 @@ import {
 import { addCircleOutline, syncOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import Header from '../../../components/Header';
+import { useBlockNavigation } from '../../../utils/blockBackNavigation';
 
 export default function EndoscopyLanding() {
   const history = useHistory();
-
+  useBlockNavigation(false, () => {});
   return (
     <IonPage>
       <style>{`
@@ -41,20 +42,20 @@ export default function EndoscopyLanding() {
       `}</style>
 
       <IonContent fullscreen className="ion-padding" style={{ '--background': '#f8f9fa' }}>
-        <Header title='Endoscopy'/>
-        
+        <Header title='Endoscopy' />
+
         {/* Main Grid: Centers the column vertically and horizontally */}
         <IonGrid style={{ height: '100%', display: 'flex', alignItems: 'center' }}>
           <IonRow className="ion-justify-content-center" style={{ width: '100%' }}>
-            
+
             {/* Constrained width for the centered "Mobile Menu" look */}
             <IonCol size="12" sizeSm="8" sizeMd="6" sizeLg="5" sizeXl="4">
-            
+
 
               {/* OPTION 1: NEW ENDOSCOPY */}
               <IonCard mode="ios" className="bordered-card">
                 <IonCardContent className="ion-text-center" style={{ padding: '32px 24px' }}>
-                  
+
                   {/* Icon */}
                   <div className="icon-circle" style={{ background: '#F0F4FF' }}>
                     <IonIcon icon={addCircleOutline} color="primary" style={{ fontSize: '32px' }} />
@@ -71,9 +72,9 @@ export default function EndoscopyLanding() {
                   </p>
 
                   {/* Button */}
-                  <IonButton 
-                    expand="block" 
-                    shape="round" 
+                  <IonButton
+                    expand="block"
+                    shape="round"
                     color="primary"
                     onClick={() => history.push('/new-endo')}
                     style={{ fontWeight: '600', height: '48px' }}
@@ -87,7 +88,7 @@ export default function EndoscopyLanding() {
               {/* OPTION 2: UPDATE EXISTING */}
               <IonCard mode="ios" className="bordered-card">
                 <IonCardContent className="ion-text-center" style={{ padding: '32px 24px' }}>
-                  
+
                   {/* Icon */}
                   <div className="icon-circle" style={{ background: '#F0FDF4' }}>
                     <IonIcon icon={syncOutline} color="success" style={{ fontSize: '32px' }} />
@@ -104,10 +105,10 @@ export default function EndoscopyLanding() {
                   </p>
 
                   {/* Button */}
-                  <IonButton 
-                    expand="block" 
-                    shape="round" 
-                    color="success" 
+                  <IonButton
+                    expand="block"
+                    shape="round"
+                    color="success"
                     fill="outline"
                     onClick={() => history.push('/update-endo')}
                     style={{ fontWeight: '600', height: '48px', borderWidth: '2px' }}
