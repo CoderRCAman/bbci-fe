@@ -8,6 +8,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Link } from "react-router-dom";
 import { useBlockNavigation } from "../../../utils/blockBackNavigation";
+import { differenceInYears } from "date-fns";
 export default function NewEndo() {
   const [searchTerm, setSearchTerm] = useState("");
   const { db, sqlite } = useSQLite();
@@ -23,7 +24,7 @@ export default function NewEndo() {
             select * from patients ; 
           `;
         const query2 = `
-          select e.* , p.name , p.id as user_id from endoscopy e
+          select e.* , p.name , p.dob, p.id as user_id from endoscopy e
           join patients p  on p.id = e.user_id 
           ;
         `;
@@ -97,6 +98,11 @@ export default function NewEndo() {
                   )}
                 ></Column>
                 <Column field="name" sortable header="Name"></Column>
+                <Column field="age" sortable header="Age"
+                  body={(rowData) => (
+                    <p>{differenceInYears(new Date(), rowData.dob)}</p>
+                  )}
+                ></Column>
                 <Column field="gender" sortable header="Gender"></Column>
               </DataTable>
             </div>
