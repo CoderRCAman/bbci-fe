@@ -27,8 +27,8 @@ export interface DEMOGRAPHIC_INFO {
   place_of_birth?: string;
   tab_id?: string;
 }
-const initialState: DEMOGRAPHIC_INFO = {
-  id: shortUUID().generate(),
+const getInitialState = (): DEMOGRAPHIC_INFO => ({
+  id: shortUUID().generate(), // Generates a fresh UUID every time this is called
   user_id: "",
   religion: "",
   marital_status: "",
@@ -38,7 +38,7 @@ const initialState: DEMOGRAPHIC_INFO = {
   mother_tongue: "",
   place_of_birth: "",
   tab_id: "",
-};
+});
 const data = [
   {
     type: "Religion",
@@ -117,7 +117,7 @@ export default function Tab12() {
   const searchParams = new URLSearchParams(location.search);
   const [isDisabled, setIsDisabled] = useState(false)
   const [demographicInfo, setDemographicInfo] =
-    useState<DEMOGRAPHIC_INFO>(initialState);
+    useState<DEMOGRAPHIC_INFO>(getInitialState());
   useEffect(() => {
     setId(searchParams?.get("id"));
   }, []);
@@ -126,10 +126,10 @@ export default function Tab12() {
       const res = await db?.query(
         `
                 select * from demographic_info where user_id = '${id}'
-          `
+          ` 
       );
       if (res?.values?.length === 0) {
-        setDemographicInfo({ ...initialState, user_id: id!! });
+        setDemographicInfo({ ...getInitialState(), user_id: id!! });
       } else {
         const values = res?.values as DEMOGRAPHIC_INFO[];
         setDemographicInfo(values[0]);

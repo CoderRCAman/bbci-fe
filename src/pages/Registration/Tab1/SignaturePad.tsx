@@ -195,9 +195,9 @@ export default function SignaturePad({
   }
 
   function handlePointerDown(e: React.PointerEvent<SVGSVGElement>) {
-    e.preventDefault();
     if (viewMode) return;
     if (e.pointerType !== "pen") return;
+    e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
 
     // Start a new stroke in our ref
@@ -208,10 +208,10 @@ export default function SignaturePad({
   }
 
   function handlePointerMove(e: React.PointerEvent<SVGSVGElement>) {
-    e.preventDefault();
     if (viewMode) return;
     if (e.buttons !== 1) return;
     if (e.pointerType !== "pen") return;
+    e.preventDefault();
     // Add point to the ref (no state update!)
     currentStrokeRef.current.push(getRelativePoint(e));
 

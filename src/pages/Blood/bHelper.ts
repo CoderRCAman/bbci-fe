@@ -12,7 +12,7 @@ export function validateRFTArray(samples: RFTType[]): string | null {
     const sampleNumber = i + 1;
 
     if (
-      (!sample.result || sample.result === "") &&
+      (sample.result === "") &&
       !allowedEmptyTests.includes(sample.test_name)
     ) {
       return `Error in sample number ${sampleNumber}: Result is required.`;
