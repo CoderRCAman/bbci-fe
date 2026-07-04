@@ -8,14 +8,26 @@ import { SQLiteDBConnection } from "@capacitor-community/sqlite";
 import ExcelJS from "exceljs";
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from "@capacitor/core";
+
+const getErrorMsg = (error: any) => {
+  if (error?.response) {
+    return `Server Error: ${error.response.status} - ${JSON.stringify(error.response.data)}`;
+  } else if (error?.request) {
+    return `Network Error: No response received. ${error.message}`;
+  } else {
+    return `Error: ${error?.message || JSON.stringify(error)}`;
+  }
+};
+
 // Limit to 5 concurrent requests
 const queue = new PQueue({ concurrency: 1 }); 
 // Create an axios instance
 const api = axios.create({
-  baseURL: "http://14.139.205.198/api",
+  baseURL: "http://ziro.bbci.in/api",
+  // baseURL: "http://14.139.205.198/api",
   // baseURL : "http://localhost:11142/api", 
   // baseURL: "https://ziro.devetc.site/api",
-  timeout: 5000,
+  timeout: 60000,
 });
 
 const Tables = [
@@ -62,8 +74,9 @@ export async function PUSH_TO_CLOUD(
               table_data: chunk,
               operation: "INSERT_UPDATE",
             });
-          } catch (error) {
+          } catch (error: any) {
             console.log(error);
+            alert(`Push Error for table ${table_name}: ${getErrorMsg(error)}`);
             throw error;
             // throw new Error(
             //   `Failed to push data to cloud for table : ${table_name}`
@@ -83,16 +96,18 @@ export async function PUSH_TO_CLOUD(
             })),
             operation: "DELETE",
           });
-        } catch (error) {
+        } catch (error: any) {
           console.log(JSON.stringify(error));
+          alert(`Push Error for deleted records: ${getErrorMsg(error)}`);
           throw error;
           // throw new Error(`Failed to push data to cloud for deleted records`);
         }
       });
     }
     await queue.onIdle();
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
+    alert(`Push Process Error: ${getErrorMsg(error)}`);
     throw error;
   }
 }
@@ -140,8 +155,9 @@ async function fetchTable(tableName: string, db: SQLiteDBConnection | null) {
         console.log(`✅ Completed ${tableName} (${allRows.length} total rows)`);
         break;
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(`⚠️ Error fetching ${tableName} at offset ${offset}:`, JSON.stringify(err));
+      alert(`Fetch Error for ${tableName}: ${getErrorMsg(err)}`);
       throw err;
     }
   }
@@ -187,8 +203,9 @@ export async function PULL_FROM_CLOUD(
                 : item
             ),
           }));
-        } catch (err) {
+        } catch (err: any) {
           console.error("Error in table:", table_name, JSON.stringify(err));
+          alert(`Pull Error for ${table_name}: ${getErrorMsg(err)}`);
           setPullState((prev) => ({
             ...prev,
             data: prev.data.map((item) =>
@@ -208,8 +225,9 @@ export async function PULL_FROM_CLOUD(
     }
     await queue.onIdle();
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.log(JSON.stringify(error));
+    alert(`Pull Process Error: ${getErrorMsg(error)}`);
     throw error;
   }
 }

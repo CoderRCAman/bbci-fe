@@ -2,6 +2,7 @@ import React, { use, useEffect, useState } from "react";
 import { Geolocation } from "@capacitor/geolocation";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
+import { useLocation } from "react-router";
 
 interface LocationEditorProps {
     patient: any;
@@ -21,12 +22,13 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
     setError
 }) => {
     const [edit, setEdit] = useState(false);
-    const [locationSpinner, setLocationSpinner] = useState(false);
+    const [locationSpinner, setLocationSpinner] = useState(false); 
+    const location = useLocation();
     useEffect(() => {
         return () => {
             setError("");
         }
-    }, [])
+    }, [location.search])
     const getCurrentPosition = async () => {
         try {
             setLocationSpinner(true);
@@ -119,8 +121,8 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
             {/* Normal View Mode */}
             {!edit && (
                 <div className="space-y-1 text-gray-700">
-                    <p><strong>Latitude:</strong> {patient.lat}</p>
-                    <p><strong>Longitude:</strong> {patient.long}</p>
+                    <p><strong>Latitude:</strong> {patient.lat ?? 'Not set'}</p>
+                    <p><strong>Longitude:</strong> {patient.long ?? 'Not set'}</p>
                     {
                         <Button
                             type="button"
@@ -142,11 +144,12 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
                     <div>
                         <label className="block mb-1 text-sm text-gray-600">Latitude</label>
                         <InputText
-                            value={patient.lat.toString()}
+                            value={patient.lat?.toString() || ""}
                             onChange={(e) => {
+                                const val = parseFloat(e.target.value);
                                 setPatient((prev: any) => ({
                                     ...prev,
-                                    lat: parseFloat(e.target.value) || 0
+                                    lat: isNaN(val) ? null : val
                                 }));
                                 setIsUnsaved(true);
                             }}
@@ -157,11 +160,12 @@ const LocationEditor: React.FC<LocationEditorProps> = ({
                     <div>
                         <label className="block mb-1 text-sm text-gray-600">Longitude</label>
                         <InputText
-                            value={patient.long.toString()}
+                            value={patient.long?.toString() || ""}
                             onChange={(e) => {
+                                const val = parseFloat(e.target.value);
                                 setPatient((prev: any) => ({
                                     ...prev,
-                                    long: parseFloat(e.target.value) || 0
+                                    long: isNaN(val) ? null : val
                                 }));
                                 setIsUnsaved(true);
                             }}

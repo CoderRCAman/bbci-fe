@@ -46,8 +46,8 @@ interface Patient {
   name: string;
   age: number;
   gender: string;
-  lat: number;
-  long: number;
+  lat: number | null;
+  long: number | null;
   place: string;
   i_name: string;
   i_emp_code: string;
@@ -93,8 +93,8 @@ const Tab1: React.FC = () => {
     name: "",
     age: 0,
     gender: "",
-    lat: 0,
-    long: 0,
+    lat: null,
+    long: null,
     place: "",
     i_name: "",
     i_emp_code: "",
@@ -192,7 +192,7 @@ const Tab1: React.FC = () => {
         }
       }
       else {
-        setPatient(p => ({ ...p, lat: 0, long: 0 }))
+        setPatient(p => ({ ...p, lat: null, long: null }))
         reset({
           name: "",
           age: 0,
@@ -224,8 +224,8 @@ const Tab1: React.FC = () => {
         name: "",
         age: 0,
         gender: "",
-        lat: 0,
-        long: 0,
+        lat: null,
+        long: null,
         place: "",
         i_emp_code: "",
         i_name: "",
@@ -246,15 +246,6 @@ const Tab1: React.FC = () => {
   }, [location.search, db]);
 
   const savePatient = async (data: any) => {
-    if (!patient.lat) {
-      setAlert((a) => ({
-        ...a,
-        show: true,
-        header: "Missing fields",
-        message: "Please select co-ordinate",
-      }));
-      return;
-    }
     if (strokes.length === 0) {
       setAlert((a) => ({
         ...a,
